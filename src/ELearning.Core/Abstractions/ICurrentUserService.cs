@@ -6,4 +6,5 @@ public interface ICurrentUserService
     string? Email { get; }
     IEnumerable<string> Roles { get; }
     bool IsAuthenticated { get; }
+    bool HasRole(string role);
 }
