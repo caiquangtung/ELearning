@@ -52,11 +52,8 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.UpdatedAt)
             .HasColumnName("updated_at");
 
-        // Store roles as JSON array in a single column
-        builder.Property<List<string>>("_roles")
-            .HasField("_roles")
+        builder.PrimitiveCollection<string>("_roles")
             .HasColumnName("roles")
-            .HasColumnType("jsonb")
             .IsRequired();
     }
 }

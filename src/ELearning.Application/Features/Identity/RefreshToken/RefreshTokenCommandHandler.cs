@@ -1,45 +1,49 @@
-using ELearning.Application.Features.Identity.Login;
+using ELearning.Application.Features.Identity.Common;
 using ELearning.Core.Abstractions;
 using ELearning.Core.Common;
+using ELearning.Domain.Aggregates.UserAggregate;
 using MediatR;
-using System.Security.Claims;
 
 namespace ELearning.Application.Features.Identity.RefreshToken;
 
 public class RefreshTokenCommandHandler(
     IUserRepository userRepository,
-    ITokenService tokenService,
+    IJwtTokenService jwtTokenService,
     IUnitOfWork unitOfWork)
     : IRequestHandler<RefreshTokenCommand, Result<AuthResponseDto>>
 {
-    private static readonly Error InvalidToken =
-        new("Auth.InvalidToken", "The provided token pair is invalid or expired.");
-
     public async Task<Result<AuthResponseDto>> Handle(RefreshTokenCommand request, CancellationToken ct)
     {
-        var principal = tokenService.GetPrincipalFromExpiredToken(request.AccessToken);
-        if (principal is null) return Result.Failure<AuthResponseDto>(InvalidToken);
+        var hash = RefreshTokenHasher.Hash(request.RefreshToken);
+        var user = await userRepository.GetByRefreshTokenHashAsync(hash, ct);
+        if (user is null || !user.IsRefreshTokenValid(hash))
+            return Result.Failure<AuthResponseDto>(Error.Unauthorized("Invalid or expired refresh token."));
 
-        var userIdStr = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (!Guid.TryParse(userIdStr, out var userId))
-            return Result.Failure<AuthResponseDto>(InvalidToken);
+        if (user.Status == UserStatus.Suspended)
+            return Result.Failure<AuthResponseDto>(new Error("User.Suspended", "Account is suspended."));
 
-        var user = await userRepository.GetByIdAsync(userId, ct);
-        if (user is null) return Result.Failure<AuthResponseDto>(InvalidToken);
+        var tokens = jwtTokenService.CreateTokenPair(
+            user.Id,
+            user.Email,
+            user.FirstName,
+            user.LastName,
+            user.Roles.ToList());
 
-        var incomingHash = tokenService.HashToken(request.RefreshToken);
-        if (!user.IsRefreshTokenValid(incomingHash))
-            return Result.Failure<AuthResponseDto>(InvalidToken);
-
-        var tokens = tokenService.GenerateTokenPair(user);
-        user.SetRefreshToken(tokenService.HashToken(tokens.RefreshToken), DateTime.UtcNow.AddDays(7));
+        var newHash = RefreshTokenHasher.Hash(tokens.RawRefreshToken);
+        user.SetRefreshToken(newHash, tokens.RefreshTokenExpiresAtUtc);
 
         await unitOfWork.SaveChangesAsync(ct);
 
         return new AuthResponseDto(
             tokens.AccessToken,
-            tokens.RefreshToken,
-            tokens.AccessTokenExpiresAt,
-            new UserDto(user.Id, user.Email, user.FirstName, user.LastName, user.FullName, user.Roles));
+            tokens.RawRefreshToken,
+            tokens.AccessTokenExpiresAtUtc,
+            new UserDto(
+                user.Id,
+                user.Email,
+                user.FirstName,
+                user.LastName,
+                user.FullName,
+                user.Roles.ToList()));
     }
 }

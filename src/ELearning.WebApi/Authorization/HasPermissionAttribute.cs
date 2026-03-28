@@ -3,9 +3,10 @@ using Microsoft.AspNetCore.Authorization;
 namespace ELearning.WebApi.Authorization;
 
 /// <summary>
-/// Marks an endpoint as requiring a specific permission.
-/// The permission is resolved at runtime via PermissionPolicyProvider → PermissionAuthorizationHandler.
-/// Usage: [HasPermission(Permissions.Courses.Create)]
+/// Requires a permission resolved via <see cref="PermissionPolicyProvider"/> and <see cref="PermissionAuthorizationHandler"/>.
 /// </summary>
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true)]
-public sealed class HasPermissionAttribute(string permission) : AuthorizeAttribute(permission);
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
+public sealed class HasPermissionAttribute : AuthorizeAttribute
+{
+    public HasPermissionAttribute(string permission) => Policy = $"Permission:{permission}";
+}
