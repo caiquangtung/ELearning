@@ -4,7 +4,7 @@ scope: B2B+B2C Hybrid Learning Platform
 methodology: Agile Scrum
 sprint_duration: 2 weeks
 team_size: 6-8 developers (3-4 BE, 2-3 FE, 1 DevOps)
-status: in-progress
+status: draft
 ---
 
 # Sprint Plan - ELearning LMS Project
@@ -14,8 +14,8 @@ status: in-progress
 **Goal**: Build a production-grade B2B+B2C LMS with hybrid learning (Zoom + VOD), organization management, license pooling, commerce, and campaign features.
 
 **Tech Stack**:
-- Backend: .NET 10 (`net10.0`), Clean Architecture, EF Core, MediatR, FluentValidation
-- Frontend: Angular 21, RxJS, NgRx (optional)
+- Backend: .NET 8, Clean Architecture, EF Core, MediatR, FluentValidation
+- Frontend: Angular 17+, RxJS, NgRx (optional)
 - Database: PostgreSQL
 - Cache: Redis
 - Messaging: RabbitMQ (optional)
@@ -31,84 +31,37 @@ status: in-progress
 
 ---
 
-## Current Progress Snapshot (Updated)
-
-### Overall
-- Sprint 0: **Partially Done**
-- Sprint 1: **Done (backend + database + core tests)** — Angular UI tracked separately (see `frontend/README.md`, `docs/sprint1-completion.md`)
-- Sprint 2+ : **Not Started**
-
-### Completed Work Checklist
-- [x] Backend solution skeleton in `src/` (Domain/Core/Application/Infrastructure/WebApi)
-- [x] Core package setup (MediatR, FluentValidation, EF Core PostgreSQL, JWT, Redis, Hangfire, BCrypt)
-- [x] Base architecture scaffolding (entities, result/error, repository, unit of work, DI)
-- [x] Docker baseline (`docker-compose.yml`, API Dockerfile, frontend Dockerfile, nginx config)
-- [x] Identity: Register, Login, Refresh Token, Get / Put profile
-- [x] Organizations: create org, list orgs, get org + members, add member (Admin / OrgAdmin)
-- [x] Admin: assign platform roles to users
-- [x] EF migrations: `users`, `organizations`, `departments`, `organization_members`
-- [x] Dev seed admin (Development only) via `DatabaseSeeder`
-- [x] Role + permission authorization foundation
-- [x] Security middleware baseline (exception handling, correlation ID)
-- [x] Setup / security / sprint docs updated
-
-### Remaining Immediate Priorities
-- [ ] Angular SPA: login, register, profile, org admin UI (see `frontend/README.md`)
-- [ ] API integration tests (identity + organizations)
-- [ ] API rate limiting, lockout, and audit logging for auth actions
-- [ ] CI/CD + Serilog sinks (carry-over from Sprint 0)
-
-### Execution Board (Owner + ETA)
-
-| Task | Sprint Target | Owner | ETA | Status |
-|---|---|---|---|---|
-| EF migrations + org schema | Sprint 1 | Backend Team | — | **Done** |
-| Seed initial admin (Development) | Sprint 1 | Backend Team | — | **Done** |
-| Domain + application unit tests (baseline) | Sprint 1 | Backend + QA | — | **Done** |
-| Angular auth + org UI | Sprint 1 | Frontend Team | 3-5 days | Planned |
-| API integration tests | Sprint 1 | Backend + QA | 2-3 days | Planned |
-| API rate limiting + lockout + auth audit log | Sprint 1 | Backend + DevOps | 3-5 days | Planned |
-| CI/CD + code quality pipeline | Sprint 0 (carry-over) | DevOps | 3-4 days | Planned |
-| Serilog structured sink configuration | Sprint 0 (carry-over) | Backend + DevOps | 1-2 days | Planned |
-
-### Sprint Completion %
-- Sprint 0: **~70% complete** (core setup done, CI/CD and quality gates pending)
-- Sprint 1: **~95% complete** (backend + DB + unit tests done; Angular UI optional follow-up)
-- Sprint 2+: **0% complete** (not started)
-
----
-
 ## Sprint 0: Foundation & Setup (2 weeks)
 
 **Goal**: Set up infrastructure, tooling, CI/CD, and project skeleton.
 
 ### Backend Tasks
-- [x] Create .NET solution structure (Domain, Core, Application, Infrastructure, WebApi)
-- [x] Set up EF Core + PostgreSQL connection
+- [ ] Create .NET solution structure (Domain, Core, Application, Infrastructure, WebApi)
+- [ ] Set up EF Core + PostgreSQL connection
 - [ ] Configure Serilog structured logging
-- [x] Set up MediatR + FluentValidation + AutoMapper
-- [x] Create base entities (Entity, AggregateRoot, ValueObject)
-- [x] Implement generic repository + UnitOfWork
-- [x] Set up audit interceptor (CreatedAt, UpdatedAt, CreatedBy, UpdatedBy)
-- [x] Implement soft delete interceptor
-- [x] Configure JWT authentication
-- [x] Set up OpenAPI docs with API versioning baseline
-- [x] Create exception handling middleware
-- [x] Set up correlation ID middleware
+- [ ] Set up MediatR + FluentValidation + AutoMapper
+- [ ] Create base entities (Entity, AggregateRoot, ValueObject)
+- [ ] Implement generic repository + UnitOfWork
+- [ ] Set up audit interceptor (CreatedAt, UpdatedAt, CreatedBy, UpdatedBy)
+- [ ] Implement soft delete interceptor
+- [ ] Configure JWT authentication
+- [ ] Set up Swagger with versioning (v1)
+- [ ] Create exception handling middleware
+- [ ] Set up correlation ID middleware
 
 ### Frontend Tasks
-- [ ] Create Angular workspace (see `frontend/README.md` — requires Node **22.12+** for Angular CLI 21)
+- [ ] Create Angular workspace
 - [ ] Set up folder structure (core, shared, features)
 - [ ] Configure routing and lazy loading
 - [ ] Set up HTTP interceptors (auth, error, loading)
 - [ ] Create authentication service + guards
-- [x] Set up environment configurations
+- [ ] Set up environment configurations
 - [ ] Create shared UI components (button, input, card, modal)
 - [ ] Configure Tailwind CSS / Angular Material
 
 ### DevOps Tasks
 - [ ] Set up Git repository + branching strategy
-- [x] Configure Docker Compose (API, DB, Redis)
+- [ ] Configure Docker Compose (API, DB, Redis)
 - [ ] Set up CI/CD pipeline (GitHub Actions / Azure DevOps)
 - [ ] Configure code quality tools (SonarQube, ESLint, Prettier)
 - [ ] Set up development, staging, production environments
@@ -128,25 +81,25 @@ status: in-progress
 
 ---
 
-## Sprint 1: Identity & Organization Management (2 weeks) — **CLOSED (backend scope)**
+## Sprint 1: Identity & Organization Management (2 weeks)
 
 **Goal**: Implement user management, roles, and organization (tenant) setup.
 
 ### Backend Tasks
-- [x] **User aggregate**: Create User entity with roles (Admin, Instructor, Student)
-- [x] **Organization aggregate**: Organization, Department, OrganizationMember entities
-- [x] **Feature: Register user** (command + handler + validator)
-- [x] **Feature: Login** (JWT token generation)
-- [x] **Feature: Refresh token**
-- [x] **Feature: Create organization** (B2B tenant) — `POST /api/v1/organizations` (Admin)
-- [x] **Feature: Add member to organization** — `POST /api/v1/organizations/{id}/members`
-- [x] **Feature: Assign roles to user** — `PUT /api/v1/users/{userId}/roles` (Admin)
-- [x] Set up role-based authorization policies
-- [x] Create user profile endpoints (GET `identity/me`, PUT `identity/me`)
-- [x] Write unit tests for identity + organization domain + slug helper
+- [ ] **User aggregate**: Create User entity with roles (Admin, Instructor, Student)
+- [ ] **Organization aggregate**: Organization, Department, Member entities
+- [ ] **Feature: Register user** (command + handler + validator)
+- [ ] **Feature: Login** (JWT token generation)
+- [ ] **Feature: Refresh token**
+- [ ] **Feature: Create organization** (B2B tenant)
+- [ ] **Feature: Add member to organization**
+- [ ] **Feature: Assign roles to user**
+- [ ] Set up role-based authorization policies
+- [ ] Create user profile endpoints (GET, PUT)
+- [ ] Write unit tests for identity features
 
 ### Frontend Tasks
-- [ ] Create login page *(deferred — see `frontend/README.md`)*
+- [ ] Create login page
 - [ ] Create registration page
 - [ ] Create user profile page
 - [ ] Create organization management module (admin)
@@ -155,8 +108,8 @@ status: in-progress
 - [ ] Add form validations
 
 ### Database
-- [x] Create migrations for User, Organization, Department, OrganizationMember tables (`Sprint1_IdentityAndOrganizations`)
-- [x] Seed initial admin user (Development only — `admin@localhost.local` / `ChangeMe123!` unless overridden)
+- [ ] Create migrations for User, Organization, Department, Member tables
+- [ ] Seed initial admin user
 
 **Definition of Done**:
 - Users can register and login
@@ -164,7 +117,7 @@ status: in-progress
 - Organizations can be created
 - Members can be added to organizations
 - Role-based access control works
-- All tests pass *(unit tests green; integration/E2E optional follow-up)*
+- All tests pass
 
 ---
 
