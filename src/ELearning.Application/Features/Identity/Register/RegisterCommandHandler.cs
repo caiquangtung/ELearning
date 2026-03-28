@@ -1,4 +1,4 @@
-using ELearning.Application.Features.Identity.Login;
+using ELearning.Application.Features.Identity.Common;
 using ELearning.Core.Abstractions;
 using ELearning.Core.Common;
 using ELearning.Core.Constants;
@@ -35,6 +35,6 @@ public class RegisterCommandHandler(
             tokens.AccessToken,
             tokens.RefreshToken,
             tokens.AccessTokenExpiresAt,
-            new UserDto(user.Id, user.Email, user.FirstName, user.LastName, user.FullName, user.Roles));
+            new UserDto(user.Id, user.Email, user.FirstName, user.LastName, user.FullName, user.Roles.ToList()));
     }
 }

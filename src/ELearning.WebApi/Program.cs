@@ -1,15 +1,14 @@
 using ELearning.Application;
 using ELearning.Infrastructure;
+using ELearning.Infrastructure.Persistence;
 using ELearning.WebApi.Middlewares;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ── Application & Infrastructure ────────────────────────────────────────────
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// ── Web ─────────────────────────────────────────────────────────────────────
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
@@ -29,8 +28,9 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod()
               .AllowCredentials()));
 
-// ── Build ────────────────────────────────────────────────────────────────────
 var app = builder.Build();
+
+await app.MigrateAndSeedAsync();
 
 if (app.Environment.IsDevelopment())
 {
@@ -38,7 +38,6 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference("/scalar");
 }
 
-// ── Pipeline ─────────────────────────────────────────────────────────────────
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 

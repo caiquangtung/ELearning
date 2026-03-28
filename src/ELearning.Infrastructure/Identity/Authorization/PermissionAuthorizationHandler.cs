@@ -20,7 +20,7 @@ public class PermissionAuthorizationHandler
 
         var permissions = PermissionMap.GetPermissionsForRoles(roles);
 
-        if (permissions.Contains(requirement.Permission))
+        if (permissions.Contains(requirement.Permission, StringComparer.Ordinal))
             context.Succeed(requirement);
 
         return Task.CompletedTask;

@@ -1,4 +1,4 @@
-using ELearning.Application.Features.Identity.Login;
+using ELearning.Application.Features.Identity.Common;
 using ELearning.Core.Common;
 using MediatR;
 

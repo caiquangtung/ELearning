@@ -18,25 +18,21 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        // Persistence
         services.AddDbContext<ApplicationDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<ApplicationDbContext>());
 
-        // Repositories
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IOrganizationRepository, OrganizationRepository>();
 
-        // HttpContext
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
 
-        // Identity services
         services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddSingleton<IPasswordHasher, PasswordHasherService>();
 
-        // JWT Authentication
         var jwtSettings = configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>()!;
         var key = Encoding.UTF8.GetBytes(jwtSettings.Secret);
 
@@ -57,7 +53,6 @@ public static class DependencyInjection
                 };
             });
 
-        // Permission-based authorization
         services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
         services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
 

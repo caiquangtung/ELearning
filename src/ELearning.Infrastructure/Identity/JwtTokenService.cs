@@ -20,6 +20,7 @@ public class JwtTokenService(IOptions<JwtSettings> options) : ITokenService
         var expiresAt = DateTime.UtcNow.AddMinutes(_settings.ExpiryMinutes);
 
         var claims = BuildClaims(user);
+
         var token = new JwtSecurityToken(
             issuer: _settings.Issuer,
             audience: _settings.Audience,

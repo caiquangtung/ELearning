@@ -2,7 +2,7 @@ namespace ELearning.Core.Constants;
 
 public static class PermissionMap
 {
-    private static readonly Dictionary<string, IReadOnlyList<string>> _map = new()
+    private static readonly Dictionary<string, IReadOnlyList<string>> Map = new()
     {
         [Roles.Admin] =
         [
@@ -45,8 +45,8 @@ public static class PermissionMap
     };
 
     public static IReadOnlyList<string> GetPermissions(string role) =>
-        _map.TryGetValue(role, out var perms) ? perms : [];
+        Map.TryGetValue(role, out var perms) ? perms : [];
 
     public static IReadOnlyList<string> GetPermissionsForRoles(IEnumerable<string> roles) =>
-        roles.SelectMany(GetPermissions).Distinct().ToList();
+        roles.SelectMany(GetPermissions).Distinct(StringComparer.Ordinal).ToList();
 }

@@ -1,4 +1,4 @@
-using ELearning.Application.Features.Identity.Login;
+using ELearning.Application.Features.Identity.Common;
 using ELearning.Core.Abstractions;
 using ELearning.Core.Common;
 using MediatR;
@@ -19,6 +19,12 @@ public class GetMeQueryHandler(
         if (user is null)
             return Result.Failure<UserDto>(Error.NotFound("User", currentUser.UserId.Value));
 
-        return new UserDto(user.Id, user.Email, user.FirstName, user.LastName, user.FullName, user.Roles);
+        return new UserDto(
+            user.Id,
+            user.Email,
+            user.FirstName,
+            user.LastName,
+            user.FullName,
+            user.Roles.ToList());
     }
 }

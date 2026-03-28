@@ -1,8 +1,10 @@
 using Asp.Versioning;
+using ELearning.Application.Features.Identity.Common;
 using ELearning.Application.Features.Identity.GetMe;
 using ELearning.Application.Features.Identity.Login;
 using ELearning.Application.Features.Identity.RefreshToken;
 using ELearning.Application.Features.Identity.Register;
+using ELearning.Application.Features.Identity.UpdateProfile;
 using ELearning.Core.Common;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -27,7 +29,7 @@ public class IdentityController(IMediator mediator) : ControllerBase
     {
         var result = await mediator.Send(command, ct);
         return result.IsSuccess
-            ? CreatedAtAction(nameof(GetMe), result.Value)
+            ? CreatedAtAction(nameof(GetMe), null, result.Value)
             : Problem(result.Error);
     }
 
@@ -69,7 +71,17 @@ public class IdentityController(IMediator mediator) : ControllerBase
         return result.IsSuccess ? Ok(result.Value) : Problem(result.Error);
     }
 
-    // ── helpers ──────────────────────────────────────────────────────────────
+    /// <summary>Update the authenticated user's profile (name).</summary>
+    [HttpPut("me")]
+    [Authorize]
+    [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> UpdateProfile(
+        [FromBody] UpdateProfileCommand command,
+        CancellationToken ct)
+    {
+        var result = await mediator.Send(command, ct);
+        return result.IsSuccess ? Ok(result.Value) : Problem(result.Error);
+    }
 
     private IActionResult Problem(Error error)
     {
@@ -77,8 +89,9 @@ public class IdentityController(IMediator mediator) : ControllerBase
         {
             var c when c.Contains("NotFound") => StatusCodes.Status404NotFound,
             var c when c.Contains("Unauthorized") => StatusCodes.Status401Unauthorized,
+            var c when c.Contains("Forbidden") => StatusCodes.Status403Forbidden,
             var c when c.Contains("Conflict") || c.Contains("EmailTaken") => StatusCodes.Status409Conflict,
-            var c when c.Contains("Suspended") => StatusCodes.Status403Forbidden,
+            var c when c.Contains("Suspended", StringComparison.OrdinalIgnoreCase) => StatusCodes.Status403Forbidden,
             _ => StatusCodes.Status400BadRequest
         };
 

@@ -1,5 +1,5 @@
+using ELearning.Application.Features.Identity.Common;
 using ELearning.Core.Common;
-using ELearning.Application.Features.Identity.Login;
 using MediatR;
 
 namespace ELearning.Application.Features.Identity.Register;

@@ -1,3 +1,4 @@
+using ELearning.Application.Features.Identity.Common;
 using ELearning.Core.Abstractions;
 using ELearning.Core.Common;
 using ELearning.Domain.Aggregates.UserAggregate;
@@ -36,12 +37,10 @@ public class LoginCommandHandler(
         return BuildResponse(user, tokens);
     }
 
-    private static AuthResponseDto BuildResponse(
-        ELearning.Domain.Aggregates.UserAggregate.User user,
-        TokenPair tokens) =>
+    private static AuthResponseDto BuildResponse(User user, TokenPair tokens) =>
         new(
             tokens.AccessToken,
             tokens.RefreshToken,
             tokens.AccessTokenExpiresAt,
-            new UserDto(user.Id, user.Email, user.FirstName, user.LastName, user.FullName, user.Roles));
+            new UserDto(user.Id, user.Email, user.FirstName, user.LastName, user.FullName, user.Roles.ToList()));
 }

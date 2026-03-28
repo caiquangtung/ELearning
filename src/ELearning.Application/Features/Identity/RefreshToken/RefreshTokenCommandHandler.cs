@@ -1,8 +1,8 @@
-using ELearning.Application.Features.Identity.Login;
+using System.Security.Claims;
+using ELearning.Application.Features.Identity.Common;
 using ELearning.Core.Abstractions;
 using ELearning.Core.Common;
 using MediatR;
-using System.Security.Claims;
 
 namespace ELearning.Application.Features.Identity.RefreshToken;
 
@@ -40,6 +40,6 @@ public class RefreshTokenCommandHandler(
             tokens.AccessToken,
             tokens.RefreshToken,
             tokens.AccessTokenExpiresAt,
-            new UserDto(user.Id, user.Email, user.FirstName, user.LastName, user.FullName, user.Roles));
+            new UserDto(user.Id, user.Email, user.FirstName, user.LastName, user.FullName, user.Roles.ToList()));
     }
 }
