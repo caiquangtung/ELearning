@@ -17,4 +17,7 @@ public class CurrentUserService(IHttpContextAccessor httpContextAccessor) : ICur
         User?.FindAll(ClaimTypes.Role).Select(c => c.Value) ?? [];
 
     public bool IsAuthenticated => User?.Identity?.IsAuthenticated ?? false;
+
+    public bool HasRole(string role) =>
+        User?.IsInRole(role) ?? false;
 }

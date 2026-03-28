@@ -1,19 +1,17 @@
 using ELearning.Application;
 using ELearning.Infrastructure;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using ELearning.WebApi.Middlewares;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// ── Application & Infrastructure ────────────────────────────────────────────
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
+// ── Web ─────────────────────────────────────────────────────────────────────
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
-
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer();
-builder.Services.AddAuthorization();
 
 builder.Services.AddApiVersioning(options =>
 {
@@ -24,10 +22,14 @@ builder.Services.AddApiVersioning(options =>
 
 builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
-        policy.WithOrigins(builder.Configuration["Cors:AllowedOrigins"]?.Split(',') ?? ["http://localhost:4200"])
+        policy.WithOrigins(
+                  builder.Configuration["Cors:AllowedOrigins"]?.Split(',')
+                  ?? ["http://localhost:4200"])
               .AllowAnyHeader()
-              .AllowAnyMethod()));
+              .AllowAnyMethod()
+              .AllowCredentials()));
 
+// ── Build ────────────────────────────────────────────────────────────────────
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -36,9 +38,16 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference("/scalar");
 }
 
+// ── Pipeline ─────────────────────────────────────────────────────────────────
+app.UseMiddleware<CorrelationIdMiddleware>();
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+
+app.UseHttpsRedirection();
 app.UseCors("AllowFrontend");
+
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
 
 app.Run();
