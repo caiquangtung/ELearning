@@ -16,7 +16,4 @@ public record Error(string Code, string Description)
 
     public static Error Unauthorized(string message = "Unauthorized access.") =>
         new("Error.Unauthorized", message);
-
-    public static Error Forbidden(string message = "You do not have permission to perform this action.") =>
-        new("Error.Forbidden", message);
 }

@@ -1,7 +1,6 @@
 using ELearning.Core.Abstractions;
 using ELearning.Infrastructure.Identity;
 using ELearning.Infrastructure.Persistence;
-using ELearning.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,14 +17,6 @@ public static class DependencyInjection
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<ApplicationDbContext>());
-
-        services.AddScoped<IUserRepository, UserRepository>();
-        services.AddScoped<IOrganizationRepository, OrganizationRepository>();
-
-        services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
-        services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
-        services.AddSingleton<IJwtTokenService, JwtTokenService>();
-
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
 

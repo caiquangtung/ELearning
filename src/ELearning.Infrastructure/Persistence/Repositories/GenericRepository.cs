@@ -8,8 +8,6 @@ namespace ELearning.Infrastructure.Persistence.Repositories;
 public class GenericRepository<T>(ApplicationDbContext context) : IRepository<T>
     where T : AggregateRoot
 {
-    protected ApplicationDbContext DbContext { get; } = context;
-
     protected readonly DbSet<T> DbSet = context.Set<T>();
 
     public async Task<T?> GetByIdAsync(Guid id, CancellationToken ct = default) =>
