@@ -14,4 +14,7 @@ public class UserRepository(ApplicationDbContext context)
 
     public async Task<bool> EmailExistsAsync(string email, CancellationToken ct = default) =>
         await DbSet.AnyAsync(u => u.Email == email.ToLowerInvariant(), ct);
+
+    public async Task<User?> GetByRefreshTokenHashAsync(string refreshTokenHash, CancellationToken ct = default) =>
+        await DbSet.FirstOrDefaultAsync(u => u.RefreshTokenHash == refreshTokenHash, ct);
 }

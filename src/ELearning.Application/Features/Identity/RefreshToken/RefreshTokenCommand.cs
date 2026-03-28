@@ -4,6 +4,4 @@ using MediatR;
 
 namespace ELearning.Application.Features.Identity.RefreshToken;
 
-public record RefreshTokenCommand(
-    string AccessToken,
-    string RefreshToken) : IRequest<Result<AuthResponseDto>>;
+public record RefreshTokenCommand(string RefreshToken) : IRequest<Result<AuthResponseDto>>;

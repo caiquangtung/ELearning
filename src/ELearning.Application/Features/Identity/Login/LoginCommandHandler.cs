@@ -9,7 +9,7 @@ namespace ELearning.Application.Features.Identity.Login;
 public class LoginCommandHandler(
     IUserRepository userRepository,
     IPasswordHasher passwordHasher,
-    ITokenService tokenService,
+    IJwtTokenService jwtTokenService,
     IUnitOfWork unitOfWork)
     : IRequestHandler<LoginCommand, Result<AuthResponseDto>>
 {
@@ -21,7 +21,8 @@ public class LoginCommandHandler(
 
     public async Task<Result<AuthResponseDto>> Handle(LoginCommand request, CancellationToken ct)
     {
-        var user = await userRepository.GetByEmailAsync(request.Email.ToLowerInvariant(), ct);
+        var email = request.Email.ToLowerInvariant();
+        var user = await userRepository.GetByEmailAsync(email, ct);
 
         if (user is null || !passwordHasher.Verify(request.Password, user.PasswordHash))
             return Result.Failure<AuthResponseDto>(InvalidCredentials);
@@ -29,18 +30,30 @@ public class LoginCommandHandler(
         if (user.Status == UserStatus.Suspended)
             return Result.Failure<AuthResponseDto>(AccountSuspended);
 
-        var tokens = tokenService.GenerateTokenPair(user);
-        user.SetRefreshToken(tokenService.HashToken(tokens.RefreshToken), DateTime.UtcNow.AddDays(7));
+        var tokens = jwtTokenService.CreateTokenPair(
+            user.Id,
+            user.Email,
+            user.FirstName,
+            user.LastName,
+            user.Roles.ToList());
+
+        var refreshHash = RefreshTokenHasher.Hash(tokens.RawRefreshToken);
+        user.SetRefreshToken(refreshHash, tokens.RefreshTokenExpiresAtUtc);
 
         await unitOfWork.SaveChangesAsync(ct);
 
-        return BuildResponse(user, tokens);
-    }
+        var dto = new UserDto(
+            user.Id,
+            user.Email,
+            user.FirstName,
+            user.LastName,
+            user.FullName,
+            user.Roles.ToList());
 
-    private static AuthResponseDto BuildResponse(User user, TokenPair tokens) =>
-        new(
+        return new AuthResponseDto(
             tokens.AccessToken,
-            tokens.RefreshToken,
-            tokens.AccessTokenExpiresAt,
-            new UserDto(user.Id, user.Email, user.FirstName, user.LastName, user.FullName, user.Roles.ToList()));
+            tokens.RawRefreshToken,
+            tokens.AccessTokenExpiresAtUtc,
+            dto);
+    }
 }
