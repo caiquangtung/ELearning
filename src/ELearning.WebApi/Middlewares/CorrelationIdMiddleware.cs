@@ -11,6 +11,7 @@ public class CorrelationIdMiddleware(RequestDelegate next)
 
         context.Items[CorrelationIdHeader] = correlationId;
         context.Response.Headers[CorrelationIdHeader] = correlationId;
+        context.Request.Headers[CorrelationIdHeader] = correlationId;
 
         await next(context);
     }
