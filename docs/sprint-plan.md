@@ -85,7 +85,7 @@ status: in-progress
 ### Backend Tasks
 - [x] Create .NET solution structure (Domain, Core, Application, Infrastructure, WebApi)
 - [x] Set up EF Core + PostgreSQL connection
-- [ ] Configure Serilog structured logging
+- [x] Configure Serilog structured logging
 - [x] Set up MediatR + FluentValidation + AutoMapper
 - [x] Create base entities (Entity, AggregateRoot, ValueObject)
 - [x] Implement generic repository + UnitOfWork
@@ -109,15 +109,15 @@ status: in-progress
 ### DevOps Tasks
 - [ ] Set up Git repository + branching strategy
 - [x] Configure Docker Compose (API, DB, Redis)
-- [ ] Set up CI/CD pipeline (GitHub Actions / Azure DevOps)
+- [x] Set up CI/CD pipeline (GitHub Actions / Azure DevOps)
 - [ ] Configure code quality tools (SonarQube, ESLint, Prettier)
 - [ ] Set up development, staging, production environments
 
 ### Documentation
 - [ ] Finalize architecture documentation
-- [ ] Create API design guidelines
+- [x] Create API design guidelines
 - [ ] Set up Swagger documentation
-- [ ] Create developer onboarding guide
+- [x] Create developer onboarding guide
 
 **Definition of Done**:
 - Solution compiles and runs locally via Docker Compose

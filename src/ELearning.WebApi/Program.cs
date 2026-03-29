@@ -6,10 +6,25 @@ using ELearning.WebApi.Middlewares;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
+using Serilog;
+using Serilog.Context;
+using Serilog.Events;
 using Scalar.AspNetCore;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .CreateBootstrapLogger();
+
+builder.Host.UseSerilog((ctx, services, cfg) =>
+    cfg.ReadFrom.Configuration(ctx.Configuration)
+       .ReadFrom.Services(services)
+       .Enrich.FromLogContext()
+       .Enrich.WithProperty("Application", "ELearning.WebApi"));
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
@@ -58,6 +73,15 @@ builder.Services.AddCors(options =>
               .AllowCredentials()));
 
 var app = builder.Build();
+
+app.UseSerilogRequestLogging(options =>
+{
+    options.EnrichDiagnosticContext = (diagnostics, httpContext) =>
+    {
+        if (httpContext.Items.TryGetValue("X-Correlation-Id", out var cid) && cid is not null)
+            diagnostics.Set("CorrelationId", cid);
+    };
+});
 
 await app.MigrateAndSeedAsync();
 
