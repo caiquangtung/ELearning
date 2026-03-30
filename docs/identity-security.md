@@ -175,6 +175,21 @@ public async Task<IActionResult> GetCatalog(...) { }
 | `POST` | `/login` | Anonymous | Authenticate, get token pair |
 | `POST` | `/refresh-token` | Anonymous | Rotate token pair |
 | `GET` | `/me` | Bearer JWT | Get current user profile |
+| `PUT` | `/me` | Bearer JWT | Update current user profile (first/last name) |
+
+### Organizations & platform admin (Sprint 1)
+
+**Base**: `api/v1/organizations`, `api/v1/users` (versioned like identity).
+
+| Method | Endpoint | Authorization | Description |
+|---|---|---|---|
+| `GET` | `/api/v1/organizations` | Authenticated | Organizations the current user is a member of |
+| `GET` | `/api/v1/organizations/{id}` | Member of org **or** platform admin | Organization detail and member list |
+| `POST` | `/api/v1/organizations` | `Admin.Access` | Create organization (name → unique slug) |
+| `POST` | `/api/v1/organizations/{id}/members` | `Admin.Access` | Add a user to the org (`userId`, optional `departmentId`, `orgRole`) |
+| `PUT` | `/api/v1/users/{userId}/roles` | `Admin.Access` | Replace platform roles for a user |
+
+Org-scoped roles (`OrgAdmin`, `Member`, `Instructor` on `OrganizationMember`) are separate from JWT platform roles; see `docs/sprint1-completion.md` for aggregates and migration name.
 
 ### Register Request / Response
 

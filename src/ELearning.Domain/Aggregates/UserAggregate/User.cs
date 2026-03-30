@@ -104,4 +104,24 @@ public sealed class User : AggregateRoot
 
     public bool HasRole(string role) =>
         _roles.Contains(role, StringComparer.OrdinalIgnoreCase);
+
+    public void UpdateProfile(string firstName, string lastName)
+    {
+        FirstName = firstName.Trim();
+        LastName = lastName.Trim();
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    /// <summary>Replaces all platform roles (Admin must ensure at least one valid role remains).</summary>
+    public void SetPlatformRoles(IEnumerable<string> roles)
+    {
+        var list = roles.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        if (list.Count == 0)
+            throw new DomainException("User must have at least one platform role.");
+
+        _roles.Clear();
+        foreach (var r in list)
+            _roles.Add(r);
+        UpdatedAt = DateTime.UtcNow;
+    }
 }
