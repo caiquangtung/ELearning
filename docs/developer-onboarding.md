@@ -31,6 +31,7 @@ Services:
    - `ConnectionStrings:DefaultConnection`
    - `JwtSettings:*`
    - `Seed:*` (Development only)
+   - `Storage:Local:BasePath` (optional — where uploaded assets are stored)
 3. Run:
 
 ```bash
@@ -38,6 +39,34 @@ dotnet run --project src/ELearning.WebApi
 ```
 
 On startup the API runs migrations + seeds the default admin (Development only).
+
+## EF Core migrations (local tool)
+
+This repo uses a **local** `dotnet-ef` tool (pinned in `dotnet-tools.json`).
+
+From repo root:
+
+```bash
+dotnet tool restore
+dotnet tool run dotnet-ef migrations list --project src/ELearning.Infrastructure --startup-project src/ELearning.WebApi
+```
+
+## Local content storage (Sprint 2)
+
+- Uploaded lesson assets are stored on disk when using the local storage provider.
+- Default is a `storage/` folder under the API output directory, unless overridden.
+
+See also: `docs/file-upload-storage-guide.md` for how to swap to S3/Azure Blob.
+
+Example config:
+
+```json
+"Storage": {
+  "Local": {
+    "BasePath": "/absolute/path/to/ELearning-storage"
+  }
+}
+```
 
 ## Tests
 

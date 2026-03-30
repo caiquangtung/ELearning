@@ -1,6 +1,10 @@
 using ELearning.Core.Abstractions;
+using ELearning.Infrastructure.Courses;
 using ELearning.Infrastructure.Identity;
 using ELearning.Infrastructure.Persistence;
+using ELearning.Infrastructure.Storage;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,7 +23,9 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<ApplicationDbContext>());
 
         services.AddScoped<IUserRepository, UserRepository>();
-        services.AddScoped<IOrganizationRepository, OrganizationRepository>();
+        services.AddScoped<ICourseRepository, CourseRepository>();
+
+        services.AddSingleton<IFileStorage, LocalFileStorage>();
 
         services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
         services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
