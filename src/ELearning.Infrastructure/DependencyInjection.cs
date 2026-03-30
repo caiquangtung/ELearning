@@ -1,8 +1,10 @@
 using System.Text;
 using ELearning.Core.Abstractions;
+using ELearning.Infrastructure.Courses;
 using ELearning.Infrastructure.Identity;
 using ELearning.Infrastructure.Identity.Authorization;
 using ELearning.Infrastructure.Persistence;
+using ELearning.Infrastructure.Storage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -26,6 +28,9 @@ public static class DependencyInjection
 
         // Repositories
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<ICourseRepository, CourseRepository>();
+
+        services.AddSingleton<IFileStorage, LocalFileStorage>();
 
         // HttpContext
         services.AddHttpContextAccessor();

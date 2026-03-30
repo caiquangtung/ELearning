@@ -1,4 +1,6 @@
 using ELearning.Core.Abstractions;
+using ELearning.Domain.Aggregates.CourseAggregate;
+using ELearning.Domain.Aggregates.UserAggregate;
 using ELearning.Domain.Shared;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,6 +11,8 @@ public class ApplicationDbContext(
     ICurrentUserService currentUserService)
     : DbContext(options), IUnitOfWork
 {
+    public DbSet<User> Users => Set<User>();
+    public DbSet<Course> Courses => Set<Course>();
     public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
     {
         ApplyAuditInfo();
