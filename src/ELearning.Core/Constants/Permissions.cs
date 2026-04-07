@@ -19,6 +19,14 @@ public static class Permissions
         public const string Publish = "Courses.Publish";
     }
 
+    public static class Classes
+    {
+        public const string Read = "Classes.Read";
+        public const string Create = "Classes.Create";
+        public const string Update = "Classes.Update";
+        public const string ManageSessions = "Classes.ManageSessions";
+    }
+
     public static class Organizations
     {
         public const string Read = "Organizations.Read";
@@ -53,6 +61,7 @@ public static class Permissions
     [
         Users.Read, Users.Create, Users.Update, Users.Delete,
         Courses.Read, Courses.Create, Courses.Update, Courses.Delete, Courses.Publish,
+        Classes.Read, Classes.Create, Classes.Update, Classes.ManageSessions,
         Organizations.Read, Organizations.Manage,
         Enrollments.Read, Enrollments.Create, Enrollments.Manage,
         Licenses.Read, Licenses.Assign,

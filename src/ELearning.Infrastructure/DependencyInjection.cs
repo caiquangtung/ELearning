@@ -1,6 +1,8 @@
 using ELearning.Core.Abstractions;
 using ELearning.Infrastructure.Courses;
 using ELearning.Infrastructure.Identity;
+using ELearning.Infrastructure.TrainingClasses;
+using ELearning.Infrastructure.Zoom;
 using ELearning.Infrastructure.Persistence;
 using ELearning.Infrastructure.Storage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -24,8 +26,10 @@ public static class DependencyInjection
 
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<ICourseRepository, CourseRepository>();
+        services.AddScoped<ITrainingClassRepository, TrainingClassRepository>();
 
         services.AddSingleton<IFileStorage, LocalFileStorage>();
+        services.AddSingleton<IZoomMeetingService, NoOpZoomMeetingService>();
 
         services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
         services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
