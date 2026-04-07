@@ -39,9 +39,10 @@ public sealed class ScheduleSessionCommandHandler(
         if (request.SessionType == ClassSessionType.Zoom)
         {
             var meeting = await zoomMeetingService.CreateMeetingAsync(
-                request.Title,
-                request.StartUtc,
-                request.EndUtc,
+                new ZoomMeetingCreateRequest(
+                    Topic: request.Title,
+                    StartUtc: request.StartUtc,
+                    EndUtc: request.EndUtc),
                 ct);
             zoomId = meeting.MeetingId;
             zoomUrl = meeting.JoinUrl;

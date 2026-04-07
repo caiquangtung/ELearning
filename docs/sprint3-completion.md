@@ -12,13 +12,25 @@ status: Backend MVP delivered (Zoom prod + UI + integration tests deferred)
   - `ClassInstructor`: `TrainingClassId`, `UserId`, `AssignedAt`
   - `ClassSession`: `SessionType` (Zoom/Offline/Vod), `StartUtc`, `EndUtc`, optional `Location`, Zoom fields, `Status` + cancel/update
 
+### Statuses (documented)
+
+- **`TrainingClassStatus`**
+  - `Draft`: mới tạo, chưa có session
+  - `Scheduled`: đã có ít nhất 1 session (khi gọi `ScheduleSession`)
+  - `InProgress`: reserved cho sprint sau (khi có enrollment/attendance bắt đầu)
+  - `Completed`: reserved cho sprint sau (khi lớp kết thúc)
+  - `Cancelled`: lớp bị hủy
+- **`ClassSessionStatus`**
+  - `Scheduled`: session đang hiệu lực
+  - `Cancelled`: session bị hủy (không tính vào overlap check)
+
 ### Core
 
 - **Permissions**: `Permissions.Classes.*` (`Read`, `Create`, `Update`, `ManageSessions`)
 - **AuthZ map**: `PermissionMap` updated for OrgAdmin/Instructor/Learner
 - **Repositories / services**:
   - `ITrainingClassRepository`
-  - `IZoomMeetingService` + `ZoomMeetingInfo`
+  - `IZoomMeetingService` + `ZoomMeetingCreateRequest` + `ZoomMeetingInfo`
 
 ### Application (MediatR)
 

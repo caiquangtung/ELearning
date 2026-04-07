@@ -8,9 +8,7 @@ namespace ELearning.Infrastructure.Zoom;
 public sealed class NoOpZoomMeetingService : IZoomMeetingService
 {
     public Task<ZoomMeetingInfo> CreateMeetingAsync(
-        string topic,
-        DateTime startUtc,
-        DateTime endUtc,
+        ZoomMeetingCreateRequest request,
         CancellationToken cancellationToken = default)
     {
         var suffix = Guid.NewGuid().ToString("N")[..10];

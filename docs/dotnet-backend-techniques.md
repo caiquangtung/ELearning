@@ -122,7 +122,7 @@ Provider swapping is described here:
 - **Domain**: `ELearning.Domain/Aggregates/TrainingClassAggregate/` — `TrainingClass` (root), `ClassSession`, `ClassInstructor`; enums `ClassSessionType` (Zoom / Offline / Vod), statuses.
 - **API**: `ELearning.WebApi/Controllers/v1/TrainingClassesController.cs` — route prefix `api/v1/training-classes`.
 - **Permissions**: `Permissions.Classes.*` (`Read`, `Create`, `Update`, `ManageSessions`) in `PermissionMap` for Admin, OrgAdmin, Instructor; Learner has `Classes.Read`.
-- **Zoom (abstraction)**: `IZoomMeetingService` + `ZoomMeetingInfo` in Core; default implementation `NoOpZoomMeetingService` in Infrastructure (placeholder join URL). Swap for real Zoom REST calls in production.
+- **Zoom (abstraction)**: `IZoomMeetingService` (Core) takes a typed `ZoomMeetingCreateRequest` and returns `ZoomMeetingInfo`; default implementation `NoOpZoomMeetingService` in Infrastructure (placeholder join URL). Swap for real Zoom REST calls in production.
 - **Conflict rules**: `ITrainingClassRepository.HasInstructorSessionOverlapAsync` — overlap against non-cancelled sessions for any class where the user is an instructor.
 - **EF**: tables `training_classes`, `class_sessions`, `class_instructors`; FK from `training_classes.course_id` → `courses.id`; migration `20260405121500_Sprint3_TrainingClassesAndSessions.cs`.
 
