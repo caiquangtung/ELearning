@@ -3,15 +3,13 @@ using ELearning.Domain.Shared;
 
 namespace ELearning.Domain.Aggregates.OrganizationAggregate;
 
-public sealed class Organization : AggregateRoot
+public sealed class Organization : AuditableAggregateRoot
 {
     private Organization() { }
 
     public string Name { get; private set; } = default!;
     public string Slug { get; private set; } = default!;
     public OrganizationStatus Status { get; private set; }
-    public DateTime CreatedAt { get; private set; }
-    public DateTime? UpdatedAt { get; private set; }
 
     /// <summary>EF Core + domain: children owned by this aggregate.</summary>
     public List<Department> Departments { get; private set; } = [];

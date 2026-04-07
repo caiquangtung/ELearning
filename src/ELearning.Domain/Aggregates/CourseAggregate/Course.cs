@@ -3,18 +3,13 @@ using ELearning.Domain.Shared;
 
 namespace ELearning.Domain.Aggregates.CourseAggregate;
 
-public sealed class Course : AggregateRoot
+public sealed class Course : SoftDeletableAggregateRoot
 {
     private Course() { }
 
     public string Title { get; private set; } = default!;
     public string? Description { get; private set; }
     public CourseStatus Status { get; private set; }
-    public DateTime CreatedAt { get; private set; }
-    public DateTime? UpdatedAt { get; private set; }
-
-    public bool IsDeleted { get; private set; }
-    public DateTime? DeletedAt { get; private set; }
 
     public List<Section> Sections { get; private set; } = [];
 

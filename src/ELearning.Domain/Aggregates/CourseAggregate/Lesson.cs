@@ -3,7 +3,7 @@ using ELearning.Domain.Shared;
 
 namespace ELearning.Domain.Aggregates.CourseAggregate;
 
-public sealed class Lesson : Entity
+public sealed class Lesson : SoftDeletableEntity
 {
     private Lesson() { }
 
@@ -11,13 +11,8 @@ public sealed class Lesson : Entity
     public string Title { get; private set; } = default!;
     public int SortOrder { get; private set; }
     public string? Content { get; private set; }
-    public DateTime CreatedAt { get; private set; }
-    public DateTime? UpdatedAt { get; private set; }
 
     public List<ContentAsset> Assets { get; private set; } = [];
-
-    public bool IsDeleted { get; private set; }
-    public DateTime? DeletedAt { get; private set; }
 
     internal static Lesson Create(Guid sectionId, string title, int sortOrder)
     {

@@ -4,7 +4,7 @@ using ELearning.Domain.Shared;
 
 namespace ELearning.Domain.Aggregates.UserAggregate;
 
-public sealed class User : AggregateRoot
+public sealed class User : AuditableAggregateRoot
 {
     private readonly List<string> _roles = [];
 
@@ -18,8 +18,6 @@ public sealed class User : AggregateRoot
     public IReadOnlyList<string> Roles => _roles.AsReadOnly();
     public string? RefreshTokenHash { get; private set; }
     public DateTime? RefreshTokenExpiresAt { get; private set; }
-    public DateTime CreatedAt { get; private set; }
-    public DateTime? UpdatedAt { get; private set; }
 
     public string FullName => $"{FirstName} {LastName}".Trim();
 

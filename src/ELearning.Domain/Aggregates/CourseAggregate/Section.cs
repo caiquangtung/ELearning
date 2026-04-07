@@ -3,20 +3,15 @@ using ELearning.Domain.Shared;
 
 namespace ELearning.Domain.Aggregates.CourseAggregate;
 
-public sealed class Section : Entity
+public sealed class Section : SoftDeletableEntity
 {
     private Section() { }
 
     public Guid CourseId { get; private set; }
     public string Title { get; private set; } = default!;
     public int SortOrder { get; private set; }
-    public DateTime CreatedAt { get; private set; }
-    public DateTime? UpdatedAt { get; private set; }
 
     public List<Lesson> Lessons { get; private set; } = [];
-
-    public bool IsDeleted { get; private set; }
-    public DateTime? DeletedAt { get; private set; }
 
     internal static Section Create(Guid courseId, string title, int sortOrder)
     {
