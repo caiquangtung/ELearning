@@ -65,7 +65,7 @@ public class TrainingClassConflictTests
             endUtc: DateTime.UtcNow.AddDays(1).AddHours(1),
             location: "Room",
             zoomMeetingId: null,
-            zoomJoinUrl: null));
+            zoomJoinUrl: null);
         tc.Sessions.Add(existing);
         var sessionId = existing.Id;
 
