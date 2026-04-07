@@ -57,8 +57,7 @@ public class TrainingClassConflictTests
 
         var tc = TrainingClass.Create(Guid.NewGuid(), "Cohort A", 20);
         tc.AddInstructor(instructorId);
-        var existing = ClassSession.Create(
-            trainingClassId: tc.Id,
+        var existing = tc.ScheduleSession(
             title: "Old",
             sessionType: ClassSessionType.Offline,
             startUtc: DateTime.UtcNow.AddDays(1),
@@ -66,7 +65,6 @@ public class TrainingClassConflictTests
             location: "Room",
             zoomMeetingId: null,
             zoomJoinUrl: null);
-        tc.Sessions.Add(existing);
         var sessionId = existing.Id;
 
         var repo = Substitute.For<ITrainingClassRepository>();
