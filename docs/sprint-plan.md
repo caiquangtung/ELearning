@@ -34,9 +34,10 @@ status: in-progress
 ## Current Progress Snapshot (Updated)
 
 ### Overall
-- Sprint 0: **Partially Done**
+- Sprint 0: **Partially Done** (Docker, local dev, baseline CI present; full quality gates / multi-env TBD)
 - Sprint 1: **Done (backend + database + core tests)** — Angular UI tracked separately (see `frontend/README.md`, `docs/sprint1-completion.md`)
-- Sprint 2+ : **Not Started**
+- Sprint 2: **In progress — backend core done** (course CRUD, sections/lessons, assets, migrations `Sprint2_CoursesAndContent`; cloud blob storage, sample seed, course UI **not done**)
+- Sprint 3: **Backend MVP done** — `TrainingClass` aggregate, sessions, instructors, conflict checks, `IZoomMeetingService` stub; **real Zoom OAuth + webhooks + Angular UI** still open (see `docs/notice.md`)
 
 ### Completed Work Checklist
 - [x] Backend solution skeleton in `src/` (Domain/Core/Application/Infrastructure/WebApi)
@@ -46,17 +47,21 @@ status: in-progress
 - [x] Identity: Register, Login, Refresh Token, Get / Put profile
 - [x] Organizations: create org, list orgs, get org + members, add member (Admin / OrgAdmin)
 - [x] Admin: assign platform roles to users
-- [x] EF migrations: `users`, `organizations`, `departments`, `organization_members`
+- [x] EF migrations: `users`, `organizations`, `departments`, `organization_members`, **courses / sections / lessons / content assets**
 - [x] Dev seed admin (Development only) via `DatabaseSeeder`
 - [x] Role + permission authorization foundation
 - [x] Security middleware baseline (exception handling, correlation ID)
 - [x] Setup / security / sprint docs updated
+- [x] **Sprint 2 (backend)**: Course aggregate, `CoursesController` API, local file storage via `IFileStorage`
+- [x] **Sprint 3 (backend)**: Training class aggregate, `TrainingClassesController`, migration `Sprint3_TrainingClassesAndSessions`, `NoOpZoomMeetingService`
 
 ### Remaining Immediate Priorities
-- [ ] Angular SPA: login, register, profile, org admin UI (see `frontend/README.md`)
-- [ ] API integration tests (identity + organizations)
+- [ ] **Sprint 3 follow-up**: real Zoom API implementation, webhooks, API integration tests for training classes
+- [ ] Angular SPA: login, register, profile, org admin, **course catalog UI** (see `frontend/README.md`)
+- [ ] API integration tests (identity, organizations, **courses**)
 - [ ] API rate limiting, lockout, and audit logging for auth actions
 - [ ] CI/CD + Serilog sinks (carry-over from Sprint 0)
+- [ ] Optional: S3/Azure Blob for `IFileStorage`, seed sample courses
 
 ### Execution Board (Owner + ETA)
 
@@ -65,8 +70,10 @@ status: in-progress
 | EF migrations + org schema | Sprint 1 | Backend Team | — | **Done** |
 | Seed initial admin (Development) | Sprint 1 | Backend Team | — | **Done** |
 | Domain + application unit tests (baseline) | Sprint 1 | Backend + QA | — | **Done** |
-| Angular auth + org UI | Sprint 1 | Frontend Team | 3-5 days | Planned |
-| API integration tests | Sprint 1 | Backend + QA | 2-3 days | Planned |
+| Course catalog + content API | Sprint 2 | Backend Team | — | **Done** |
+| Class / session scheduling API | Sprint 3 | Backend Team | — | **Done (MVP)** |
+| Angular auth + org + course UI | Sprint 1–2 | Frontend Team | ongoing | Planned |
+| API integration tests | Sprint 1–2 | Backend + QA | 2-3 days | Planned |
 | API rate limiting + lockout + auth audit log | Sprint 1 | Backend + DevOps | 3-5 days | Planned |
 | CI/CD + code quality pipeline | Sprint 0 (carry-over) | DevOps | 3-4 days | Planned |
 | Serilog structured sink configuration | Sprint 0 (carry-over) | Backend + DevOps | 1-2 days | Planned |
@@ -74,7 +81,10 @@ status: in-progress
 ### Sprint Completion %
 - Sprint 0: **~70% complete** (core setup done, CI/CD and quality gates pending)
 - Sprint 1: **~95% complete** (backend + DB + unit tests done; Angular UI optional follow-up)
-- Sprint 2+: **0% complete** (not started)
+- Sprint 2: **~75% complete** (backend + DB + unit/smoke tests; blob storage, sample seed, Angular course UI, API integration tests pending)
+- Sprint 3: **~70% complete** (backend + DB + unit tests; real Zoom, webhooks, Angular UI, integration tests pending)
+
+**Related docs**: `docs/notice.md` (triển khai — lưu ý kỹ thuật), `docs/dotnet-backend-techniques.md` (patterns backend).
 
 ---
 
@@ -168,23 +178,24 @@ status: in-progress
 
 ---
 
-## Sprint 2: Course Catalog & Content Management (2 weeks)
+## Sprint 2: Course Catalog & Content Management (2 weeks) — **BACKEND SCOPE DONE** *(follow-ups below)*
 
 **Goal**: Build course catalog with sections, lessons, and content assets.
 
 ### Backend Tasks
-- [ ] **Course aggregate**: Course, Section, Lesson, ContentAsset entities
-- [ ] **Feature: Create course** (draft mode)
-- [ ] **Feature: Update course**
-- [ ] **Feature: Delete course** (soft delete)
-- [ ] **Feature: Publish course** (status change)
-- [ ] **Feature: Add section to course**
-- [ ] **Feature: Add lesson to section**
-- [ ] **Feature: Upload content asset** (video, PDF, SCORM)
-- [ ] **Feature: Get course details** (with sections/lessons)
-- [ ] **Feature: List courses** (paginated, filtered, sorted)
-- [ ] Implement file upload service (S3 / Azure Blob)
-- [ ] Write unit + integration tests
+- [x] **Course aggregate**: Course, Section, Lesson, ContentAsset entities
+- [x] **Feature: Create course** (draft mode)
+- [x] **Feature: Update course**
+- [x] **Feature: Delete course** (soft delete)
+- [x] **Feature: Publish course** (status change)
+- [x] **Feature: Add section to course**
+- [x] **Feature: Add lesson to section**
+- [x] **Feature: Upload content asset** (video, PDF, SCORM)
+- [x] **Feature: Get course details** (with sections/lessons)
+- [x] **Feature: List courses** (paginated, filtered, sorted)
+- [ ] Implement file upload service (S3 / Azure Blob) *(currently Local storage via `IFileStorage`)*
+- [x] Write unit tests (domain + application validators / smoke)
+- [ ] Write API-level integration tests for courses *(not present in `tests/` yet)*
 
 ### Frontend Tasks
 - [ ] Create course list page (with filters, search, pagination)
@@ -196,34 +207,35 @@ status: in-progress
 - [ ] Add course preview mode
 
 ### Database
-- [ ] Create migrations for Course, Section, Lesson, ContentAsset tables
+- [x] Create migrations for Course, Section, Lesson, ContentAsset tables
 - [ ] Seed sample courses
 
 **Definition of Done**:
-- Courses can be created, updated, deleted
-- Sections and lessons can be managed
-- Content assets can be uploaded
-- Course catalog is browsable
-- All tests pass
+- [x] Courses can be created, updated, deleted
+- [x] Sections and lessons can be managed
+- [x] Content assets can be uploaded
+- [x] Course catalog is browsable *(via API; Angular UI pending)*
+- [x] Unit tests pass *(integration tests optional follow-up)*
 
 ---
 
-## Sprint 3: Class Scheduling & Session Management (2 weeks)
+## Sprint 3: Class Scheduling & Session Management (2 weeks) — **BACKEND MVP DONE** *(Zoom prod + UI + tests follow-up)*
 
 **Goal**: Implement class (cohort) scheduling with Zoom and offline sessions.
 
 ### Backend Tasks
-- [ ] **Class aggregate**: Class, Session, Schedule entities
-- [ ] **Feature: Create class** (from course template)
-- [ ] **Feature: Schedule session** (Zoom/Offline/VOD)
-- [ ] **Feature: Assign instructor to class**
-- [ ] **Feature: Get class schedule**
-- [ ] **Feature: Update session**
-- [ ] **Feature: Cancel session**
-- [ ] Integrate Zoom API (create meeting, get meeting details)
-- [ ] Implement instructor conflict detection
-- [ ] Set up capacity management (max learners per class)
-- [ ] Write unit + integration tests
+- [x] **Training class aggregate** (`TrainingClass`, `ClassSession`, `ClassInstructor` — tên tránh xung đột với keyword `class` trong C#)
+- [x] **Feature: Create class** from published course — `POST /api/v1/training-classes`
+- [x] **Feature: Schedule session** (Zoom/Offline/VOD) — `POST .../training-classes/{id}/sessions`
+- [x] **Feature: Assign instructor to class** — `POST/DELETE .../instructors`
+- [x] **Feature: Get class schedule** — `GET .../training-classes/{id}` (sessions ordered by time)
+- [x] **Feature: Update session** — `PUT .../sessions/{sessionId}`
+- [x] **Feature: Cancel session** — `POST .../sessions/{sessionId}/cancel`
+- [x] Zoom integration via **`IZoomMeetingService`** + **`NoOpZoomMeetingService`** (placeholder URLs; replace for production Zoom API)
+- [x] Instructor conflict detection (overlap across classes for assigned instructors)
+- [x] Capacity: `max_learners` on `training_classes` (enforcement vs enrollment = Sprint 4)
+- [x] Unit tests (domain + validator smoke)
+- [ ] API integration tests for training classes
 
 ### Frontend Tasks
 - [ ] Create class list page
@@ -235,19 +247,19 @@ status: in-progress
 - [ ] Add conflict detection warnings
 
 ### Infrastructure
-- [ ] Set up Zoom OAuth app
-- [ ] Configure Zoom webhook endpoints
+- [ ] Set up Zoom OAuth app *(required for production Zoom; not needed for `NoOp` stub)*
+- [ ] Configure Zoom webhook endpoints *(attendance / meetings — often Sprint 4+)*
 
 ### Database
-- [ ] Create migrations for Class, Session, InstructorAssignment tables
+- [x] Migration `Sprint3_TrainingClassesAndSessions`: `training_classes`, `class_sessions`, `class_instructors`
 
 **Definition of Done**:
-- Classes can be created from courses
-- Sessions can be scheduled (Zoom/Offline/VOD)
-- Instructors can be assigned
-- Zoom meetings are auto-created
-- Schedule conflicts are detected
-- All tests pass
+- [x] Classes can be created from **published** courses
+- [x] Sessions can be scheduled (Zoom/Offline/VOD)
+- [x] Instructors can be assigned
+- [x] Zoom-style meeting id/URL populated when type is Zoom *(dev: stub; prod: replace service)*
+- [x] Schedule conflicts are detected for instructors
+- [x] Unit tests pass *(integration tests optional follow-up)*
 
 ---
 

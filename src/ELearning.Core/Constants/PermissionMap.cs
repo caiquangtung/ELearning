@@ -22,6 +22,10 @@ public static class PermissionMap
                 set.Add(Permissions.Organizations.Read);
                 set.Add(Permissions.Organizations.Manage);
                 set.Add(Permissions.Courses.Read);
+                set.Add(Permissions.Classes.Read);
+                set.Add(Permissions.Classes.Create);
+                set.Add(Permissions.Classes.Update);
+                set.Add(Permissions.Classes.ManageSessions);
                 set.Add(Permissions.Enrollments.Read);
                 set.Add(Permissions.Enrollments.Create);
                 set.Add(Permissions.Enrollments.Manage);
@@ -38,6 +42,10 @@ public static class PermissionMap
                 set.Add(Permissions.Courses.Create);
                 set.Add(Permissions.Courses.Update);
                 set.Add(Permissions.Courses.Publish);
+                set.Add(Permissions.Classes.Read);
+                set.Add(Permissions.Classes.Create);
+                set.Add(Permissions.Classes.Update);
+                set.Add(Permissions.Classes.ManageSessions);
                 set.Add(Permissions.Enrollments.Read);
                 set.Add(Permissions.Reports.Read);
                 continue;
@@ -46,6 +54,7 @@ public static class PermissionMap
             if (r.Equals(Roles.Learner, StringComparison.OrdinalIgnoreCase))
             {
                 set.Add(Permissions.Courses.Read);
+                set.Add(Permissions.Classes.Read);
                 set.Add(Permissions.Enrollments.Read);
                 set.Add(Permissions.Enrollments.Create);
             }

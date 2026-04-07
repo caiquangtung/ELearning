@@ -228,6 +228,154 @@ namespace ELearning.Infrastructure.Persistence.Migrations
                     b.ToTable("course_sections", (string)null);
                 });
 
+            modelBuilder.Entity("ELearning.Domain.Aggregates.TrainingClassAggregate.ClassInstructor", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("AssignedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("assigned_at");
+
+                    b.Property<Guid>("TrainingClassId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("training_class_id");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("TrainingClassId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("class_instructors", (string)null);
+                });
+
+            modelBuilder.Entity("ELearning.Domain.Aggregates.TrainingClassAggregate.ClassSession", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTime>("EndUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("end_utc");
+
+                    b.Property<string>("Location")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("location");
+
+                    b.Property<DateTime>("StartUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("start_utc");
+
+                    b.Property<string>("SessionType")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("session_type");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("TrainingClassId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("training_class_id");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("title");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("ZoomJoinUrl")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("zoom_join_url");
+
+                    b.Property<string>("ZoomMeetingId")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("zoom_meeting_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StartUtc");
+
+                    b.HasIndex("TrainingClassId", "StartUtc");
+
+                    b.ToTable("class_sessions", (string)null);
+                });
+
+            modelBuilder.Entity("ELearning.Domain.Aggregates.TrainingClassAggregate.TrainingClass", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CourseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("course_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<int>("MaxLearners")
+                        .HasColumnType("integer")
+                        .HasColumnName("max_learners");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("title");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourseId");
+
+                    b.ToTable("training_classes", (string)null);
+                });
+
             modelBuilder.Entity("ELearning.Domain.Aggregates.OrganizationAggregate.Department", b =>
                 {
                     b.Property<Guid>("Id")
@@ -441,6 +589,43 @@ namespace ELearning.Infrastructure.Persistence.Migrations
                         .HasForeignKey("OrganizationId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("ELearning.Domain.Aggregates.TrainingClassAggregate.ClassInstructor", b =>
+                {
+                    b.HasOne("ELearning.Domain.Aggregates.TrainingClassAggregate.TrainingClass", null)
+                        .WithMany("Instructors")
+                        .HasForeignKey("TrainingClassId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ELearning.Domain.Aggregates.UserAggregate.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("ELearning.Domain.Aggregates.TrainingClassAggregate.ClassSession", b =>
+                {
+                    b.HasOne("ELearning.Domain.Aggregates.TrainingClassAggregate.TrainingClass", null)
+                        .WithMany("Sessions")
+                        .HasForeignKey("TrainingClassId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("ELearning.Domain.Aggregates.TrainingClassAggregate.TrainingClass", b =>
+                {
+                    b.HasOne("ELearning.Domain.Aggregates.CourseAggregate.Course", null)
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Instructors");
+
+                    b.Navigation("Sessions");
                 });
 
             modelBuilder.Entity("ELearning.Domain.Aggregates.CourseAggregate.Course", b =>
