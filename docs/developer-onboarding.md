@@ -26,9 +26,11 @@ Services:
 
 ## Frontend (Angular)
 
-The .NET backend lives under `src/`; the Angular app is planned under `frontend/` (see `docs/project-structure.md`). For requirements spec, reusable base components, state management, and Angular practices, see:
+The .NET backend lives under `src/`; the Angular SPA is under **`frontend/web`** (see `frontend/README.md` and `docs/sprint4-completion.md`). For engineering conventions (spec, state, patterns), see:
 
-- [`docs/angular-frontend-spec.md`](angular-frontend-spec.md)
+- [`docs/spec/angular-frontend-spec.md`](spec/angular-frontend-spec.md) (canonical Angular / PrimeNG spec; [`docs/angular-frontend-spec.md`](angular-frontend-spec.md) redirects here)
+
+Run the UI locally: from `frontend/web`, `npm install` then `npm start` (API on `http://localhost:5000` with CORS for `http://localhost:4200`).
 
 ## Run API locally (without Docker)
 

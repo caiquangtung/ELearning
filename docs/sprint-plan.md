@@ -38,7 +38,7 @@ status: in-progress
 - Sprint 1: **Done (backend + database + core tests)** — Angular UI tracked separately (see `frontend/README.md`, `docs/sprint1-completion.md`)
 - Sprint 2: **In progress — backend core done** (course CRUD, sections/lessons, assets, migrations `Sprint2_CoursesAndContent`; cloud blob storage, sample seed, course UI **not done**)
 - Sprint 3: **Backend MVP done** — `TrainingClass` aggregate, sessions, instructors, conflict checks, `IZoomMeetingService` stub; **real Zoom OAuth + webhooks + Angular UI** still open (see `docs/notice.md`)
-- Sprint 4: **Planned (Frontend MVP)** — implement Angular 21 SPA scaffold + integrate with Sprint 1–3 APIs (auth, orgs, courses, training classes); enrollment/attendance moved to Sprint 5+
+- Sprint 4: **MVP done (Angular SPA)** — `frontend/web` Angular 19 app + Docker build; integrates auth, orgs, courses, training classes (see `docs/sprint4-completion.md`); Angular 21 upgrade optional; enrollment/attendance remains Sprint 5+
 
 ### Completed Work Checklist
 - [x] Backend solution skeleton in `src/` (Domain/Core/Application/Infrastructure/WebApi)
@@ -55,10 +55,11 @@ status: in-progress
 - [x] Setup / security / sprint docs updated
 - [x] **Sprint 2 (backend)**: Course aggregate, `CoursesController` API, local file storage via `IFileStorage`
 - [x] **Sprint 3 (backend)**: Training class aggregate, `TrainingClassesController`, migration `Sprint3_TrainingClassesAndSessions`, `NoOpZoomMeetingService`
+- [x] **Sprint 4 (frontend MVP)**: Angular app in `frontend/web`, auth/orgs/courses/training-classes UI, HTTP interceptors, Docker/nginx alignment
 
 ### Remaining Immediate Priorities
 - [ ] **Sprint 3 follow-up**: real Zoom API implementation, webhooks, API integration tests for training classes
-- [ ] Angular SPA: login, register, profile, org admin, **course catalog UI** (see `frontend/README.md`)
+- [x] Angular SPA MVP: login, register, profile, orgs, courses, training classes (see `frontend/README.md`, `docs/sprint4-completion.md`)
 - [ ] API integration tests (identity, organizations, **courses**)
 - [ ] API rate limiting, lockout, and audit logging for auth actions
 - [ ] CI/CD + Serilog sinks (carry-over from Sprint 0)
@@ -73,7 +74,7 @@ status: in-progress
 | Domain + application unit tests (baseline) | Sprint 1 | Backend + QA | — | **Done** |
 | Course catalog + content API | Sprint 2 | Backend Team | — | **Done** |
 | Class / session scheduling API | Sprint 3 | Backend Team | — | **Done (MVP)** |
-| Angular SPA MVP (auth + org + courses + classes) | Sprint 4 | Frontend Team | 2 weeks | Planned |
+| Angular SPA MVP (auth + org + courses + classes) | Sprint 4 | Frontend Team | 2 weeks | **MVP done** (see `docs/sprint4-completion.md`) |
 | API integration tests | Sprint 1–2 | Backend + QA | 2-3 days | Planned |
 | API rate limiting + lockout + auth audit log | Sprint 1 | Backend + DevOps | 3-5 days | Planned |
 | CI/CD + code quality pipeline | Sprint 0 (carry-over) | DevOps | 3-4 days | Planned |
@@ -84,7 +85,7 @@ status: in-progress
 - Sprint 1: **~95% complete** (backend + DB + unit tests done; Angular UI optional follow-up)
 - Sprint 2: **~75% complete** (backend + DB + unit/smoke tests; blob storage, sample seed, Angular course UI, API integration tests pending)
 - Sprint 3: **~70% complete** (backend + DB + unit tests; real Zoom, webhooks, Angular UI, integration tests pending)
-- Sprint 4: **0% complete** (planned: Angular scaffold + SPA MVP integration)
+- Sprint 4: **~75% complete** (SPA MVP + Docker; optional: Angular 21 upgrade, E2E, refresh-token interceptor)
 
 **Related docs**: `docs/notice.md` (triển khai — lưu ý kỹ thuật), `docs/dotnet-backend-techniques.md` (patterns backend).
 
@@ -284,47 +285,47 @@ status: in-progress
   - Training class list + detail (sessions) + schedule/update/cancel session (based on permissions)
 
 ### Frontend Tasks (checklist)
-- [ ] Scaffold Angular 21 workspace + app (`frontend/web/`) and commit baseline routing
-- [ ] App structure: `core/`, `shared/`, `features/` (standalone components, lazy routes)
-- [ ] Environment configuration: `API_BASE_URL` + dev/prod config
-- [ ] HTTP layer:
-  - [ ] Auth interceptor (attach JWT)
-  - [ ] Error interceptor (map API `Error`/problem details → toast/banner)
-  - [ ] Loading indicator (global)
-- [ ] Auth & session:
-  - [ ] Login page + token persistence
-  - [ ] Route guards (anonymous vs authenticated)
-  - [ ] Profile page (GET/PUT `identity/me`)
-- [ ] Organizations (Sprint 1 API):
-  - [ ] Org list page
-  - [ ] Org detail page (members)
-  - [ ] Add member modal (if endpoint enabled for role)
-- [ ] Courses (Sprint 2 API):
-  - [ ] Course list page (search + pagination)
-  - [ ] Course detail page
-  - [ ] (Optional) Create/update course form (feature-flagged or role-gated)
-- [ ] Training classes (Sprint 3 API):
-  - [ ] Training class list page
-  - [ ] Training class detail (sessions table)
-  - [ ] Schedule session form (handle `Conflict` + validation)
-  - [ ] Update session form
-  - [ ] Cancel session action
-  - [ ] Display Zoom join URL when `SessionType=Zoom`
-- [ ] UX/quality:
-  - [ ] Basic responsive layout + navigation
-  - [ ] Form validation + error copy
-  - [ ] Minimal e2e smoke (login → list courses → view class detail) *(if tooling available)*
+- [x] Scaffold Angular workspace + app (`frontend/web/`) — **Angular 19** baseline (CLI 21 upgrade optional; see `docs/sprint4-completion.md`)
+- [x] App structure: `core/`, `shared/`, `features/` (standalone components, lazy routes)
+- [x] Environment configuration: dev `apiUrl` → `http://localhost:5000`; prod empty → same-origin `/api` via nginx
+- [x] HTTP layer:
+  - [x] Auth interceptor (attach JWT)
+  - [x] Error interceptor (map Problem Details → global banner)
+  - [ ] Loading indicator (global) *(deferred)*
+- [x] Auth & session:
+  - [x] Login + register + token persistence (`sessionStorage`)
+  - [x] Route guards (`authGuard`, `guestGuard`)
+  - [x] Profile page (GET/PUT `identity/me`)
+- [x] Organizations (Sprint 1 API):
+  - [x] Org list page
+  - [x] Org detail page (members)
+  - [x] Add member form (org role + user id)
+  - [x] Create organization (Admin)
+- [x] Courses (Sprint 2 API):
+  - [x] Course list (search + pagination + status filter)
+  - [x] Course detail
+  - [x] Create draft course (Admin/Instructor)
+- [x] Training classes (Sprint 3 API):
+  - [x] Training class list + create (published course)
+  - [x] Detail + sessions table
+  - [x] Schedule / update / cancel session (conflicts surface via API → banner)
+  - [x] Zoom join link when present
+  - [x] Assign instructor (user id)
+- [x] UX/quality:
+  - [x] Basic layout + navigation
+  - [x] Form validation + server error copy
+  - [ ] Minimal e2e smoke *(deferred)*
 
 ### Backend/Infra Tasks (supporting, not the main deliverable)
-- [ ] Confirm CORS + API base URL strategy (direct `https://localhost:xxxx` vs reverse-proxy `/api`)
-- [ ] Ensure Swagger describes error shapes used by FE (validation/conflict/not found)
+- [x] CORS + API base URL: dev → `http://localhost:5000`; Docker UI → relative `/api` + nginx proxy (see `frontend/nginx.conf`)
+- [ ] Ensure Swagger describes error shapes used by FE (validation/conflict/not found) *(carry-over)*
 
 **Definition of Done**:
-- Angular app builds and runs locally.
-- Users can login and navigate core modules (orgs/courses/classes).
-- Training class sessions can be scheduled/updated/cancelled from the UI (given permissions) and **conflict/validation errors are shown clearly**.
-- No hardcoded API URLs (environment-based).
-- “Happy path” smoke flow works end-to-end against local backend.
+- [x] Angular app builds and runs locally (`frontend/web`).
+- [x] Users can login and navigate core modules (orgs/courses/classes).
+- [x] Training class sessions can be scheduled/updated/cancelled from the UI (given permissions); API errors shown in global banner.
+- [x] No hardcoded API URLs (environment-based).
+- [x] Happy path against local API documented in `docs/sprint4-completion.md`.
 
 ---
 

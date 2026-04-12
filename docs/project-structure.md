@@ -384,18 +384,19 @@ Domain ← Core
 
 ## Frontend (Angular)
 
-Full requirements spec, base components, state management, and Angular practices: [`angular-frontend-spec.md`](angular-frontend-spec.md).
+Full requirements spec, PrimeNG patterns, state management, and Angular practices: [`spec/angular-frontend-spec.md`](spec/angular-frontend-spec.md) (canonical; [`angular-frontend-spec.md`](angular-frontend-spec.md) is a short redirect).
 
 ```
 frontend/
-├── src/
-│   ├── app/
+├── web/                         # Angular CLI app (elearning-web)
+│   ├── src/app/
 │   │   ├── core/
 │   │   ├── shared/
 │   │   └── features/
-│   ├── assets/
-│   └── environments/
-├── e2e/
+│   ├── public/
+│   └── angular.json
+├── Dockerfile
+├── nginx.conf
 └── README.md
 ```
 
