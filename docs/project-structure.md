@@ -384,6 +384,8 @@ Domain ← Core
 
 ## Frontend (Angular)
 
+Full requirements spec, base components, state management, and Angular practices: [`angular-frontend-spec.md`](angular-frontend-spec.md).
+
 ```
 frontend/
 ├── src/

@@ -38,6 +38,7 @@ status: in-progress
 - Sprint 1: **Done (backend + database + core tests)** — Angular UI tracked separately (see `frontend/README.md`, `docs/sprint1-completion.md`)
 - Sprint 2: **In progress — backend core done** (course CRUD, sections/lessons, assets, migrations `Sprint2_CoursesAndContent`; cloud blob storage, sample seed, course UI **not done**)
 - Sprint 3: **Backend MVP done** — `TrainingClass` aggregate, sessions, instructors, conflict checks, `IZoomMeetingService` stub; **real Zoom OAuth + webhooks + Angular UI** still open (see `docs/notice.md`)
+- Sprint 4: **Planned (Frontend MVP)** — implement Angular 21 SPA scaffold + integrate with Sprint 1–3 APIs (auth, orgs, courses, training classes); enrollment/attendance moved to Sprint 5+
 
 ### Completed Work Checklist
 - [x] Backend solution skeleton in `src/` (Domain/Core/Application/Infrastructure/WebApi)
@@ -72,7 +73,7 @@ status: in-progress
 | Domain + application unit tests (baseline) | Sprint 1 | Backend + QA | — | **Done** |
 | Course catalog + content API | Sprint 2 | Backend Team | — | **Done** |
 | Class / session scheduling API | Sprint 3 | Backend Team | — | **Done (MVP)** |
-| Angular auth + org + course UI | Sprint 1–2 | Frontend Team | ongoing | Planned |
+| Angular SPA MVP (auth + org + courses + classes) | Sprint 4 | Frontend Team | 2 weeks | Planned |
 | API integration tests | Sprint 1–2 | Backend + QA | 2-3 days | Planned |
 | API rate limiting + lockout + auth audit log | Sprint 1 | Backend + DevOps | 3-5 days | Planned |
 | CI/CD + code quality pipeline | Sprint 0 (carry-over) | DevOps | 3-4 days | Planned |
@@ -83,6 +84,7 @@ status: in-progress
 - Sprint 1: **~95% complete** (backend + DB + unit tests done; Angular UI optional follow-up)
 - Sprint 2: **~75% complete** (backend + DB + unit/smoke tests; blob storage, sample seed, Angular course UI, API integration tests pending)
 - Sprint 3: **~70% complete** (backend + DB + unit tests; real Zoom, webhooks, Angular UI, integration tests pending)
+- Sprint 4: **0% complete** (planned: Angular scaffold + SPA MVP integration)
 
 **Related docs**: `docs/notice.md` (triển khai — lưu ý kỹ thuật), `docs/dotnet-backend-techniques.md` (patterns backend).
 
@@ -107,14 +109,15 @@ status: in-progress
 - [x] Set up correlation ID middleware
 
 ### Frontend Tasks
-- [ ] Create Angular workspace (see `frontend/README.md` — requires Node **22.12+** for Angular CLI 21)
-- [ ] Set up folder structure (core, shared, features)
-- [ ] Configure routing and lazy loading
-- [ ] Set up HTTP interceptors (auth, error, loading)
-- [ ] Create authentication service + guards
+- **Status**: deferred / carry-over to **Sprint 4** (Angular workspace is not created yet; `frontend/` currently contains Docker/nginx + scaffold instructions only).
+- [ ] Create Angular workspace (see `frontend/README.md` — requires Node **22.12+** for Angular CLI 21) *(carry-over → Sprint 4)*
+- [ ] Set up folder structure (core, shared, features) *(carry-over → Sprint 4)*
+- [ ] Configure routing and lazy loading *(carry-over → Sprint 4)*
+- [ ] Set up HTTP interceptors (auth, error, loading) *(carry-over → Sprint 4)*
+- [ ] Create authentication service + guards *(carry-over → Sprint 4)*
 - [x] Set up environment configurations
-- [ ] Create shared UI components (button, input, card, modal)
-- [ ] Configure Tailwind CSS / Angular Material
+- [ ] Create shared UI components (button, input, card, modal) *(carry-over → Sprint 4)*
+- [ ] Configure Tailwind CSS / Angular Material *(carry-over → Sprint 4)*
 
 ### DevOps Tasks
 - [ ] Set up Git repository + branching strategy
@@ -156,13 +159,14 @@ status: in-progress
 - [x] Write unit tests for identity + organization domain + slug helper
 
 ### Frontend Tasks
-- [ ] Create login page *(deferred — see `frontend/README.md`)*
-- [ ] Create registration page
-- [ ] Create user profile page
-- [ ] Create organization management module (admin)
-- [ ] Create member management UI
-- [ ] Implement role-based UI rendering
-- [ ] Add form validations
+- **Status**: deferred / carry-over to **Sprint 4** (backend scope closed; FE to integrate Sprint 1 APIs).
+- [ ] Create login page *(carry-over → Sprint 4; see `frontend/README.md`)*
+- [ ] Create registration page *(carry-over → Sprint 4)*
+- [ ] Create user profile page *(carry-over → Sprint 4)*
+- [ ] Create organization management module (admin) *(carry-over → Sprint 4)*
+- [ ] Create member management UI *(carry-over → Sprint 4)*
+- [ ] Implement role-based UI rendering *(carry-over → Sprint 4)*
+- [ ] Add form validations *(carry-over → Sprint 4)*
 
 ### Database
 - [x] Create migrations for User, Organization, Department, OrganizationMember tables (`Sprint1_IdentityAndOrganizations`)
@@ -198,13 +202,14 @@ status: in-progress
 - [ ] Write API-level integration tests for courses *(not present in `tests/` yet)*
 
 ### Frontend Tasks
-- [ ] Create course list page (with filters, search, pagination)
-- [ ] Create course detail page
-- [ ] Create course creation form (multi-step wizard)
-- [ ] Create section/lesson management UI
-- [ ] Implement file upload component
-- [ ] Create rich text editor for lesson content
-- [ ] Add course preview mode
+- **Status**: deferred / carry-over to **Sprint 4** (backend scope done; FE to integrate Sprint 2 APIs).
+- [ ] Create course list page (with filters, search, pagination) *(carry-over → Sprint 4)*
+- [ ] Create course detail page *(carry-over → Sprint 4)*
+- [ ] Create course creation form (multi-step wizard) *(carry-over → Sprint 4; create/update can be phased if needed)*
+- [ ] Create section/lesson management UI *(carry-over → Sprint 4; stretch)*
+- [ ] Implement file upload component *(carry-over → Sprint 4; stretch)*
+- [ ] Create rich text editor for lesson content *(carry-over → Sprint 4; stretch)*
+- [ ] Add course preview mode *(carry-over → Sprint 4; stretch)*
 
 ### Database
 - [x] Create migrations for Course, Section, Lesson, ContentAsset tables
@@ -238,13 +243,14 @@ status: in-progress
 - [ ] API integration tests for training classes
 
 ### Frontend Tasks
-- [ ] Create class list page
-- [ ] Create class creation form
-- [ ] Create session scheduling UI (calendar view)
-- [ ] Create instructor assignment UI
-- [ ] Display Zoom meeting links
-- [ ] Create class detail page with schedule
-- [ ] Add conflict detection warnings
+- **Status**: deferred / carry-over to **Sprint 4** (backend MVP done; FE to integrate Sprint 3 APIs).
+- [ ] Create class list page *(carry-over → Sprint 4)*
+- [ ] Create class creation form *(carry-over → Sprint 4)*
+- [ ] Create session scheduling UI (calendar view) *(carry-over → Sprint 4; can start as a simple form/table)*
+- [ ] Create instructor assignment UI *(carry-over → Sprint 4; can be minimal modal/table)*
+- [ ] Display Zoom meeting links *(carry-over → Sprint 4)*
+- [ ] Create class detail page with schedule *(carry-over → Sprint 4)*
+- [ ] Add conflict detection warnings *(carry-over → Sprint 4; surface API `Conflict` errors)*
 
 ### Infrastructure
 - [ ] Set up Zoom OAuth app *(required for production Zoom; not needed for `NoOp` stub)*
@@ -263,43 +269,62 @@ status: in-progress
 
 ---
 
-## Sprint 4: Enrollment & Attendance (2 weeks)
+## Sprint 4: Frontend MVP (Angular 21) — Auth + Org + Courses + Classes (2 weeks)
 
-**Goal**: Implement enrollment workflow and attendance tracking.
+**Goal**: Deliver the first usable Angular SPA that integrates with **already-delivered** backend APIs from Sprint 1–3 (identity/orgs/courses/training classes). Enrollment/attendance remains a follow-up sprint (see Sprint 5+).
 
-### Backend Tasks
-- [ ] **Enrollment aggregate**: Enrollment, Progress, Attendance entities
-- [ ] **Feature: Enroll student in class** (B2C)
-- [ ] **Feature: Bulk enroll** (B2B via license)
-- [ ] **Feature: Get enrollment status**
-- [ ] **Feature: Track lesson progress**
-- [ ] **Feature: Record attendance** (manual + Zoom webhook)
-- [ ] **Feature: Get attendance report**
-- [ ] Implement Zoom webhook handler (meeting ended)
-- [ ] Calculate attendance percentage
-- [ ] Implement completion rules (attendance + progress)
-- [ ] Write unit + integration tests
+### Scope (must-have)
+- **Scaffold Angular 21 app** under `frontend/` (see `frontend/README.md`) and make it runnable locally.
+- **API integration** with the WebApi (base URL config, auth token handling, error handling).
+- **Core user flows**:
+  - Login + (optional) register
+  - View/update profile
+  - Organization list + organization detail/members (read + add member if API is ready/allowed)
+  - Course list + course detail (read-first)
+  - Training class list + detail (sessions) + schedule/update/cancel session (based on permissions)
 
-### Frontend Tasks
-- [ ] Create enrollment page (student view)
-- [ ] Create my classes page (student dashboard)
-- [ ] Create attendance tracking UI (instructor view)
-- [ ] Create progress tracker (student view)
-- [ ] Display attendance percentage
-- [ ] Create attendance report page
+### Frontend Tasks (checklist)
+- [ ] Scaffold Angular 21 workspace + app (`frontend/web/`) and commit baseline routing
+- [ ] App structure: `core/`, `shared/`, `features/` (standalone components, lazy routes)
+- [ ] Environment configuration: `API_BASE_URL` + dev/prod config
+- [ ] HTTP layer:
+  - [ ] Auth interceptor (attach JWT)
+  - [ ] Error interceptor (map API `Error`/problem details → toast/banner)
+  - [ ] Loading indicator (global)
+- [ ] Auth & session:
+  - [ ] Login page + token persistence
+  - [ ] Route guards (anonymous vs authenticated)
+  - [ ] Profile page (GET/PUT `identity/me`)
+- [ ] Organizations (Sprint 1 API):
+  - [ ] Org list page
+  - [ ] Org detail page (members)
+  - [ ] Add member modal (if endpoint enabled for role)
+- [ ] Courses (Sprint 2 API):
+  - [ ] Course list page (search + pagination)
+  - [ ] Course detail page
+  - [ ] (Optional) Create/update course form (feature-flagged or role-gated)
+- [ ] Training classes (Sprint 3 API):
+  - [ ] Training class list page
+  - [ ] Training class detail (sessions table)
+  - [ ] Schedule session form (handle `Conflict` + validation)
+  - [ ] Update session form
+  - [ ] Cancel session action
+  - [ ] Display Zoom join URL when `SessionType=Zoom`
+- [ ] UX/quality:
+  - [ ] Basic responsive layout + navigation
+  - [ ] Form validation + error copy
+  - [ ] Minimal e2e smoke (login → list courses → view class detail) *(if tooling available)*
 
-### Infrastructure
-- [ ] Configure Zoom webhook for attendance
-
-### Database
-- [ ] Create migrations for Enrollment, Progress, Attendance tables
+### Backend/Infra Tasks (supporting, not the main deliverable)
+- [ ] Confirm CORS + API base URL strategy (direct `https://localhost:xxxx` vs reverse-proxy `/api`)
+- [ ] Ensure Swagger describes error shapes used by FE (validation/conflict/not found)
 
 **Definition of Done**:
-- Students can enroll in classes
-- Attendance is tracked (manual + Zoom)
-- Progress is recorded per lesson
-- Attendance reports are available
-- All tests pass
+- Angular app builds and runs locally.
+- Users can login and navigate core modules (orgs/courses/classes).
+- Training class sessions can be scheduled/updated/cancelled from the UI (given permissions) and **conflict/validation errors are shown clearly**.
+- No hardcoded API URLs (environment-based).
+- “Happy path” smoke flow works end-to-end against local backend.
 
 ---
 

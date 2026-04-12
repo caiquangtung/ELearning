@@ -1,6 +1,6 @@
 ---
 title: Developer onboarding
-scope: Local setup · Docker · Backend run/debug
+scope: Local setup · Docker · Backend · Angular spec
 status: active
 ---
 
@@ -23,6 +23,12 @@ Services:
 - **Postgres**: `localhost:5432`
 - **Redis**: `localhost:6379`
 - **Frontend nginx**: `http://localhost:4200` (static build container)
+
+## Frontend (Angular)
+
+The .NET backend lives under `src/`; the Angular app is planned under `frontend/` (see `docs/project-structure.md`). For requirements spec, reusable base components, state management, and Angular practices, see:
+
+- [`docs/angular-frontend-spec.md`](angular-frontend-spec.md)
 
 ## Run API locally (without Docker)
 
