@@ -27,7 +27,45 @@ todos:
       - fe-features
 ---
 
-# ELearning Build Plan (.NET Clean Architecture + Angular)
+<div align="center">
+
+# ELearning Platform
+
+A modern, large-scale **e-learning system** built with **.NET Clean Architecture** (backend) and **Angular** (frontend).
+
+### Core stack
+
+<a href="https://dotnet.microsoft.com/"><img src="https://img.shields.io/badge/.NET-512BD4?style=for-the-badge&logo=dotnet&logoColor=white" alt=".NET" /></a>
+<a href="https://angular.dev/"><img src="https://img.shields.io/badge/Angular-DD0031?style=for-the-badge&logo=angular&logoColor=white" alt="Angular" /></a>
+<a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" /></a>
+<a href="https://www.docker.com/"><img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" /></a>
+
+### Data & persistence
+
+<a href="https://www.postgresql.org/"><img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" /></a>
+<a href="https://learn.microsoft.com/en-us/ef/core/"><img src="https://img.shields.io/badge/Entity%20Framework%20Core-512BD4?style=for-the-badge&logo=dotnet&logoColor=white" alt="Entity Framework Core" /></a>
+
+### Libraries & cross-cutting
+
+<a href="https://github.com/jbogard/MediatR"><img src="https://img.shields.io/badge/MediatR-68217A?style=flat-square&logo=dotnet&logoColor=white" alt="MediatR" /></a>
+<a href="https://automapper.org/"><img src="https://img.shields.io/badge/AutoMapper-5C2D91?style=flat-square&logo=dotnet&logoColor=white" alt="AutoMapper" /></a>
+<a href="https://serilog.net/"><img src="https://img.shields.io/badge/Serilog-1C1919?style=flat-square&logo=serilog&logoColor=white" alt="Serilog" /></a>
+<a href="https://jwt.io/"><img src="https://img.shields.io/badge/JWT-000000?style=flat-square&logo=jsonwebtokens&logoColor=white" alt="JWT" /></a>
+<a href="https://docs.fluentvalidation.net/"><img src="https://img.shields.io/badge/FluentValidation-059BED?style=flat-square" alt="FluentValidation" /></a>
+
+</div>
+
+## Main technologies
+
+| Layer | Stack |
+|--------|--------|
+| **Backend** | .NET 8+ · Clean Architecture |
+| **Frontend** | Angular 18+ · feature modules · Signals |
+| **Database** | PostgreSQL |
+| **ORM** | Entity Framework Core |
+| **Cross-cutting** | AutoMapper · Serilog · JWT · FluentValidation · MediatR |
+
+---
 
 ## Scope
 
