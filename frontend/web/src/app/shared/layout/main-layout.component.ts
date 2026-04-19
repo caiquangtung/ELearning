@@ -3,12 +3,14 @@ import { RouterModule } from '@angular/router';
 import { MenuItem, PrimeTemplate } from 'primeng/api';
 import { Button } from 'primeng/button';
 import { Menubar } from 'primeng/menubar';
+import { ProgressBar } from 'primeng/progressbar';
 import { AuthService } from '../../core/auth/auth.service';
+import { LoadingService } from '../../core/loading/loading.service';
 
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [RouterModule, Menubar, Button, PrimeTemplate],
+  imports: [RouterModule, Menubar, Button, PrimeTemplate, ProgressBar],
   template: `
     <p-menubar [model]="navItems" styleClass="mb-0">
       <ng-template pTemplate="start">
@@ -19,6 +21,9 @@ import { AuthService } from '../../core/auth/auth.service';
         <p-button label="Sign out" icon="pi pi-sign-out" severity="secondary" [text]="true" (onClick)="signOut()" />
       </ng-template>
     </p-menubar>
+    @if (loading.isLoading() > 0) {
+      <p-progressBar mode="indeterminate" [style]="{ height: '3px' }" />
+    }
     <div class="layout-main">
       <router-outlet />
     </div>
@@ -26,6 +31,7 @@ import { AuthService } from '../../core/auth/auth.service';
 })
 export class MainLayoutComponent {
   readonly auth = inject(AuthService);
+  readonly loading = inject(LoadingService);
 
   readonly navItems: MenuItem[] = [
     { label: 'Dashboard', icon: 'pi pi-home', routerLink: '/dashboard' },
