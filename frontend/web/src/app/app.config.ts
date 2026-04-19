@@ -6,13 +6,14 @@ import { providePrimeNG } from 'primeng/config';
 import { ELearningPreset } from './shared/ui/theme/elearning-preset';
 import { authInterceptor } from './core/http/auth.interceptor';
 import { errorInterceptor } from './core/http/error.interceptor';
+import { loadingInterceptor } from './core/http/loading.interceptor';
 import { routes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
-    provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
+    provideHttpClient(withInterceptors([loadingInterceptor, authInterceptor, errorInterceptor])),
     provideAnimationsAsync(),
     providePrimeNG({
       ripple: true,

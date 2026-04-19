@@ -2,20 +2,24 @@ import { DatePipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { Button } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputText } from 'primeng/inputtext';
 import { InputTextarea } from 'primeng/inputtextarea';
-import { Paginator, PaginatorState } from 'primeng/paginator';
 import { Panel } from 'primeng/panel';
 import { PrimeTemplate } from 'primeng/api';
-import { TableModule } from 'primeng/table';
 import { Tag } from 'primeng/tag';
 import { Toolbar } from 'primeng/toolbar';
 import { LmsApiService, CourseListItemDto } from '../../core/api/lms-api.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { PagedList } from '../../core/models/paged-list.model';
 import { GlobalErrorService } from '../../core/error/global-error.service';
+import { PageShellComponent } from '../../shared/ui/page-shell/page-shell.component';
+import { UiButtonComponent } from '../../shared/ui/ui-button/ui-button.component';
+import { UiDataTableComponent } from '../../shared/ui/ui-data-table/ui-data-table.component';
+import {
+  UiDataTableBodyTemplateDirective,
+  UiDataTableHeaderTemplateDirective,
+} from '../../shared/ui/ui-data-table/ui-data-table-templates.directive';
 
 @Component({
   selector: 'app-course-list',
@@ -24,70 +28,89 @@ import { GlobalErrorService } from '../../core/error/global-error.service';
     DatePipe,
     FormsModule,
     RouterLink,
-    TableModule,
     Toolbar,
-    Button,
     InputText,
     InputTextarea,
     DropdownModule,
-    Paginator,
     Panel,
     Tag,
     PrimeTemplate,
+    PageShellComponent,
+    UiButtonComponent,
+    UiDataTableComponent,
+    UiDataTableHeaderTemplateDirective,
+    UiDataTableBodyTemplateDirective,
   ],
   template: `
-    <h1 class="text-2xl font-semibold mt-0">Courses</h1>
-    @if (canCreate()) {
-      <p-panel header="New course" [toggleable]="true" styleClass="mb-4">
-        <div class="flex flex-column gap-3" style="max-width: 36rem">
-          <input pInputText [(ngModel)]="newTitle" placeholder="Title" class="w-full" name="ctitle" />
-          <textarea
-            pInputTextarea
-            [(ngModel)]="newDescription"
-            rows="3"
-            placeholder="Description"
-            class="w-full"
-            name="cdesc"
-          ></textarea>
-          <p-button
-            label="Create draft"
-            icon="pi pi-plus"
-            [disabled]="!newTitle.trim() || creating()"
-            [loading]="creating()"
-            (onClick)="createCourse()"
-          />
-        </div>
-      </p-panel>
-    }
-    <p-toolbar styleClass="mb-3">
-      <ng-template pTemplate="start">
-        <input pInputText [(ngModel)]="search" placeholder="Search" class="mr-2" name="csearch" />
-        <p-dropdown
-          [options]="statusOptions"
-          [(ngModel)]="status"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Status"
-          [showClear]="true"
-          styleClass="w-12rem"
-          name="cstatus"
+    <app-page-shell title="Courses">
+      <ng-container pageActions>
+        <app-ui-button
+          label="Refresh"
+          icon="pi pi-refresh"
+          severity="secondary"
+          [text]="true"
+          (clicked)="reload()"
         />
-        <p-button label="Apply" icon="pi pi-filter" class="ml-2" (onClick)="applyFilters()" />
-      </ng-template>
-    </p-toolbar>
-    @if (loading()) {
-      <p>Loading…</p>
-    } @else {
+      </ng-container>
+
+      @if (canCreate()) {
+        <p-panel header="New course" [toggleable]="true" styleClass="mb-4">
+          <div class="flex flex-column gap-3" style="max-width: 36rem">
+            <input pInputText [(ngModel)]="newTitle" placeholder="Title" class="w-full" name="ctitle" />
+            <textarea
+              pInputTextarea
+              [(ngModel)]="newDescription"
+              rows="3"
+              placeholder="Description"
+              class="w-full"
+              name="cdesc"
+            ></textarea>
+            <app-ui-button
+              label="Create draft"
+              icon="pi pi-plus"
+              [disabled]="!newTitle.trim() || creating()"
+              [loading]="creating()"
+              (clicked)="createCourse()"
+            />
+          </div>
+        </p-panel>
+      }
+
+      <p-toolbar styleClass="mb-3">
+        <ng-template pTemplate="start">
+          <input pInputText [(ngModel)]="search" placeholder="Search" class="mr-2" name="csearch" />
+          <p-dropdown
+            [options]="statusOptions"
+            [(ngModel)]="status"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Status"
+            [showClear]="true"
+            styleClass="w-12rem"
+            name="cstatus"
+          />
+          <app-ui-button label="Apply" icon="pi pi-filter" class="ml-2" (clicked)="applyFilters()" />
+        </ng-template>
+      </p-toolbar>
+
       @if (page(); as p) {
-        <p-table [value]="p.items" styleClass="p-datatable-sm" [tableStyle]="{ 'min-width': '40rem' }">
-          <ng-template pTemplate="header">
+        <app-ui-data-table
+          [value]="p.items"
+          [rows]="pageSize"
+          [totalRecords]="p.totalCount"
+          [first]="(p.page - 1) * pageSize"
+          [emptyColspan]="3"
+          (pageChange)="onPageChange($event)"
+        >
+          <ng-template uiDataTableHeader>
             <tr>
               <th>Title</th>
               <th>Status</th>
               <th>Created</th>
             </tr>
           </ng-template>
-          <ng-template pTemplate="body" let-c>
+
+          <ng-template uiDataTableBody let-c>
             <tr>
               <td>
                 <a [routerLink]="['/courses', c.id]" class="text-primary font-medium">{{ c.title }}</a>
@@ -96,22 +119,9 @@ import { GlobalErrorService } from '../../core/error/global-error.service';
               <td>{{ c.createdAt | date: 'mediumDate' }}</td>
             </tr>
           </ng-template>
-          <ng-template pTemplate="emptymessage">
-            <tr>
-              <td colspan="3">No courses.</td>
-            </tr>
-          </ng-template>
-        </p-table>
-        <p-paginator
-          [rows]="pageSize"
-          [totalRecords]="p.totalCount"
-          [first]="(p.page - 1) * pageSize"
-          (onPageChange)="onPageChange($event)"
-          [showCurrentPageReport]="true"
-          currentPageReportTemplate="{first}–{last} of {totalRecords}"
-        />
+        </app-ui-data-table>
       }
-    }
+    </app-page-shell>
   `,
 })
 export class CourseListComponent implements OnInit {
@@ -151,7 +161,7 @@ export class CourseListComponent implements OnInit {
     this.reload();
   }
 
-  onPageChange(event: PaginatorState): void {
+  onPageChange(event: import('primeng/paginator').PaginatorState): void {
     const first = event.first ?? 0;
     const rows = event.rows ?? this.pageSize;
     this.pageNum = Math.floor(first / rows) + 1;
