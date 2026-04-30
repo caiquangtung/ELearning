@@ -62,6 +62,16 @@ export const routes: Routes = [
             (m) => m.TrainingClassDetailComponent,
           ),
       },
+      {
+        path: 'organizations/:id/license-pools',
+        loadComponent: () =>
+          import('./features/licenses/license-pool-list.component').then((m) => m.LicensePoolListComponent),
+      },
+      {
+        path: 'license-pools/:id',
+        loadComponent: () =>
+          import('./features/licenses/license-pool-detail.component').then((m) => m.LicensePoolDetailComponent),
+      },
     ],
   },
   { path: '**', redirectTo: '' },

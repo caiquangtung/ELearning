@@ -365,26 +365,26 @@ status: in-progress
 **Goal**: Implement B2B license pooling and seat management.
 
 ### Backend Tasks
-- [ ] **LicensePool aggregate**: LicensePool, LicenseAssignment entities
-- [ ] **Feature: Create license pool** (org buys seats)
-- [ ] **Feature: Assign license to member**
-- [ ] **Feature: Revoke license**
-- [ ] **Feature: Get license usage report**
-- [ ] Implement quota enforcement (prevent over-assignment)
-- [ ] Implement license expiry logic
+- [x] **LicensePool aggregate**: LicensePool, LicenseAssignment entities
+- [x] **Feature: Create license pool** (org buys seats)
+- [x] **Feature: Assign license to member**
+- [x] **Feature: Revoke license**
+- [x] **Feature: Get license usage report**
+- [x] Enforce quota (prevent over-assignment) *(domain enforces seat availability)*
+- [x] License expiry constraint *(domain prevents assignment if expired; expiry enforcement beyond that is follow-up)*
 - [ ] **Feature: Bulk enroll via license**
 - [ ] Create private class for organization
 - [ ] Write unit + integration tests
 
 ### Frontend Tasks
-- [ ] Create license pool management UI (org admin)
-- [ ] Create license assignment UI
-- [ ] Display license usage dashboard
+- [x] Create license pool management UI (org admin) *(list + create)*
+- [x] Create license assignment UI *(assign/revoke by user id in pool detail)*
+- [x] Display license usage dashboard *(basic: seats used/available on detail screen)*
 - [ ] Create member enrollment UI (org admin)
 - [ ] Add license expiry warnings
 
 ### Database
-- [ ] Create migrations for LicensePool, LicenseAssignment tables
+- [ ] Create migrations for LicensePool, LicenseAssignment tables *(pending: EF tooling currently timing out in environment; schema defined via EF configurations)*
 
 **Definition of Done**:
 - Organizations can purchase license pools
