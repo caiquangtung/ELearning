@@ -1,6 +1,6 @@
 ---
 title: Sprint 5 completion — License Pools (B2B)
-status: in-progress
+status: done
 ---
 
 ## Goal
@@ -17,6 +17,7 @@ Implement B2B **license pooling** and basic **seat assignment** for organization
 - **Persistence**:
   - `license_pools`, `license_assignments` EF mappings (`src/ELearning.Infrastructure/Persistence/Configurations/*`)
   - Repository: `ILicensePoolRepository` + `LicensePoolRepository`
+  - Migration: `20260430162719_Sprint5_LicensePools` (`src/ELearning.Infrastructure/Persistence/Migrations/`)
 - **API** (`api/v1`):
   - `GET /organizations/{organizationId}/license-pools`
   - `POST /organizations/{organizationId}/license-pools`
@@ -37,7 +38,14 @@ Implement B2B **license pooling** and basic **seat assignment** for organization
 
 ## Deferred / follow-ups
 
-- DB migration file generation (EF tooling issues in the current environment); mappings + DbSet are in place.
 - Enrollment flows: “assign license then enroll member into a class/course”.
 - Bulk assignment and expiry warnings in UI.
+
+## Notes
+
+- EFCore package alignment was required to remove MSBuild conflicts (MSB3277) and keep the build warning-free.
+
+## Validation
+
+- `dotnet test src/ELearning.sln`
 

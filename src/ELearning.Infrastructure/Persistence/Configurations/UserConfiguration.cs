@@ -1,6 +1,8 @@
 using ELearning.Domain.Aggregates.UserAggregate;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using System.Text.Json;
 
 namespace ELearning.Infrastructure.Persistence.Configurations;
 
@@ -52,8 +54,16 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.UpdatedAt)
             .HasColumnName("updated_at");
 
-        builder.PrimitiveCollection<string>("_roles")
+        builder.Property<List<string>>("_roles")
             .HasColumnName("roles")
-            .IsRequired();
+            .HasColumnType("jsonb")
+            .HasConversion(
+                v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null) ?? new List<string>())
+            .Metadata.SetValueComparer(new ValueComparer<List<string>>(
+                (a, b) => (a ?? new List<string>()).SequenceEqual(b ?? new List<string>()),
+                v => (v ?? new List<string>()).Aggregate(0, (h, e) => HashCode.Combine(h, e.GetHashCode())),
+                v => (v ?? new List<string>()).ToList()))
+            ;
     }
 }
