@@ -41,6 +41,14 @@ import { GlobalErrorService } from '../../core/error/global-error.service';
           <span>{{ d.organization.slug }}</span>
           <p-tag [value]="d.organization.status" severity="info" />
         </p>
+        <div class="mb-3">
+          <a
+            [routerLink]="['/organizations', d.organization.id, 'license-pools']"
+            class="text-primary font-medium"
+          >
+            License pools
+          </a>
+        </div>
         <h2 class="text-xl">Members</h2>
         <p-table [value]="d.members" styleClass="p-datatable-sm mb-4" [tableStyle]="{ 'min-width': '40rem' }">
           <ng-template pTemplate="header">

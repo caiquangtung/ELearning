@@ -106,6 +106,42 @@ export interface TrainingClassDetailDto {
   sessions: ClassSessionDto[];
 }
 
+export interface LicensePoolListItemDto {
+  id: string;
+  organizationId: string;
+  name: string;
+  totalSeats: number;
+  activeSeats: number;
+  availableSeats: number;
+  expiresAt: string | null;
+  createdAt: string;
+}
+
+export interface LicenseAssignmentDto {
+  userId: string;
+  assignedAt: string;
+  revokedAt: string | null;
+}
+
+export interface LicensePoolDetailDto {
+  id: string;
+  organizationId: string;
+  name: string;
+  totalSeats: number;
+  activeSeats: number;
+  availableSeats: number;
+  expiresAt: string | null;
+  createdAt: string;
+  assignments: LicenseAssignmentDto[];
+}
+
+export interface LicenseUsageReportDto {
+  licensePoolId: string;
+  totalSeats: number;
+  activeSeats: number;
+  availableSeats: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class LmsApiService {
   private readonly http = inject(HttpClient);
@@ -206,5 +242,32 @@ export class LmsApiService {
 
   assignInstructor(classId: string, userId: string): Observable<unknown> {
     return this.http.post(`${this.base}/training-classes/${classId}/instructors`, { userId }, { responseType: 'text' });
+  }
+
+  listLicensePools(organizationId: string): Observable<LicensePoolListItemDto[]> {
+    return this.http.get<LicensePoolListItemDto[]>(`${this.base}/organizations/${organizationId}/license-pools`);
+  }
+
+  createLicensePool(
+    organizationId: string,
+    body: { name: string; totalSeats: number; expiresAt?: string | null },
+  ): Observable<LicensePoolDetailDto> {
+    return this.http.post<LicensePoolDetailDto>(`${this.base}/organizations/${organizationId}/license-pools`, body);
+  }
+
+  getLicensePool(id: string): Observable<LicensePoolDetailDto> {
+    return this.http.get<LicensePoolDetailDto>(`${this.base}/license-pools/${id}`);
+  }
+
+  getLicensePoolUsage(id: string): Observable<LicenseUsageReportDto> {
+    return this.http.get<LicenseUsageReportDto>(`${this.base}/license-pools/${id}/usage`);
+  }
+
+  assignLicense(poolId: string, userId: string): Observable<LicenseUsageReportDto> {
+    return this.http.post<LicenseUsageReportDto>(`${this.base}/license-pools/${poolId}/assignments`, { userId });
+  }
+
+  revokeLicense(poolId: string, userId: string): Observable<LicenseUsageReportDto> {
+    return this.http.delete<LicenseUsageReportDto>(`${this.base}/license-pools/${poolId}/assignments/${userId}`);
   }
 }
