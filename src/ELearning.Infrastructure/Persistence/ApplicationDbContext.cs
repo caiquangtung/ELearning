@@ -1,6 +1,7 @@
 using ELearning.Core.Abstractions;
 using ELearning.Domain.Aggregates.CourseAggregate;
 using ELearning.Domain.Aggregates.LicensePoolAggregate;
+using ELearning.Domain.Aggregates.OrderAggregate;
 using ELearning.Domain.Aggregates.TrainingClassAggregate;
 using ELearning.Domain.Aggregates.UserAggregate;
 using ELearning.Domain.Shared;
@@ -17,6 +18,7 @@ public class ApplicationDbContext(
     public DbSet<Course> Courses => Set<Course>();
     public DbSet<TrainingClass> TrainingClasses => Set<TrainingClass>();
     public DbSet<LicensePool> LicensePools => Set<LicensePool>();
+    public DbSet<Order> Orders => Set<Order>();
     public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
     {
         ApplyAuditInfo();

@@ -2,6 +2,7 @@ using ELearning.Core.Abstractions;
 using ELearning.Infrastructure.Courses;
 using ELearning.Infrastructure.Identity;
 using ELearning.Infrastructure.Licenses;
+using ELearning.Infrastructure.Orders;
 using ELearning.Infrastructure.TrainingClasses;
 using ELearning.Infrastructure.Zoom;
 using ELearning.Infrastructure.Persistence;
@@ -30,6 +31,7 @@ public static class DependencyInjection
         services.AddScoped<ICourseRepository, CourseRepository>();
         services.AddScoped<ITrainingClassRepository, TrainingClassRepository>();
         services.AddScoped<ILicensePoolRepository, LicensePoolRepository>();
+        services.AddScoped<IOrderRepository, OrderRepository>();
 
         services.AddSingleton<IFileStorage, LocalFileStorage>();
         services.AddSingleton<IZoomMeetingService, NoOpZoomMeetingService>();

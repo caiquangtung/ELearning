@@ -52,6 +52,13 @@ public static class Permissions
         public const string Export = "Reports.Export";
     }
 
+    public static class Commerce
+    {
+        public const string Read = "Commerce.Read";
+        public const string Create = "Commerce.Create";
+        public const string Pay = "Commerce.Pay";
+    }
+
     public static class Admin
     {
         public const string Access = "Admin.Access";
@@ -66,6 +73,7 @@ public static class Permissions
         Enrollments.Read, Enrollments.Create, Enrollments.Manage,
         Licenses.Read, Licenses.Assign,
         Reports.Read, Reports.Export,
+        Commerce.Read, Commerce.Create, Commerce.Pay,
         Admin.Access
     ];
 }

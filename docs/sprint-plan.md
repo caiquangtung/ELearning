@@ -400,17 +400,17 @@ status: in-progress
 **Goal**: Implement order, payment, and pricing engine.
 
 ### Backend Tasks
-- [ ] **Order aggregate**: Order, OrderItem, Payment, Invoice entities
-- [ ] **Feature: Create order** (cart to order)
-- [ ] **Feature: Calculate price** (pricing engine)
-- [ ] **Feature: Apply discount** (manual)
+- [x] **Order aggregate**: Order, OrderItem (Payment/Invoice deferred)
+- [x] **Feature: Create order** (cart to order) *(MVP: accepts explicit unit prices)*
+- [ ] **Feature: Calculate price** (pricing engine) *(deferred: catalog-based pricing)*
+- [x] **Feature: Apply discount** (manual)
 - [ ] **Feature: Process payment** (Stripe/VNPay integration)
 - [ ] **Feature: Handle payment webhook**
 - [ ] **Feature: Generate invoice**
-- [ ] **Feature: Get order history**
+- [x] **Feature: Get order history** *(MVP: list buyer orders)*
 - [ ] Implement reservation pattern (hold seat during checkout)
 - [ ] Implement payment timeout (release seat after 15 min)
-- [ ] Write unit + integration tests
+- [x] Write unit tests (domain) *(integration tests deferred)*
 
 ### Frontend Tasks
 - [ ] Create course purchase page
@@ -425,15 +425,15 @@ status: in-progress
 - [ ] Configure payment webhook endpoints
 
 ### Database
-- [ ] Create migrations for Order, Payment, Invoice tables
+- [x] Create migrations for Order, OrderItem tables *(Payment/Invoice deferred)*
 
 **Definition of Done**:
 - Users can purchase courses/classes
-- Pricing is calculated correctly
-- Payments are processed
-- Invoices are generated
-- Seat reservation works
-- All tests pass
+- Pricing is calculated correctly *(MVP: totals computed from request item prices)*
+- Payments are processed *(deferred)*
+- Invoices are generated *(deferred)*
+- Seat reservation works *(deferred)*
+- All tests pass *(unit tests)*
 
 ---
 
