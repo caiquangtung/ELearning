@@ -413,12 +413,12 @@ status: in-progress
 - [x] Write unit tests (domain) *(integration tests still deferred)*
 
 ### Frontend Tasks
-- [ ] Create course purchase page
-- [ ] Create checkout page
-- [ ] Integrate payment gateway UI
-- [ ] Create order confirmation page
-- [ ] Create order history page
-- [ ] Display invoice
+- [x] Create course purchase flow *(published course / priced class / pool detail → `/checkout`; see `docs/sprint6-completion.md`)*
+- [x] Create checkout page
+- [ ] Integrate payment gateway UI *(prod: Stripe/VNPay; dev: NoOp “Pay now” on order detail)*
+- [x] Create order confirmation *(order detail after place order; optional `?pay=1` auto-pay)*
+- [x] Create order history page
+- [x] Display invoice *(summary on order detail when status is Paid)*
 
 ### Infrastructure
 - [ ] Set up Stripe/VNPay account *(production follow-up)*
@@ -428,7 +428,7 @@ status: in-progress
 - [x] Create migrations for Order, OrderItem, pricing columns, payments, invoices, reservations *(see `Sprint6_*` migrations)*
 
 **Definition of Done**:
-- Users can purchase courses/classes *(backend API path; Angular checkout still open)*
+- Users can purchase courses/classes *(Angular: detail pages → checkout → orders; API still authoritative)*
 - Pricing is calculated correctly *(server reads catalog prices; ignores client-supplied unit prices)*
 - Payments are processed *(NoOp MVP; replace provider for prod gateways)*
 - Invoices are generated *(persisted invoice row)*

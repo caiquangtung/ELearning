@@ -31,6 +31,14 @@ public sealed record OrderListItemDto(
     long TotalCents,
     DateTime CreatedAt);
 
+public sealed record InvoiceDto(
+    Guid Id,
+    Guid OrderId,
+    string InvoiceNumber,
+    string Currency,
+    long TotalCents,
+    DateTime IssuedAt);
+
 public static class OrderDtoMapper
 {
     public static OrderDto ToDto(Order order) =>

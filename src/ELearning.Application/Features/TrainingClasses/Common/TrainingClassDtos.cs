@@ -28,6 +28,8 @@ public sealed record TrainingClassDetailDto(
     Guid CourseId,
     string Title,
     int MaxLearners,
+    long PriceCents,
+    string Currency,
     string Status,
     DateTime CreatedAt,
     DateTime? UpdatedAt,

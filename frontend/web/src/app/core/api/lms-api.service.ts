@@ -61,6 +61,8 @@ export interface CourseDetailDto {
   title: string;
   description: string | null;
   status: string;
+  priceCents: number;
+  currency: string;
   createdAt: string;
   updatedAt: string | null;
   sections: CourseSectionDetailDto[];
@@ -99,6 +101,8 @@ export interface TrainingClassDetailDto {
   courseId: string;
   title: string;
   maxLearners: number;
+  priceCents: number;
+  currency: string;
   status: string;
   createdAt: string;
   updatedAt: string | null;
@@ -113,6 +117,8 @@ export interface LicensePoolListItemDto {
   totalSeats: number;
   activeSeats: number;
   availableSeats: number;
+  seatPriceCents: number;
+  currency: string;
   expiresAt: string | null;
   createdAt: string;
 }
@@ -130,9 +136,67 @@ export interface LicensePoolDetailDto {
   totalSeats: number;
   activeSeats: number;
   availableSeats: number;
+  seatPriceCents: number;
+  currency: string;
   expiresAt: string | null;
   createdAt: string;
   assignments: LicenseAssignmentDto[];
+}
+
+export interface OrderItemDto {
+  referenceId: string;
+  itemType: string;
+  quantity: number;
+  unitPriceCents: number;
+  lineTotalCents: number;
+  currency: string;
+}
+
+export interface OrderDto {
+  id: string;
+  buyerUserId: string;
+  organizationId: string | null;
+  status: string;
+  currency: string;
+  subtotalCents: number;
+  discountCents: number;
+  totalCents: number;
+  createdAt: string;
+  updatedAt: string | null;
+  checkoutExpiresAtUtc: string | null;
+  items: OrderItemDto[];
+}
+
+export interface OrderListItemDto {
+  id: string;
+  status: string;
+  currency: string;
+  totalCents: number;
+  createdAt: string;
+}
+
+export interface InvoiceDto {
+  id: string;
+  orderId: string;
+  invoiceNumber: string;
+  currency: string;
+  totalCents: number;
+  issuedAt: string;
+}
+
+export interface CreateOrderItemRequest {
+  itemType: string;
+  referenceId: string;
+  quantity: number;
+  unitPriceCents: number;
+}
+
+export interface CreateOrderRequest {
+  buyerUserId: string;
+  organizationId: string | null;
+  currency: string;
+  items: CreateOrderItemRequest[];
+  discountCents?: number;
 }
 
 export interface LicenseUsageReportDto {
@@ -269,5 +333,26 @@ export class LmsApiService {
 
   revokeLicense(poolId: string, userId: string): Observable<LicenseUsageReportDto> {
     return this.http.delete<LicenseUsageReportDto>(`${this.base}/license-pools/${poolId}/assignments/${userId}`);
+  }
+
+  createOrder(body: CreateOrderRequest): Observable<OrderDto> {
+    return this.http.post<OrderDto>(`${this.base}/orders`, body);
+  }
+
+  getOrder(id: string): Observable<OrderDto> {
+    return this.http.get<OrderDto>(`${this.base}/orders/${id}`);
+  }
+
+  listMyOrders(buyerUserId: string, take = 50): Observable<OrderListItemDto[]> {
+    const params = new HttpParams().set('buyerUserId', buyerUserId).set('take', String(take));
+    return this.http.get<OrderListItemDto[]>(`${this.base}/orders/my`, { params });
+  }
+
+  payOrder(id: string): Observable<OrderDto> {
+    return this.http.post<OrderDto>(`${this.base}/orders/${id}/pay`, {});
+  }
+
+  getOrderInvoice(orderId: string): Observable<InvoiceDto> {
+    return this.http.get<InvoiceDto>(`${this.base}/orders/${orderId}/invoice`);
   }
 }

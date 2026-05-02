@@ -19,6 +19,8 @@ public sealed class GetCourseQueryHandler(ICourseRepository courseRepository)
             course.Title,
             course.Description,
             course.Status.ToString(),
+            course.PriceCents,
+            course.Currency,
             course.CreatedAt,
             course.UpdatedAt,
             course.Sections

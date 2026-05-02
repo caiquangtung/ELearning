@@ -26,6 +26,8 @@ public sealed class GetLicensePoolQueryHandler(ILicensePoolRepository licensePoo
             pool.TotalSeats,
             pool.ActiveSeatCount,
             pool.AvailableSeats,
+            pool.SeatPriceCents,
+            pool.Currency,
             pool.ExpiresAt,
             pool.CreatedAt,
             assignments);

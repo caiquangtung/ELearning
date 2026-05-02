@@ -1,6 +1,6 @@
 ---
 title: Sprint 6 completion — Commerce (Orders + checkout)
-status: backend-mvp-done
+status: mvp-done
 ---
 
 ## Goal
@@ -32,6 +32,7 @@ Deliver **Commerce checkout**: priced orders, **15-minute checkout window**, opt
 | `POST` | `/orders` | `Commerce.Create` | Creates pending checkout; sets checkout expiry |
 | `GET` | `/orders/{id}` | `Commerce.Read` | Includes `checkoutExpiresAtUtc` when applicable |
 | `GET` | `/orders/my` | `Commerce.Read` | Buyer history |
+| `GET` | `/orders/{id}/invoice` | `Commerce.Read` | Invoice summary when the order is **Paid** |
 | `POST` | `/orders/{id}/pay` | `Commerce.Pay` | Creates payment intent; **NoOp** verifies + completes immediately |
 | `POST` | `/payments/webhook` | *(anonymous + optional secret)* | Body `{ "transactionId": "..." }`; header `X-Payments-Webhook-Secret` when configured |
 
@@ -89,14 +90,27 @@ Development defaults live in `src/ELearning.WebApi/appsettings.Development.json`
 
 - `tests/ELearning.Domain.UnitTests/OrderAggregateTests.cs` (includes expiry behaviour).
 
+## Angular (`frontend/web`)
+
+- **API client** (`src/app/core/api/lms-api.service.ts`): DTOs include `priceCents` / `currency` on courses and training classes, `seatPriceCents` / `currency` on license pools; order types and methods `createOrder`, `getOrder`, `listMyOrders`, `payOrder`, `getOrderInvoice`.
+- **Routes** (`app.routes.ts`): `/checkout` (query `type`, `ref`, optional `qty`), `/orders`, `/orders/:id`.
+- **Nav**: “My orders” in `main-layout.component.ts`.
+- **Purchase entry points**: “Buy course” on published courses with `priceCents > 0`; “Enroll / checkout” on training classes with price and not cancelled; “Buy seats” on license pools with `seatPriceCents > 0`.
+- **Checkout** (`features/checkout/checkout.component.ts`): loads the entity, shows line total, optional discount (cents) and organization id, submits `POST /orders`, then navigates to order detail with `?pay=1` to trigger **Pay now (NoOp)**.
+- **Orders** (`features/orders/`): list with link to detail; detail shows status, checkout expiry, line items, pay CTA for `PendingPayment`, and invoice panel when paid.
+
+```bash
+cd frontend/web && npm run build
+```
+
 ## Deferred / follow-ups
 
 - Real **Stripe / VNPay** implementation + signing of webhook payloads (not just shared secret header).
-- **GET invoice by order** (and PDF/storage).
+- **Invoice PDF** or downloadable artifact (UI shows metadata only today).
 - **Enrollment** tied to paid orders (capacity then subtracts enrolled learners, not only reservations).
 - **API integration tests** for `/orders`, `/pay`, `/payments/webhook`.
-- **Angular** checkout UI (see sprint plan FE tasks).
 
 ## Validation
 
 - `dotnet test src/ELearning.sln`
+- `cd frontend/web && npm run build`

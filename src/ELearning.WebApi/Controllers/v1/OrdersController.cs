@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using ELearning.Application.Features.Orders.CreateOrder;
+using ELearning.Application.Features.Orders.GetInvoice;
 using ELearning.Application.Features.Orders.GetOrder;
 using ELearning.Application.Features.Orders.ListMyOrders;
 using ELearning.Application.Features.Orders.PayOrder;
@@ -34,6 +35,15 @@ public sealed class OrdersController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> Get(Guid id, CancellationToken ct)
     {
         var result = await mediator.Send(new GetOrderQuery(id), ct);
+        return result.IsSuccess ? Ok(result.Value) : Problem(result.Error);
+    }
+
+    [HttpGet("{id:guid}/invoice")]
+    [HasPermission(Permissions.Commerce.Read)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetInvoice(Guid id, CancellationToken ct)
+    {
+        var result = await mediator.Send(new GetInvoiceByOrderQuery(id), ct);
         return result.IsSuccess ? Ok(result.Value) : Problem(result.Error);
     }
 

@@ -41,6 +41,8 @@ public sealed record CourseDetailDto(
     string Title,
     string? Description,
     string Status,
+    long PriceCents,
+    string Currency,
     DateTime CreatedAt,
     DateTime? UpdatedAt,
     IReadOnlyList<CourseSectionDetailDto> Sections);

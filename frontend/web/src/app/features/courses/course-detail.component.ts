@@ -34,6 +34,18 @@ function assetTypeLabel(t: number): string {
           <h1 class="text-2xl font-semibold m-0">{{ c.title }}</h1>
           <p-tag [value]="c.status" [severity]="c.status === 'Published' ? 'success' : 'warn'" />
         </div>
+        @if (c.status === 'Published' && c.priceCents > 0) {
+          <p class="text-600 mb-2">
+            Price: <strong>{{ formatPrice(c.priceCents, c.currency) }}</strong>
+          </p>
+          <p-button
+            label="Buy course"
+            icon="pi pi-shopping-cart"
+            styleClass="mb-3"
+            [routerLink]="['/checkout']"
+            [queryParams]="{ type: 'Course', ref: c.id, qty: 1 }"
+          />
+        }
         @if (c.description) {
           <p class="text-color-secondary">{{ c.description }}</p>
         }
@@ -81,6 +93,10 @@ export class CourseDetailComponent implements OnInit {
   readonly loading = signal(true);
 
   readonly assetTypeLabel = assetTypeLabel;
+
+  formatPrice(cents: number, currency: string): string {
+    return `${(cents / 100).toFixed(2)} ${currency}`;
+  }
 
   ngOnInit(): void {
     this.errors.clear();
