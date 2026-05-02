@@ -18,6 +18,9 @@ public sealed class Order : AuditableAggregateRoot
     public long DiscountCents { get; private set; }
     public long TotalCents { get; private set; }
 
+    /// <summary>When status is PendingPayment, checkout must complete before this instant (UTC).</summary>
+    public DateTime? CheckoutExpiresAtUtc { get; private set; }
+
     public IReadOnlyList<OrderItem> Items => _items.AsReadOnly();
 
     public static Order CreateDraft(Guid buyerUserId, Guid? organizationId, string currency)
@@ -58,18 +61,32 @@ public sealed class Order : AuditableAggregateRoot
         UpdatedAt = DateTime.UtcNow;
     }
 
-    public void SubmitForPayment()
+    public void SubmitForPayment(TimeSpan checkoutTimeout)
     {
         if (Status != OrderStatus.Draft) throw new DomainException("Order must be draft.");
         if (_items.Count == 0) throw new DomainException("Order must have at least one item.");
         if (TotalCents <= 0) throw new DomainException("Order total must be greater than 0.");
+        if (checkoutTimeout <= TimeSpan.Zero) throw new DomainException("Checkout timeout must be positive.");
 
+        CheckoutExpiresAtUtc = DateTime.UtcNow.Add(checkoutTimeout);
         Status = OrderStatus.PendingPayment;
         UpdatedAt = DateTime.UtcNow;
     }
 
+    /// <summary>If checkout window elapsed while pending payment, cancel and release reservations externally.</summary>
+    public bool TryExpireCheckout(DateTime utcNow)
+    {
+        if (Status != OrderStatus.PendingPayment) return false;
+        if (CheckoutExpiresAtUtc is null || utcNow <= CheckoutExpiresAtUtc.Value) return false;
+
+        Status = OrderStatus.Cancelled;
+        UpdatedAt = utcNow;
+        return true;
+    }
+
     public void MarkPaid()
     {
+        if (Status == OrderStatus.Paid) return;
         if (Status != OrderStatus.PendingPayment) throw new DomainException("Order must be pending payment.");
         Status = OrderStatus.Paid;
         UpdatedAt = DateTime.UtcNow;

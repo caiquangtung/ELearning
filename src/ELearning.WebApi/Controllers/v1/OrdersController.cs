@@ -2,6 +2,7 @@ using Asp.Versioning;
 using ELearning.Application.Features.Orders.CreateOrder;
 using ELearning.Application.Features.Orders.GetOrder;
 using ELearning.Application.Features.Orders.ListMyOrders;
+using ELearning.Application.Features.Orders.PayOrder;
 using ELearning.Core.Common;
 using ELearning.Core.Constants;
 using ELearning.WebApi.Authorization;
@@ -52,6 +53,15 @@ public sealed class OrdersController(IMediator mediator) : ControllerBase
         return result.IsSuccess
             ? CreatedAtAction(nameof(Get), new { id = result.Value.Id }, result.Value)
             : Problem(result.Error);
+    }
+
+    [HttpPost("{id:guid}/pay")]
+    [HasPermission(Permissions.Commerce.Pay)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> Pay(Guid id, CancellationToken ct)
+    {
+        var result = await mediator.Send(new PayOrderCommand(id), ct);
+        return result.IsSuccess ? Ok(result.Value) : Problem(result.Error);
     }
 
     private IActionResult Problem(Error error)

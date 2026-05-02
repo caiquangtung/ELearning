@@ -22,6 +22,8 @@ public sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(o => o.DiscountCents).HasColumnName("discount_cents").IsRequired();
         builder.Property(o => o.TotalCents).HasColumnName("total_cents").IsRequired();
 
+        builder.Property(o => o.CheckoutExpiresAtUtc).HasColumnName("checkout_expires_at");
+
         builder.Property(o => o.CreatedAt).HasColumnName("created_at").IsRequired();
         builder.Property(o => o.UpdatedAt).HasColumnName("updated_at");
 

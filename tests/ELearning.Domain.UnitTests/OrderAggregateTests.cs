@@ -45,13 +45,13 @@ public class OrderAggregateTests
     public void SubmitForPayment_requires_items_and_positive_total()
     {
         var order = Order.CreateDraft(Guid.NewGuid(), null, "USD");
-        var act = () => order.SubmitForPayment();
+        var act = () => order.SubmitForPayment(TimeSpan.FromMinutes(15));
         act.Should().Throw<DomainException>();
 
         order.AddItem(OrderItemType.Course, Guid.NewGuid(), 1, 1000);
         order.ApplyManualDiscount(1000);
 
-        var act2 = () => order.SubmitForPayment();
+        var act2 = () => order.SubmitForPayment(TimeSpan.FromMinutes(15));
         act2.Should().Throw<DomainException>();
     }
 
@@ -61,9 +61,22 @@ public class OrderAggregateTests
         var order = Order.CreateDraft(Guid.NewGuid(), null, "USD");
         order.AddItem(OrderItemType.Course, Guid.NewGuid(), 1, 1000);
 
-        order.SubmitForPayment();
+        order.SubmitForPayment(TimeSpan.FromMinutes(15));
 
         order.Status.Should().Be(OrderStatus.PendingPayment);
+    }
+
+    [Fact]
+    public void TryExpireCheckout_cancels_pending_when_past_deadline()
+    {
+        var order = Order.CreateDraft(Guid.NewGuid(), null, "USD");
+        order.AddItem(OrderItemType.Course, Guid.NewGuid(), 1, 1000);
+        order.SubmitForPayment(TimeSpan.FromMinutes(15));
+        var deadline = order.CheckoutExpiresAtUtc!.Value;
+
+        var expired = order.TryExpireCheckout(deadline.AddSeconds(1));
+        expired.Should().BeTrue();
+        order.Status.Should().Be(OrderStatus.Cancelled);
     }
 
     [Fact]
@@ -74,7 +87,7 @@ public class OrderAggregateTests
         act.Should().Throw<DomainException>();
 
         order.AddItem(OrderItemType.Course, Guid.NewGuid(), 1, 1000);
-        order.SubmitForPayment();
+        order.SubmitForPayment(TimeSpan.FromMinutes(15));
         order.MarkPaid();
 
         order.Status.Should().Be(OrderStatus.Paid);
@@ -85,7 +98,7 @@ public class OrderAggregateTests
     {
         var order = Order.CreateDraft(Guid.NewGuid(), null, "USD");
         order.AddItem(OrderItemType.Course, Guid.NewGuid(), 1, 1000);
-        order.SubmitForPayment();
+        order.SubmitForPayment(TimeSpan.FromMinutes(15));
         order.MarkPaid();
 
         var act = () => order.Cancel("nope");

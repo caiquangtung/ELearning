@@ -1,3 +1,5 @@
+using ELearning.Domain.Aggregates.OrderAggregate;
+
 namespace ELearning.Application.Features.Orders.Common;
 
 public sealed record OrderItemDto(
@@ -19,6 +21,7 @@ public sealed record OrderDto(
     long TotalCents,
     DateTime CreatedAt,
     DateTime? UpdatedAt,
+    DateTime? CheckoutExpiresAtUtc,
     IReadOnlyList<OrderItemDto> Items);
 
 public sealed record OrderListItemDto(
@@ -27,4 +30,29 @@ public sealed record OrderListItemDto(
     string Currency,
     long TotalCents,
     DateTime CreatedAt);
+
+public static class OrderDtoMapper
+{
+    public static OrderDto ToDto(Order order) =>
+        new(
+            order.Id,
+            order.BuyerUserId,
+            order.OrganizationId,
+            order.Status.ToString(),
+            order.Currency,
+            order.SubtotalCents,
+            order.DiscountCents,
+            order.TotalCents,
+            order.CreatedAt,
+            order.UpdatedAt,
+            order.CheckoutExpiresAtUtc,
+            order.Items.Select(i => new OrderItemDto(
+                    i.ReferenceId,
+                    i.ItemType.ToString(),
+                    i.Quantity,
+                    i.UnitPriceCents,
+                    i.LineTotalCents,
+                    i.Currency))
+                .ToList());
+}
 

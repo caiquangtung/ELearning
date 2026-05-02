@@ -1,6 +1,7 @@
 using ELearning.Application.Features.Orders.Common;
 using ELearning.Core.Abstractions;
 using ELearning.Core.Common;
+using ELearning.Domain.Aggregates.CommerceAggregate;
 using ELearning.Domain.Aggregates.OrderAggregate;
 using ELearning.Domain.Exceptions;
 using MediatR;
@@ -12,6 +13,7 @@ public sealed class CreateOrderCommandHandler(
     ICourseRepository courseRepository,
     ITrainingClassRepository trainingClassRepository,
     ILicensePoolRepository licensePoolRepository,
+    ICheckoutReservationRepository reservationRepository,
     IUnitOfWork unitOfWork)
     : IRequestHandler<CreateOrderCommand, Result<OrderDto>>
 {
@@ -19,35 +21,70 @@ public sealed class CreateOrderCommandHandler(
     {
         try
         {
+            List<(OrderItemType Type, Guid ReferenceId, int Quantity)> parsedItems;
+            try
+            {
+                parsedItems = request.Items
+                    .Select(i => (ItemType: Enum.Parse<OrderItemType>(i.ItemType, ignoreCase: true), i.ReferenceId, i.Quantity))
+                    .ToList();
+            }
+            catch (ArgumentException)
+            {
+                return Result.Failure<OrderDto>(Error.Validation("Order.InvalidItemType", "Invalid ItemType."));
+            }
+
+            var utcNow = DateTime.UtcNow;
+            foreach (var group in parsedItems.Where(i => i.Type == OrderItemType.TrainingClass).GroupBy(i => i.ReferenceId))
+            {
+                var tc = await trainingClassRepository.GetByIdAsync(group.Key, ct);
+                if (tc is null)
+                    throw new DomainException("Training class not found.");
+
+                var qtyThisOrder = group.Sum(i => i.Quantity);
+                var reservedElsewhere = await reservationRepository.SumActiveReservedQuantityAsync(group.Key, utcNow, ct);
+
+                const int enrolledLearners = 0;
+                if (reservedElsewhere + qtyThisOrder > tc.MaxLearners - enrolledLearners)
+                    throw new DomainException("Training class seat capacity exceeded during checkout.");
+            }
+
             var order = Order.CreateDraft(request.BuyerUserId, request.OrganizationId, request.Currency);
 
-            foreach (var i in request.Items)
+            foreach (var i in parsedItems)
             {
-                var type = Enum.Parse<OrderItemType>(i.ItemType, ignoreCase: true);
-                var priced = await GetUnitPriceAsync(type, i.ReferenceId, ct);
+                var priced = await GetUnitPriceAsync(i.Type, i.ReferenceId, ct);
                 if (!priced.Currency.Equals(order.Currency, StringComparison.OrdinalIgnoreCase))
-                    return Result.Failure<OrderDto>(Error.Conflict("Order.CurrencyMismatch", $"Item currency {priced.Currency} does not match order currency {order.Currency}."));
+                    return Result.Failure<OrderDto>(
+                        Error.Conflict(
+                            "Order.CurrencyMismatch",
+                            $"Item currency {priced.Currency} does not match order currency {order.Currency}."));
 
-                order.AddItem(type, i.ReferenceId, i.Quantity, priced.UnitPriceCents);
+                order.AddItem(i.Type, i.ReferenceId, i.Quantity, priced.UnitPriceCents);
             }
 
             if (request.DiscountCents > 0)
                 order.ApplyManualDiscount(request.DiscountCents);
 
-            order.SubmitForPayment();
+            order.SubmitForPayment(CommerceConstants.CheckoutTimeout);
+
+            foreach (var item in order.Items.Where(it => it.ItemType == OrderItemType.TrainingClass))
+            {
+                reservationRepository.Add(
+                    CheckoutReservation.Create(
+                        order.Id,
+                        item.ReferenceId,
+                        item.Quantity,
+                        order.CheckoutExpiresAtUtc!.Value));
+            }
 
             orderRepository.Add(order);
             await unitOfWork.SaveChangesAsync(ct);
 
-            return ToDto(order);
+            return OrderDtoMapper.ToDto(order);
         }
         catch (DomainException ex)
         {
             return Result.Failure<OrderDto>(Error.Conflict("Order", ex.Message));
-        }
-        catch (ArgumentException)
-        {
-            return Result.Failure<OrderDto>(Error.Validation("Order.InvalidItemType", "Invalid ItemType."));
         }
     }
 
@@ -88,26 +125,4 @@ public sealed class CreateOrderCommandHandler(
         if (pool.SeatPriceCents <= 0) throw new DomainException("License pool seat price is not set.");
         return (pool.SeatPriceCents, pool.Currency);
     }
-
-    private static OrderDto ToDto(Order o) =>
-        new(
-            o.Id,
-            o.BuyerUserId,
-            o.OrganizationId,
-            o.Status.ToString(),
-            o.Currency,
-            o.SubtotalCents,
-            o.DiscountCents,
-            o.TotalCents,
-            o.CreatedAt,
-            o.UpdatedAt,
-            o.Items.Select(i => new OrderItemDto(
-                    i.ReferenceId,
-                    i.ItemType.ToString(),
-                    i.Quantity,
-                    i.UnitPriceCents,
-                    i.LineTotalCents,
-                    i.Currency))
-                .ToList());
 }
-

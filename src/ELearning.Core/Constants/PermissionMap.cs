@@ -35,6 +35,7 @@ public static class PermissionMap
                 set.Add(Permissions.Reports.Export);
                 set.Add(Permissions.Commerce.Read);
                 set.Add(Permissions.Commerce.Create);
+                set.Add(Permissions.Commerce.Pay);
                 continue;
             }
 
@@ -51,6 +52,7 @@ public static class PermissionMap
                 set.Add(Permissions.Enrollments.Read);
                 set.Add(Permissions.Reports.Read);
                 set.Add(Permissions.Commerce.Read);
+                set.Add(Permissions.Commerce.Pay);
                 continue;
             }
 
@@ -62,6 +64,7 @@ public static class PermissionMap
                 set.Add(Permissions.Enrollments.Create);
                 set.Add(Permissions.Commerce.Read);
                 set.Add(Permissions.Commerce.Create);
+                set.Add(Permissions.Commerce.Pay);
             }
         }
 

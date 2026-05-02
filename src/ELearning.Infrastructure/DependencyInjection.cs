@@ -1,4 +1,7 @@
+using ELearning.Application.Common.Interfaces;
+using ELearning.Application.Common.Options;
 using ELearning.Core.Abstractions;
+using ELearning.Infrastructure.Commerce;
 using ELearning.Infrastructure.Courses;
 using ELearning.Infrastructure.Identity;
 using ELearning.Infrastructure.Licenses;
@@ -6,6 +9,7 @@ using ELearning.Infrastructure.Orders;
 using ELearning.Infrastructure.TrainingClasses;
 using ELearning.Infrastructure.Zoom;
 using ELearning.Infrastructure.Persistence;
+using ELearning.Infrastructure.Payments;
 using ELearning.Infrastructure.Storage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -32,6 +36,12 @@ public static class DependencyInjection
         services.AddScoped<ITrainingClassRepository, TrainingClassRepository>();
         services.AddScoped<ILicensePoolRepository, LicensePoolRepository>();
         services.AddScoped<IOrderRepository, OrderRepository>();
+        services.AddScoped<IOrderPaymentRepository, OrderPaymentRepository>();
+        services.AddScoped<IInvoiceRepository, InvoiceRepository>();
+        services.AddScoped<ICheckoutReservationRepository, CheckoutReservationRepository>();
+
+        services.Configure<PaymentOptions>(configuration.GetSection(PaymentOptions.SectionName));
+        services.AddSingleton<IPaymentService, NoOpPaymentService>();
 
         services.AddSingleton<IFileStorage, LocalFileStorage>();
         services.AddSingleton<IZoomMeetingService, NoOpZoomMeetingService>();

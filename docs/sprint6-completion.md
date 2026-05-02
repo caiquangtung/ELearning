@@ -1,53 +1,102 @@
 ---
-title: Sprint 6 completion — Commerce (Orders MVP)
-status: in-progress
+title: Sprint 6 completion — Commerce (Orders + checkout)
+status: backend-mvp-done
 ---
 
 ## Goal
 
-Deliver a first **Commerce** slice: orders + order history, with totals calculated and persisted.
+Deliver **Commerce checkout**: priced orders, **15-minute checkout window**, optional **seat holds** on training classes during pending payment, **payment intent + completion**, **invoice** row, and a **payment webhook** hook point.
 
-## Delivered (MVP)
+## Delivered (backend MVP)
 
-### Backend
+### Domain & pricing
 
-- **Domain**: `Order` + `OrderItem` (`src/ELearning.Domain/Aggregates/OrderAggregate/*`)
-  - Draft → PendingPayment flow (`SubmitForPayment`)
-  - Manual discount support
-  - Totals computed as \( \text{subtotal} - \text{discount} \)
-- **Application**:
-  - Create order: `ELearning.Application/Features/Orders/CreateOrder/*`
-  - Get order: `ELearning.Application/Features/Orders/GetOrder/*`
-  - List buyer orders: `ELearning.Application/Features/Orders/ListMyOrders/*`
-- **API** (`api/v1`):
-  - `POST /orders`
-  - `GET /orders/{id}`
-  - `GET /orders/my?buyerUserId={guid}&take=50`
-- **Permissions**
-  - Added `Commerce.Read`, `Commerce.Create`, `Commerce.Pay` (`src/ELearning.Core/Constants/Permissions.cs`)
-  - Role mapping updated (`src/ELearning.Core/Constants/PermissionMap.cs`)
+- **Orders**: `Order` checkout expiry (`CheckoutExpiresAtUtc`), `TryExpireCheckout`, idempotent `MarkPaid` (`src/ELearning.Domain/Aggregates/OrderAggregate/*`).
+- **Catalog prices** (server-side; client `unitPriceCents` on create is ignored):
+  - `Course.PriceCents` / `Course.Currency`
+  - `TrainingClass.PriceCents` / `TrainingClass.Currency`
+  - `LicensePool.SeatPriceCents` / `LicensePool.Currency`
+- **Commerce entities**: `OrderPayment`, `Invoice`, `CheckoutReservation` (`src/ELearning.Domain/Aggregates/CommerceAggregate/*`).
 
-### Persistence / DB
+### Application
 
-- **EF configurations**
-  - `src/ELearning.Infrastructure/Persistence/Configurations/OrderConfiguration.cs`
-  - `src/ELearning.Infrastructure/Persistence/Configurations/OrderItemConfiguration.cs`
-- **Migration**
-  - `20260430163239_Sprint6_CommerceOrders` (`src/ELearning.Infrastructure/Persistence/Migrations/`)
+- Create order (priced server-side + reservations): `Features/Orders/CreateOrder/*`
+- Pay order (NoOp provider completes inline): `Features/Orders/PayOrder/*`
+- Complete payment (shared by pay + webhook): `Features/Orders/CompletePayment/*`
+- Get / list orders: `Features/Orders/GetOrder/*`, `Features/Orders/ListMyOrders/*`
+
+### API (`api/v1`)
+
+| Method | Route | Permission | Notes |
+|--------|-------|------------|--------|
+| `POST` | `/orders` | `Commerce.Create` | Creates pending checkout; sets checkout expiry |
+| `GET` | `/orders/{id}` | `Commerce.Read` | Includes `checkoutExpiresAtUtc` when applicable |
+| `GET` | `/orders/my` | `Commerce.Read` | Buyer history |
+| `POST` | `/orders/{id}/pay` | `Commerce.Pay` | Creates payment intent; **NoOp** verifies + completes immediately |
+| `POST` | `/payments/webhook` | *(anonymous + optional secret)* | Body `{ "transactionId": "..." }`; header `X-Payments-Webhook-Secret` when configured |
+
+### Payments configuration
+
+Bound from `Payments` section (`src/ELearning.Application/Common/Options/PaymentOptions.cs`):
+
+```json
+{
+  "Payments": {
+    "Provider": "NoOp",
+    "WebhookSecret": "dev-payments-webhook-secret-change-me"
+  }
+}
+```
+
+Development defaults live in `src/ELearning.WebApi/appsettings.Development.json`.
+
+### Persistence / migrations
+
+- Orders checkout column + commerce tables migration:
+
+```14:67:src/ELearning.Infrastructure/Persistence/Migrations/20260502080808_Sprint6_CommercePaymentsInvoiceReservation.cs
+            migrationBuilder.AddColumn<DateTime>(
+                name: "checkout_expires_at",
+                table: "orders",
+                type: "timestamp with time zone",
+                nullable: true);
+
+            migrationBuilder.CreateTable(
+                name: "checkout_reservations",
+                // ...
+            );
+
+            migrationBuilder.CreateTable(
+                name: "invoices",
+                // ...
+            );
+
+            migrationBuilder.CreateTable(
+                name: "order_payments",
+                // ...
+            );
+```
+
+- Catalog pricing columns: `20260501094030_Sprint6_PricingFields` (courses / training_classes / license_pools).
+
+### Behaviour notes
+
+- **Checkout timeout**: `CommerceConstants.CheckoutTimeout` = **15 minutes** (`Features/Orders/CommerceConstants.cs`). Expired pending orders are cancelled when `/pay` or the webhook completion runs.
+- **Seat reservation**: For `TrainingClass` line items, rows in `checkout_reservations` reserve quantity against class capacity (enrolled count is **0** in MVP — see handler constant). Reservations are removed when payment completes or checkout expires/cancels.
+- **Provider**: `NoOpPaymentService` implements `IPaymentService` (`Infrastructure/Payments/NoOpPaymentService.cs`). Swap implementation for Stripe/VNPay without changing handlers.
 
 ### Tests
 
-- `tests/ELearning.Domain.UnitTests/OrderAggregateTests.cs`
+- `tests/ELearning.Domain.UnitTests/OrderAggregateTests.cs` (includes expiry behaviour).
 
 ## Deferred / follow-ups
 
-- Catalog-based pricing engine (derive prices from Course/Class/LicensePool price tables)
-- Payment integration (Stripe/VNPay) + webhook handling
-- Invoice generation + storage
-- Reservation/timeout logic for seat holds during checkout
-- Integration tests for Orders API
+- Real **Stripe / VNPay** implementation + signing of webhook payloads (not just shared secret header).
+- **GET invoice by order** (and PDF/storage).
+- **Enrollment** tied to paid orders (capacity then subtracts enrolled learners, not only reservations).
+- **API integration tests** for `/orders`, `/pay`, `/payments/webhook`.
+- **Angular** checkout UI (see sprint plan FE tasks).
 
 ## Validation
 
 - `dotnet test src/ELearning.sln`
-

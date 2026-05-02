@@ -400,17 +400,17 @@ status: in-progress
 **Goal**: Implement order, payment, and pricing engine.
 
 ### Backend Tasks
-- [x] **Order aggregate**: Order, OrderItem (Payment/Invoice deferred)
-- [x] **Feature: Create order** (cart to order) *(MVP: accepts explicit unit prices)*
-- [ ] **Feature: Calculate price** (pricing engine) *(deferred: catalog-based pricing)*
+- [x] **Order aggregate**: Order, OrderItem + checkout expiry
+- [x] **Feature: Create order** (cart → priced checkout server-side)
+- [x] **Feature: Calculate price** *(MVP: prices on Course / TrainingClass / LicensePool + migration `Sprint6_PricingFields`)*
 - [x] **Feature: Apply discount** (manual)
-- [ ] **Feature: Process payment** (Stripe/VNPay integration)
-- [ ] **Feature: Handle payment webhook**
-- [ ] **Feature: Generate invoice**
+- [x] **Feature: Process payment** *(MVP: `IPaymentService` + `NoOpPaymentService`; Stripe/VNPay = provider swap + infra account)*
+- [x] **Feature: Handle payment webhook** *(MVP: `/payments/webhook` + optional shared secret header)*
+- [x] **Feature: Generate invoice** *(MVP: `invoices` row on successful payment)*
 - [x] **Feature: Get order history** *(MVP: list buyer orders)*
-- [ ] Implement reservation pattern (hold seat during checkout)
-- [ ] Implement payment timeout (release seat after 15 min)
-- [x] Write unit tests (domain) *(integration tests deferred)*
+- [x] Implement reservation pattern *(MVP: `checkout_reservations` for TrainingClass line items + capacity check vs other pending checkouts)*
+- [x] Implement payment timeout *(MVP: `checkout_expires_at` + cancel on expiry during pay/webhook completion; 15 minutes)*
+- [x] Write unit tests (domain) *(integration tests still deferred)*
 
 ### Frontend Tasks
 - [ ] Create course purchase page
@@ -421,19 +421,19 @@ status: in-progress
 - [ ] Display invoice
 
 ### Infrastructure
-- [ ] Set up Stripe/VNPay account
-- [ ] Configure payment webhook endpoints
+- [ ] Set up Stripe/VNPay account *(production follow-up)*
+- [x] Configure payment webhook endpoints *(MVP: `/api/v1/payments/webhook` + `Payments:WebhookSecret`)*
 
 ### Database
-- [x] Create migrations for Order, OrderItem tables *(Payment/Invoice deferred)*
+- [x] Create migrations for Order, OrderItem, pricing columns, payments, invoices, reservations *(see `Sprint6_*` migrations)*
 
 **Definition of Done**:
-- Users can purchase courses/classes
-- Pricing is calculated correctly *(MVP: totals computed from request item prices)*
-- Payments are processed *(deferred)*
-- Invoices are generated *(deferred)*
-- Seat reservation works *(deferred)*
-- All tests pass *(unit tests)*
+- Users can purchase courses/classes *(backend API path; Angular checkout still open)*
+- Pricing is calculated correctly *(server reads catalog prices; ignores client-supplied unit prices)*
+- Payments are processed *(NoOp MVP; replace provider for prod gateways)*
+- Invoices are generated *(persisted invoice row)*
+- Seat reservation works *(training-class checkout holds + timeout release)*
+- All tests pass *(unit tests; integration tests optional follow-up)*
 
 ---
 
