@@ -9,6 +9,8 @@ import {
   CourseDetailDto,
   TrainingClassDetailDto,
   LicensePoolDetailDto,
+  PromotionQuoteDto,
+  QuoteCheckoutRequest,
 } from '../../core/api/lms-api.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { GlobalErrorService } from '../../core/error/global-error.service';
@@ -38,18 +40,36 @@ function formatMoney(cents: number, currency: string): string {
         <p-panel header="Summary" styleClass="mb-4">
           <p class="mt-0"><strong>{{ title() }}</strong></p>
           <p class="text-sm text-color-secondary mb-2">{{ typeLabel() }}</p>
-          <p class="mb-0">
-            Quantity: {{ quantity() }} · Unit: {{ formatMoney(unitPriceCents(), currency()) }} ·
-            <strong>Total: {{ formatMoney(lineTotalCents(), currency()) }}</strong>
+          <p class="mb-1">
+            Quantity: {{ quantity() }} · Unit: {{ formatMoney(unitPriceCents(), currency()) }}
           </p>
+          @if (quote(); as q) {
+            <p class="mb-0">
+              Subtotal: {{ formatMoney(q.subtotalCents, q.currency) }} · Discount:
+              <strong>-{{ formatMoney(q.discountCents, q.currency) }}</strong> · Total:
+              <strong>{{ formatMoney(q.totalCents, q.currency) }}</strong>
+            </p>
+          } @else {
+            <p class="mb-0">
+              <strong>Total: {{ formatMoney(lineTotalCents(), currency()) }}</strong>
+            </p>
+          }
         </p-panel>
 
         <div class="flex flex-column gap-3 mb-4" style="max-width: 30rem">
           <label class="text-sm font-medium" for="qty">Quantity</label>
           <input id="qty" pInputText type="number" min="1" [(ngModel)]="qtyModel" (ngModelChange)="onQtyChange($event)" />
 
-          <label class="text-sm font-medium" for="discount">Discount (cents, optional)</label>
-          <input id="discount" pInputText type="number" min="0" [(ngModel)]="discountModel" />
+          <label class="text-sm font-medium" for="coupon">Coupon code (optional)</label>
+          <div class="flex gap-2">
+            <input id="coupon" pInputText [(ngModel)]="couponModel" placeholder="e.g. SPRING20" class="w-full" />
+            <app-ui-button label="Apply" severity="secondary" [text]="true" (clicked)="applyCoupon()" />
+          </div>
+          @if (quote(); as q) {
+            @if (q.appliedCouponCode) {
+              <p class="text-sm text-color-secondary m-0">Applied: <strong>{{ q.appliedCouponCode }}</strong></p>
+            }
+          }
 
           <label class="text-sm font-medium" for="org">Organization ID (optional)</label>
           <input id="org" pInputText [(ngModel)]="orgModel" placeholder="UUID for org-scoped purchase" />
@@ -81,10 +101,11 @@ export class CheckoutComponent implements OnInit {
   readonly currency = signal('USD');
   readonly quantity = signal(1);
   readonly lineTotalCents = signal(0);
+  readonly quote = signal<PromotionQuoteDto | null>(null);
   readonly formatMoney = formatMoney;
 
   qtyModel = 1;
-  discountModel = 0;
+  couponModel = '';
   orgModel = '';
 
   private checkoutType: CheckoutType | null = null;
@@ -134,6 +155,7 @@ export class CheckoutComponent implements OnInit {
     const q = Number.isFinite(n) && n >= 1 ? Math.floor(n) : 1;
     this.quantity.set(q);
     this.recalcLine();
+    this.refreshQuote();
   }
 
   canSubmit(): boolean {
@@ -147,6 +169,7 @@ export class CheckoutComponent implements OnInit {
 
     this.errors.clear();
     this.loading.set(true);
+    this.quote.set(null);
 
     if (type === 'Course') {
       this.api.getCourse(id).subscribe({
@@ -174,6 +197,7 @@ export class CheckoutComponent implements OnInit {
     this.unitPriceCents.set(c.priceCents ?? 0);
     this.recalcLine();
     this.loading.set(false);
+    this.refreshQuote();
   }
 
   private applyTrainingClass(tc: TrainingClassDetailDto): void {
@@ -182,6 +206,7 @@ export class CheckoutComponent implements OnInit {
     this.unitPriceCents.set(tc.priceCents ?? 0);
     this.recalcLine();
     this.loading.set(false);
+    this.refreshQuote();
   }
 
   private applyPool(p: LicensePoolDetailDto): void {
@@ -190,6 +215,7 @@ export class CheckoutComponent implements OnInit {
     this.unitPriceCents.set(p.seatPriceCents ?? 0);
     this.recalcLine();
     this.loading.set(false);
+    this.refreshQuote();
   }
 
   private failLoad(): void {
@@ -201,6 +227,34 @@ export class CheckoutComponent implements OnInit {
     this.lineTotalCents.set(this.unitPriceCents() * this.quantity());
   }
 
+  applyCoupon(): void {
+    this.refreshQuote();
+  }
+
+  private refreshQuote(): void {
+    const user = this.auth.user();
+    const type = this.checkoutType;
+    if (!user || !type || !this.referenceId || this.unitPriceCents() <= 0) return;
+
+    const orgTrim = this.orgModel.trim();
+    const orgId = orgTrim && uuidRe.test(orgTrim) ? orgTrim : null;
+    const coupon = this.couponModel.trim();
+
+    const body: QuoteCheckoutRequest = {
+      buyerUserId: user.id,
+      organizationId: orgId,
+      currency: this.currency(),
+      couponCode: coupon ? coupon : null,
+      items: [{ itemType: type, referenceId: this.referenceId, quantity: this.quantity() }],
+    };
+
+    this.errors.clear();
+    this.api.quoteCheckout(body).subscribe({
+      next: (q) => this.quote.set(q),
+      error: () => this.quote.set(null),
+    });
+  }
+
   submit(): void {
     const user = this.auth.user();
     const type = this.checkoutType;
@@ -208,8 +262,8 @@ export class CheckoutComponent implements OnInit {
 
     const orgTrim = this.orgModel.trim();
     const orgId = orgTrim && uuidRe.test(orgTrim) ? orgTrim : null;
-    const discount = Math.max(0, Number(this.discountModel) || 0);
     const qty = this.quantity();
+    const discount = this.quote()?.discountCents ?? 0;
 
     const body: CreateOrderRequest = {
       buyerUserId: user.id,

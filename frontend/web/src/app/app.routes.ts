@@ -84,6 +84,16 @@ export const routes: Routes = [
         path: 'orders/:id',
         loadComponent: () => import('./features/orders/order-detail.component').then((m) => m.OrderDetailComponent),
       },
+      {
+        path: 'campaigns',
+        loadComponent: () =>
+          import('./features/campaigns/campaign-list.component').then((m) => m.CampaignListComponent),
+      },
+      {
+        path: 'campaigns/:id',
+        loadComponent: () =>
+          import('./features/campaigns/campaign-detail.component').then((m) => m.CampaignDetailComponent),
+      },
     ],
   },
   { path: '**', redirectTo: '' },

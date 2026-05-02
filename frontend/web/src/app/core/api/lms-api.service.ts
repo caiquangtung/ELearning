@@ -184,6 +184,97 @@ export interface InvoiceDto {
   issuedAt: string;
 }
 
+export interface PromotionQuoteItemDto {
+  itemType: string;
+  referenceId: string;
+  quantity: number;
+  unitPriceCents: number;
+  lineTotalCents: number;
+  discountCents: number;
+}
+
+export interface PromotionQuoteDto {
+  currency: string;
+  subtotalCents: number;
+  discountCents: number;
+  totalCents: number;
+  appliedCouponCode: string | null;
+  items: PromotionQuoteItemDto[];
+}
+
+export interface QuoteCheckoutItemRequest {
+  itemType: string;
+  referenceId: string;
+  quantity: number;
+}
+
+export interface QuoteCheckoutRequest {
+  buyerUserId: string;
+  organizationId: string | null;
+  currency: string;
+  items: QuoteCheckoutItemRequest[];
+  couponCode: string | null;
+}
+
+export interface PromotionRuleDto {
+  id: string;
+  ruleType: string;
+  percentOff: number;
+  appliesToItemTypes: string[];
+}
+
+export interface CouponDto {
+  id: string;
+  campaignId: string;
+  code: string;
+  status: string;
+  expiresUtc: string | null;
+  perBuyerMaxRedemptions: number;
+}
+
+export interface CampaignDto {
+  id: string;
+  name: string;
+  scope: string;
+  organizationId: string | null;
+  status: string;
+  startUtc: string;
+  endUtc: string | null;
+  rules: PromotionRuleDto[];
+  coupons: CouponDto[];
+}
+
+export interface CampaignListItemDto {
+  id: string;
+  name: string;
+  scope: string;
+  organizationId: string | null;
+  status: string;
+  startUtc: string;
+  endUtc: string | null;
+}
+
+export interface CreateCampaignRequest {
+  name: string;
+  scope: string;
+  organizationId: string | null;
+  startUtc: string;
+  endUtc: string | null;
+}
+
+export interface AddItemPercentOffRuleRequest {
+  campaignId: string; // ignored by server; provided for type symmetry
+  percentOff: number;
+  appliesToItemTypes: string[];
+}
+
+export interface CreateCouponRequest {
+  campaignId: string; // ignored by server; provided for type symmetry
+  code: string;
+  expiresUtc: string | null;
+  perBuyerMaxRedemptions: number;
+}
+
 export interface CreateOrderItemRequest {
   itemType: string;
   referenceId: string;
@@ -354,5 +445,31 @@ export class LmsApiService {
 
   getOrderInvoice(orderId: string): Observable<InvoiceDto> {
     return this.http.get<InvoiceDto>(`${this.base}/orders/${orderId}/invoice`);
+  }
+
+  quoteCheckout(body: QuoteCheckoutRequest): Observable<PromotionQuoteDto> {
+    return this.http.post<PromotionQuoteDto>(`${this.base}/checkout/quote`, body);
+  }
+
+  listCampaigns(organizationId: string | null, includeGlobal = true, take = 50): Observable<CampaignListItemDto[]> {
+    let params = new HttpParams().set('includeGlobal', String(includeGlobal)).set('take', String(take));
+    if (organizationId) params = params.set('organizationId', organizationId);
+    return this.http.get<CampaignListItemDto[]>(`${this.base}/campaigns`, { params });
+  }
+
+  getCampaign(id: string): Observable<CampaignDto> {
+    return this.http.get<CampaignDto>(`${this.base}/campaigns/${id}`);
+  }
+
+  createCampaign(body: CreateCampaignRequest): Observable<CampaignDto> {
+    return this.http.post<CampaignDto>(`${this.base}/campaigns`, body);
+  }
+
+  addCampaignRule(campaignId: string, body: Omit<AddItemPercentOffRuleRequest, 'campaignId'>): Observable<CampaignDto> {
+    return this.http.post<CampaignDto>(`${this.base}/campaigns/${campaignId}/rules`, body);
+  }
+
+  createCampaignCoupon(campaignId: string, body: Omit<CreateCouponRequest, 'campaignId'>): Observable<CampaignDto> {
+    return this.http.post<CampaignDto>(`${this.base}/campaigns/${campaignId}/coupons`, body);
   }
 }
