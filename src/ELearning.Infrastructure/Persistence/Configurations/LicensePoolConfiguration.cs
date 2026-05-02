@@ -16,6 +16,8 @@ public sealed class LicensePoolConfiguration : IEntityTypeConfiguration<LicenseP
         builder.Property(p => p.OrganizationId).HasColumnName("organization_id").IsRequired();
         builder.Property(p => p.Name).HasColumnName("name").HasMaxLength(200).IsRequired();
         builder.Property(p => p.TotalSeats).HasColumnName("total_seats").IsRequired();
+        builder.Property(p => p.SeatPriceCents).HasColumnName("seat_price_cents").IsRequired();
+        builder.Property(p => p.Currency).HasColumnName("currency").HasMaxLength(3).IsRequired();
         builder.Property(p => p.ExpiresAt).HasColumnName("expires_at");
 
         builder.Property(p => p.CreatedAt).HasColumnName("created_at").IsRequired();

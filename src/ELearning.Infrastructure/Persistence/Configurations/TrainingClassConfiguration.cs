@@ -23,6 +23,9 @@ public class TrainingClassConfiguration : IEntityTypeConfiguration<TrainingClass
 
         builder.Property(x => x.MaxLearners).HasColumnName("max_learners").IsRequired();
 
+        builder.Property(x => x.PriceCents).HasColumnName("price_cents").IsRequired();
+        builder.Property(x => x.Currency).HasColumnName("currency").HasMaxLength(3).IsRequired();
+
         builder.Property(x => x.Status)
             .HasColumnName("status")
             .HasConversion<string>()

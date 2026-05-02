@@ -10,6 +10,8 @@ public sealed class LicensePool : AuditableAggregateRoot
     public Guid OrganizationId { get; private set; }
     public string Name { get; private set; } = default!;
     public int TotalSeats { get; private set; }
+    public long SeatPriceCents { get; private set; }
+    public string Currency { get; private set; } = "USD";
 
     /// <summary>Optional business constraint; null means no expiry.</summary>
     public DateTime? ExpiresAt { get; private set; }
@@ -31,6 +33,8 @@ public sealed class LicensePool : AuditableAggregateRoot
             OrganizationId = organizationId,
             Name = name.Trim(),
             TotalSeats = totalSeats,
+            SeatPriceCents = 0,
+            Currency = "USD",
             ExpiresAt = expiresAt,
             CreatedAt = DateTime.UtcNow
         };
@@ -51,6 +55,16 @@ public sealed class LicensePool : AuditableAggregateRoot
         if (totalSeats <= 0) throw new DomainException("Total seats must be greater than 0.");
         if (totalSeats < ActiveSeatCount) throw new DomainException("Total seats cannot be less than assigned seats.");
         TotalSeats = totalSeats;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void SetSeatPrice(long seatPriceCents, string currency)
+    {
+        if (seatPriceCents < 0) throw new DomainException("Seat price must be non-negative.");
+        if (string.IsNullOrWhiteSpace(currency)) throw new DomainException("Currency is required.");
+
+        SeatPriceCents = seatPriceCents;
+        Currency = currency.Trim().ToUpperInvariant();
         UpdatedAt = DateTime.UtcNow;
     }
 

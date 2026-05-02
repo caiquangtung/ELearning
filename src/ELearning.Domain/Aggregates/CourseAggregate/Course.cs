@@ -10,6 +10,8 @@ public sealed class Course : SoftDeletableAggregateRoot
     public string Title { get; private set; } = default!;
     public string? Description { get; private set; }
     public CourseStatus Status { get; private set; }
+    public long PriceCents { get; private set; }
+    public string Currency { get; private set; } = "USD";
 
     public List<Section> Sections { get; private set; } = [];
 
@@ -24,6 +26,8 @@ public sealed class Course : SoftDeletableAggregateRoot
             Title = title.Trim(),
             Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim(),
             Status = CourseStatus.Draft,
+            PriceCents = 0,
+            Currency = "USD",
             CreatedAt = DateTime.UtcNow
         };
     }
@@ -61,6 +65,16 @@ public sealed class Course : SoftDeletableAggregateRoot
     {
         if (Status == CourseStatus.Draft) return;
         Status = CourseStatus.Draft;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void SetPrice(long priceCents, string currency)
+    {
+        if (priceCents < 0) throw new DomainException("Price must be non-negative.");
+        if (string.IsNullOrWhiteSpace(currency)) throw new DomainException("Currency is required.");
+
+        PriceCents = priceCents;
+        Currency = currency.Trim().ToUpperInvariant();
         UpdatedAt = DateTime.UtcNow;
     }
 }
