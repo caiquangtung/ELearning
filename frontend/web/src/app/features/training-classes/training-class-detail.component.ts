@@ -54,7 +54,17 @@ function toIso(local: string): string {
           <p-tag [value]="t.status" severity="info" />
           <span>Max learners: {{ t.maxLearners }}</span>
         </p>
-        <p-button label="View course" icon="pi pi-book" [text]="true" [routerLink]="['/courses', t.courseId]" styleClass="mb-3 p-0" />
+        <div class="flex flex-wrap gap-2 align-items-center mb-3">
+          <p-button label="View course" icon="pi pi-book" [text]="true" [routerLink]="['/courses', t.courseId]" styleClass="p-0" />
+          @if (canCheckout(t)) {
+            <p-button
+              label="Enroll / checkout"
+              icon="pi pi-shopping-cart"
+              [routerLink]="['/checkout']"
+              [queryParams]="{ type: 'TrainingClass', ref: t.id, qty: 1 }"
+            />
+          }
+        </div>
         @if (canManageSessions()) {
           <p-panel header="Schedule / update session" [toggleable]="true" styleClass="mb-3">
             <div class="flex flex-column gap-3" style="max-width: 32rem">
@@ -189,6 +199,10 @@ export class TrainingClassDetailComponent implements OnInit {
   canManageSessions(): boolean {
     const roles = this.auth.user()?.roles ?? [];
     return roles.some((r) => r === 'Admin' || r === 'OrgAdmin' || r === 'Instructor');
+  }
+
+  canCheckout(t: TrainingClassDetailDto): boolean {
+    return t.priceCents > 0 && t.status !== 'Cancelled';
   }
 
   ngOnInit(): void {

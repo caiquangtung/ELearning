@@ -27,6 +27,8 @@ public sealed class CreateLicensePoolCommandHandler(
                 pool.TotalSeats,
                 pool.ActiveSeatCount,
                 pool.AvailableSeats,
+                pool.SeatPriceCents,
+                pool.Currency,
                 pool.ExpiresAt,
                 pool.CreatedAt,
                 []);

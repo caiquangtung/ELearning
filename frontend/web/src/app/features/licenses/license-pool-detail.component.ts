@@ -1,7 +1,8 @@
 import { DatePipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { Button } from 'primeng/button';
 import { InputText } from 'primeng/inputtext';
 import { Panel } from 'primeng/panel';
 import { Tag } from 'primeng/tag';
@@ -21,6 +22,8 @@ import {
   imports: [
     DatePipe,
     FormsModule,
+    RouterLink,
+    Button,
     InputText,
     Panel,
     Tag,
@@ -35,6 +38,14 @@ import {
       <app-page-shell title="{{ p.name }}" [subtitle]="'Pool: ' + p.id">
         <ng-container pageActions>
           <app-ui-button label="Refresh" icon="pi pi-refresh" severity="secondary" [text]="true" (clicked)="reload()" />
+          @if (p.seatPriceCents > 0) {
+            <p-button
+              label="Buy seats"
+              icon="pi pi-shopping-cart"
+              [routerLink]="['/checkout']"
+              [queryParams]="{ type: 'LicensePool', ref: p.id, qty: 1 }"
+            />
+          }
         </ng-container>
 
         <div class="flex gap-3 flex-wrap mb-3">

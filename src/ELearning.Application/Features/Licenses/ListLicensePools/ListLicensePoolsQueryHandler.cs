@@ -20,6 +20,8 @@ public sealed class ListLicensePoolsQueryHandler(ILicensePoolRepository licenseP
                 p.TotalSeats,
                 p.ActiveSeatCount,
                 p.AvailableSeats,
+                p.SeatPriceCents,
+                p.Currency,
                 p.ExpiresAt,
                 p.CreatedAt))
             .ToList();

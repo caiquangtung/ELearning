@@ -40,6 +40,8 @@ public sealed class GetTrainingClassQueryHandler(ITrainingClassRepository traini
             tc.CourseId,
             tc.Title,
             tc.MaxLearners,
+            tc.PriceCents,
+            tc.Currency,
             tc.Status.ToString(),
             tc.CreatedAt,
             tc.UpdatedAt,

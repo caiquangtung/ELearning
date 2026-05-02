@@ -7,6 +7,8 @@ public sealed record LicensePoolListItemDto(
     int TotalSeats,
     int ActiveSeats,
     int AvailableSeats,
+    long SeatPriceCents,
+    string Currency,
     DateTime? ExpiresAt,
     DateTime CreatedAt);
 
@@ -22,6 +24,8 @@ public sealed record LicensePoolDetailDto(
     int TotalSeats,
     int ActiveSeats,
     int AvailableSeats,
+    long SeatPriceCents,
+    string Currency,
     DateTime? ExpiresAt,
     DateTime CreatedAt,
     IReadOnlyList<LicenseAssignmentDto> Assignments);

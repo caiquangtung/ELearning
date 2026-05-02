@@ -10,6 +10,8 @@ public sealed class TrainingClass : AggregateRoot
     public Guid CourseId { get; private set; }
     public string Title { get; private set; } = default!;
     public int MaxLearners { get; private set; }
+    public long PriceCents { get; private set; }
+    public string Currency { get; private set; } = "USD";
     public TrainingClassStatus Status { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public DateTime? UpdatedAt { get; private set; }
@@ -33,6 +35,8 @@ public sealed class TrainingClass : AggregateRoot
             CourseId = courseId,
             Title = title.Trim(),
             MaxLearners = maxLearners,
+            PriceCents = 0,
+            Currency = "USD",
             Status = TrainingClassStatus.Draft,
             CreatedAt = DateTime.UtcNow
         };
@@ -106,6 +110,16 @@ public sealed class TrainingClass : AggregateRoot
     {
         if (Status == TrainingClassStatus.Cancelled) return;
         Status = TrainingClassStatus.Cancelled;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void SetPrice(long priceCents, string currency)
+    {
+        if (priceCents < 0) throw new DomainException("Price must be non-negative.");
+        if (string.IsNullOrWhiteSpace(currency)) throw new DomainException("Currency is required.");
+
+        PriceCents = priceCents;
+        Currency = currency.Trim().ToUpperInvariant();
         UpdatedAt = DateTime.UtcNow;
     }
 }

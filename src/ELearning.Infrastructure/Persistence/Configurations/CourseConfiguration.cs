@@ -28,6 +28,9 @@ public class CourseConfiguration : IEntityTypeConfiguration<Course>
             .HasMaxLength(32)
             .IsRequired();
 
+        builder.Property(c => c.PriceCents).HasColumnName("price_cents").IsRequired();
+        builder.Property(c => c.Currency).HasColumnName("currency").HasMaxLength(3).IsRequired();
+
         builder.Property(c => c.CreatedAt).HasColumnName("created_at").IsRequired();
         builder.Property(c => c.UpdatedAt).HasColumnName("updated_at");
 

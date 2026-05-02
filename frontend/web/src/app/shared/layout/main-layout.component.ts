@@ -39,6 +39,7 @@ export class MainLayoutComponent {
     { label: 'Organizations', icon: 'pi pi-building', routerLink: '/organizations' },
     { label: 'Courses', icon: 'pi pi-book', routerLink: '/courses' },
     { label: 'Classes', icon: 'pi pi-calendar', routerLink: '/training-classes' },
+    { label: 'My orders', icon: 'pi pi-shopping-bag', routerLink: '/orders' },
   ];
 
   signOut(): void {

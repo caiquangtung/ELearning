@@ -72,6 +72,18 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/licenses/license-pool-detail.component').then((m) => m.LicensePoolDetailComponent),
       },
+      {
+        path: 'checkout',
+        loadComponent: () => import('./features/checkout/checkout.component').then((m) => m.CheckoutComponent),
+      },
+      {
+        path: 'orders',
+        loadComponent: () => import('./features/orders/order-list.component').then((m) => m.OrderListComponent),
+      },
+      {
+        path: 'orders/:id',
+        loadComponent: () => import('./features/orders/order-detail.component').then((m) => m.OrderDetailComponent),
+      },
     ],
   },
   { path: '**', redirectTo: '' },
