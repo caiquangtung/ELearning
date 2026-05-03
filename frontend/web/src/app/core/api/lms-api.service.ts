@@ -254,6 +254,14 @@ export interface CampaignListItemDto {
   endUtc: string | null;
 }
 
+export interface CampaignAnalyticsDto {
+  campaignId: string;
+  totalRedemptions: number;
+  uniqueBuyers: number;
+  totalDiscountCents: number;
+  lastRedeemedAtUtc: string | null;
+}
+
 export interface CreateCampaignRequest {
   name: string;
   scope: string;
@@ -273,6 +281,20 @@ export interface CreateCouponRequest {
   code: string;
   expiresUtc: string | null;
   perBuyerMaxRedemptions: number;
+}
+
+export interface PreviewCampaignQuoteItemRequest {
+  itemType: string;
+  referenceId: string;
+  quantity: number;
+}
+
+export interface PreviewCampaignQuoteRequest {
+  buyerUserId: string;
+  organizationId: string | null;
+  currency: string;
+  items: PreviewCampaignQuoteItemRequest[];
+  couponCode: string | null;
 }
 
 export interface CreateOrderItemRequest {
@@ -461,6 +483,10 @@ export class LmsApiService {
     return this.http.get<CampaignDto>(`${this.base}/campaigns/${id}`);
   }
 
+  getCampaignAnalytics(id: string): Observable<CampaignAnalyticsDto> {
+    return this.http.get<CampaignAnalyticsDto>(`${this.base}/campaigns/${id}/analytics`);
+  }
+
   createCampaign(body: CreateCampaignRequest): Observable<CampaignDto> {
     return this.http.post<CampaignDto>(`${this.base}/campaigns`, body);
   }
@@ -471,5 +497,9 @@ export class LmsApiService {
 
   createCampaignCoupon(campaignId: string, body: Omit<CreateCouponRequest, 'campaignId'>): Observable<CampaignDto> {
     return this.http.post<CampaignDto>(`${this.base}/campaigns/${campaignId}/coupons`, body);
+  }
+
+  previewCampaign(campaignId: string, body: PreviewCampaignQuoteRequest): Observable<PromotionQuoteDto> {
+    return this.http.post<PromotionQuoteDto>(`${this.base}/campaigns/${campaignId}/preview`, body);
   }
 }
