@@ -17,6 +17,7 @@ public sealed class Order : AuditableAggregateRoot
     public long SubtotalCents { get; private set; }
     public long DiscountCents { get; private set; }
     public long TotalCents { get; private set; }
+    public string? AppliedCouponCode { get; private set; }
 
     /// <summary>When status is PendingPayment, checkout must complete before this instant (UTC).</summary>
     public DateTime? CheckoutExpiresAtUtc { get; private set; }
@@ -58,6 +59,12 @@ public sealed class Order : AuditableAggregateRoot
 
         DiscountCents = discountCents;
         RecalculateTotals();
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void SetAppliedCouponCode(string? couponCode)
+    {
+        AppliedCouponCode = string.IsNullOrWhiteSpace(couponCode) ? null : couponCode.Trim();
         UpdatedAt = DateTime.UtcNow;
     }
 

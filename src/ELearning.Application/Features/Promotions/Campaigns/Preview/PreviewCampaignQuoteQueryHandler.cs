@@ -2,21 +2,22 @@ using ELearning.Application.Features.Promotions.Common;
 using ELearning.Core.Abstractions;
 using ELearning.Core.Common;
 using ELearning.Domain.Aggregates.OrderAggregate;
+using ELearning.Domain.Aggregates.PromotionAggregate;
 using ELearning.Domain.Exceptions;
 using MediatR;
 
-namespace ELearning.Application.Features.Promotions.QuoteCheckout;
+namespace ELearning.Application.Features.Promotions.Campaigns.Preview;
 
-public sealed class QuoteCheckoutQueryHandler(
-    ICouponRepository couponRepository,
-    ICampaignRepository campaignRepository,
-    ICouponRedemptionRepository redemptionRepository,
+public sealed class PreviewCampaignQuoteQueryHandler(
+    ICampaignRepository campaigns,
+    ICouponRepository coupons,
+    ICouponRedemptionRepository redemptions,
     ICourseRepository courseRepository,
     ITrainingClassRepository trainingClassRepository,
     ILicensePoolRepository licensePoolRepository)
-    : IRequestHandler<QuoteCheckoutQuery, Result<PromotionQuoteDto>>
+    : IRequestHandler<PreviewCampaignQuoteQuery, Result<PromotionQuoteDto>>
 {
-    public async Task<Result<PromotionQuoteDto>> Handle(QuoteCheckoutQuery request, CancellationToken ct)
+    public async Task<Result<PromotionQuoteDto>> Handle(PreviewCampaignQuoteQuery request, CancellationToken ct)
     {
         try
         {
@@ -28,6 +29,10 @@ public sealed class QuoteCheckoutQueryHandler(
                 return Result.Failure<PromotionQuoteDto>(Error.Validation("Items", "At least one item is required."));
 
             var currency = request.Currency.Trim().ToUpperInvariant();
+            var campaign = await campaigns.GetByIdWithRulesAndCouponsAsync(request.CampaignId, ct);
+            if (campaign is null)
+                return Result.Failure<PromotionQuoteDto>(Error.NotFound(nameof(Campaign), request.CampaignId));
+
             var items = new List<PromotionQuoteItemDto>(request.Items.Count);
             long subtotal = 0;
             var quantityLines = new List<(OrderItemType ItemType, int Quantity, long UnitPriceCents)>();
@@ -35,13 +40,6 @@ public sealed class QuoteCheckoutQueryHandler(
 
             foreach (var raw in request.Items)
             {
-                if (string.IsNullOrWhiteSpace(raw.ItemType))
-                    return Result.Failure<PromotionQuoteDto>(Error.Validation("ItemType", "ItemType is required."));
-                if (raw.ReferenceId == Guid.Empty)
-                    return Result.Failure<PromotionQuoteDto>(Error.Validation("ReferenceId", "ReferenceId is required."));
-                if (raw.Quantity <= 0)
-                    return Result.Failure<PromotionQuoteDto>(Error.Validation("Quantity", "Quantity must be greater than 0."));
-
                 if (!Enum.TryParse<OrderItemType>(raw.ItemType.Trim(), ignoreCase: true, out var itemType))
                     return Result.Failure<PromotionQuoteDto>(Error.Validation("ItemType", "Invalid ItemType."));
 
@@ -59,20 +57,58 @@ public sealed class QuoteCheckoutQueryHandler(
                 items.Add(new PromotionQuoteItemDto(raw.ItemType.Trim(), raw.ReferenceId, raw.Quantity, priced.UnitPriceCents, lineTotal, 0));
             }
 
-            var calculator = new PromotionDiscountCalculator(couponRepository, campaignRepository, redemptionRepository);
-            var (discount, appliedCouponCode) = await calculator.CalculateDiscountAsync(
-                request.BuyerUserId,
-                request.OrganizationId,
-                currency,
-                pricedLines,
-                request.CouponCode,
-                isB2B: request.OrganizationId is not null,
-                quantityLines,
-                ct);
+            // Preview stacking: include ONLY the selected campaign + optional coupon campaign.
+            Coupon? coupon = null;
+            Campaign? couponCampaign = null;
+            if (!string.IsNullOrWhiteSpace(request.CouponCode))
+            {
+                var normalized = Coupon.NormalizeCode(request.CouponCode);
+                coupon = await coupons.GetByCodeNormalizedAsync(normalized, ct);
+                if (coupon is null) throw new DomainException("Invalid coupon code.");
+                if (!coupon.IsValidAt(DateTime.UtcNow)) throw new DomainException("Coupon is expired or disabled.");
 
-            // Re-allocate discount across items (MVP: proportional by line total).
-            discount = Math.Clamp(discount, 0, subtotal);
+                var count = await redemptions.CountForBuyerAsync(coupon.Id, request.BuyerUserId, ct);
+                if (count >= coupon.PerBuyerMaxRedemptions)
+                    throw new DomainException("Coupon redemption limit reached for this buyer.");
+
+                couponCampaign = await campaigns.GetByIdWithRulesAndCouponsAsync(coupon.CampaignId, ct)
+                    ?? throw new DomainException("Campaign not found for coupon.");
+            }
+
+            var all = couponCampaign is null
+                ? new List<Campaign> { campaign }
+                : new List<Campaign> { campaign, couponCampaign }.DistinctBy(c => c.Id).ToList();
+
+            long campaignDiscount = 0;
+            foreach (var line in pricedLines)
+            {
+                var bestPercent = 0;
+                foreach (var c in all)
+                {
+                    foreach (var r in c.Rules.Where(r => r.RuleType == PromotionRuleType.ItemPercentOff))
+                    {
+                        if (!r.AppliesToItemTypes.Contains(line.ItemType)) continue;
+                        bestPercent = Math.Max(bestPercent, r.PercentOff);
+                    }
+                }
+                if (bestPercent > 0)
+                    campaignDiscount += (long)Math.Floor(line.LineTotalCents * (bestPercent / 100.0));
+            }
+
+            long volumeDiscount = 0;
+            if (request.OrganizationId is not null)
+            {
+                foreach (var q in quantityLines.Where(x => x.ItemType == OrderItemType.LicensePool))
+                {
+                    var tierPercent = q.Quantity >= 50 ? 10 : q.Quantity >= 20 ? 5 : 0;
+                    if (tierPercent <= 0) continue;
+                    volumeDiscount += (long)Math.Floor((q.UnitPriceCents * q.Quantity) * (tierPercent / 100.0));
+                }
+            }
+
+            var discount = Math.Clamp(campaignDiscount + volumeDiscount, 0, subtotal);
             var total = Math.Max(0, subtotal - discount);
+
             if (discount > 0 && subtotal > 0)
             {
                 long allocated = 0;
@@ -92,12 +128,12 @@ public sealed class QuoteCheckoutQueryHandler(
                 subtotal,
                 discount,
                 total,
-                appliedCouponCode,
+                coupon?.Code,
                 items));
         }
         catch (DomainException ex)
         {
-            return Result.Failure<PromotionQuoteDto>(Error.Conflict("Promotion", ex.Message));
+            return Result.Failure<PromotionQuoteDto>(Error.Conflict("CampaignPreview", ex.Message));
         }
     }
 

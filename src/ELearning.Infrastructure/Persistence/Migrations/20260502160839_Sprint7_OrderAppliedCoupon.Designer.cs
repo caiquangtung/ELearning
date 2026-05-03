@@ -3,6 +3,7 @@ using System;
 using ELearning.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ELearning.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260502160839_Sprint7_OrderAppliedCoupon")]
+    partial class Sprint7_OrderAppliedCoupon
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -805,38 +808,6 @@ namespace ELearning.Infrastructure.Persistence.Migrations
                     b.HasIndex("CouponId", "BuyerUserId");
 
                     b.ToTable("coupon_redemptions", (string)null);
-                });
-
-            modelBuilder.Entity("ELearning.Domain.Aggregates.PromotionAggregate.CouponUsageReservation", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<Guid>("BuyerUserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("buyer_user_id");
-
-                    b.Property<Guid>("CouponId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("coupon_id");
-
-                    b.Property<DateTime>("ExpiresAtUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("expires_at_utc");
-
-                    b.Property<Guid>("OrderId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("order_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OrderId");
-
-                    b.HasIndex("CouponId", "BuyerUserId");
-
-                    b.ToTable("coupon_usage_reservations", (string)null);
                 });
 
             modelBuilder.Entity("ELearning.Domain.Aggregates.PromotionAggregate.PromotionRule", b =>

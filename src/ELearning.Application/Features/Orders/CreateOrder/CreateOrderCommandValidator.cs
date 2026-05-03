@@ -11,6 +11,7 @@ public sealed class CreateOrderCommandValidator : AbstractValidator<CreateOrderC
         RuleFor(x => x.Items).NotNull().NotEmpty();
         RuleForEach(x => x.Items).SetValidator(new CreateOrderItemValidator());
         RuleFor(x => x.DiscountCents).GreaterThanOrEqualTo(0);
+        RuleFor(x => x.CouponCode).MaximumLength(64);
     }
 }
 

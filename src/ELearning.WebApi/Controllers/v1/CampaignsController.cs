@@ -1,12 +1,15 @@
 using Asp.Versioning;
 using ELearning.Application.Features.Promotions.Campaigns.AddRule;
+using ELearning.Application.Features.Promotions.Campaigns.Analytics;
 using ELearning.Application.Features.Promotions.Campaigns.CreateCampaign;
 using ELearning.Application.Features.Promotions.Campaigns.CreateCoupon;
 using ELearning.Application.Features.Promotions.Campaigns.GetCampaign;
 using ELearning.Application.Features.Promotions.Campaigns.ListCampaigns;
+using ELearning.Application.Features.Promotions.Campaigns.Preview;
 using ELearning.Core.Common;
 using ELearning.Core.Constants;
 using ELearning.WebApi.Authorization;
+using ELearning.WebApi.Contracts.v1;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -34,6 +37,32 @@ public sealed class CampaignsController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> Get(Guid id, CancellationToken ct)
     {
         var result = await mediator.Send(new GetCampaignQuery(id), ct);
+        return result.IsSuccess ? Ok(result.Value) : ProblemFrom(result.Error);
+    }
+
+    [HttpGet("{id:guid}/analytics")]
+    [HasPermission(Permissions.Admin.Access)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> Analytics(Guid id, CancellationToken ct)
+    {
+        var result = await mediator.Send(new GetCampaignAnalyticsQuery(id), ct);
+        return result.IsSuccess ? Ok(result.Value) : ProblemFrom(result.Error);
+    }
+
+    [HttpPost("{id:guid}/preview")]
+    [HasPermission(Permissions.Admin.Access)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> Preview(Guid id, [FromBody] PreviewCampaignQuoteRequest body, CancellationToken ct)
+    {
+        var q = new PreviewCampaignQuoteQuery(
+            id,
+            body.BuyerUserId,
+            body.OrganizationId,
+            body.Currency,
+            body.Items.Select(i => new PreviewCampaignQuoteItem(i.ItemType, i.ReferenceId, i.Quantity)).ToList(),
+            body.CouponCode);
+
+        var result = await mediator.Send(q, ct);
         return result.IsSuccess ? Ok(result.Value) : ProblemFrom(result.Error);
     }
 

@@ -28,6 +28,7 @@ public class ApplicationDbContext(
     public DbSet<Coupon> Coupons => Set<Coupon>();
     public DbSet<PromotionRule> PromotionRules => Set<PromotionRule>();
     public DbSet<CouponRedemption> CouponRedemptions => Set<CouponRedemption>();
+    public DbSet<CouponUsageReservation> CouponUsageReservations => Set<CouponUsageReservation>();
     public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
     {
         ApplyAuditInfo();

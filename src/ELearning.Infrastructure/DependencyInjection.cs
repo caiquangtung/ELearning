@@ -43,6 +43,7 @@ public static class DependencyInjection
         services.AddScoped<ICampaignRepository, CampaignRepository>();
         services.AddScoped<ICouponRepository, CouponRepository>();
         services.AddScoped<ICouponRedemptionRepository, CouponRedemptionRepository>();
+        services.AddScoped<ICouponUsageReservationRepository, CouponUsageReservationRepository>();
 
         services.Configure<PaymentOptions>(configuration.GetSection(PaymentOptions.SectionName));
         services.AddSingleton<IPaymentService, NoOpPaymentService>();
