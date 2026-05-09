@@ -57,7 +57,8 @@ public sealed class OrdersController(IMediator mediator) : ControllerBase
             body.OrganizationId,
             body.Currency,
             body.Items.Select(i => new CreateOrderItem(i.ItemType, i.ReferenceId, i.Quantity, i.UnitPriceCents)).ToList(),
-            body.DiscountCents);
+            body.DiscountCents,
+            body.CouponCode);
 
         var result = await mediator.Send(cmd, ct);
         return result.IsSuccess

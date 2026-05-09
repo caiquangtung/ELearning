@@ -40,7 +40,13 @@ export class MainLayoutComponent {
     { label: 'Courses', icon: 'pi pi-book', routerLink: '/courses' },
     { label: 'Classes', icon: 'pi pi-calendar', routerLink: '/training-classes' },
     { label: 'My orders', icon: 'pi pi-shopping-bag', routerLink: '/orders' },
+    { label: 'Campaigns', icon: 'pi pi-ticket', routerLink: '/campaigns', visible: this.isAdmin() },
   ];
+
+  private isAdmin(): boolean {
+    const roles = this.auth.user()?.roles ?? [];
+    return roles.some((r) => r === 'Admin');
+  }
 
   signOut(): void {
     this.auth.logout();

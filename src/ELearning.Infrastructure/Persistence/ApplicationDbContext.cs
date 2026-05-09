@@ -3,6 +3,7 @@ using ELearning.Domain.Aggregates.CommerceAggregate;
 using ELearning.Domain.Aggregates.CourseAggregate;
 using ELearning.Domain.Aggregates.LicensePoolAggregate;
 using ELearning.Domain.Aggregates.OrderAggregate;
+using ELearning.Domain.Aggregates.PromotionAggregate;
 using ELearning.Domain.Aggregates.TrainingClassAggregate;
 using ELearning.Domain.Aggregates.UserAggregate;
 using ELearning.Domain.Shared;
@@ -23,6 +24,11 @@ public class ApplicationDbContext(
     public DbSet<OrderPayment> OrderPayments => Set<OrderPayment>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
     public DbSet<CheckoutReservation> CheckoutReservations => Set<CheckoutReservation>();
+    public DbSet<Campaign> Campaigns => Set<Campaign>();
+    public DbSet<Coupon> Coupons => Set<Coupon>();
+    public DbSet<PromotionRule> PromotionRules => Set<PromotionRule>();
+    public DbSet<CouponRedemption> CouponRedemptions => Set<CouponRedemption>();
+    public DbSet<CouponUsageReservation> CouponUsageReservations => Set<CouponUsageReservation>();
     public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
     {
         ApplyAuditInfo();

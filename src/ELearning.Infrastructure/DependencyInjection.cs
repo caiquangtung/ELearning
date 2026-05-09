@@ -6,6 +6,7 @@ using ELearning.Infrastructure.Courses;
 using ELearning.Infrastructure.Identity;
 using ELearning.Infrastructure.Licenses;
 using ELearning.Infrastructure.Orders;
+using ELearning.Infrastructure.Promotions;
 using ELearning.Infrastructure.TrainingClasses;
 using ELearning.Infrastructure.Zoom;
 using ELearning.Infrastructure.Persistence;
@@ -39,6 +40,10 @@ public static class DependencyInjection
         services.AddScoped<IOrderPaymentRepository, OrderPaymentRepository>();
         services.AddScoped<IInvoiceRepository, InvoiceRepository>();
         services.AddScoped<ICheckoutReservationRepository, CheckoutReservationRepository>();
+        services.AddScoped<ICampaignRepository, CampaignRepository>();
+        services.AddScoped<ICouponRepository, CouponRepository>();
+        services.AddScoped<ICouponRedemptionRepository, CouponRedemptionRepository>();
+        services.AddScoped<ICouponUsageReservationRepository, CouponUsageReservationRepository>();
 
         services.Configure<PaymentOptions>(configuration.GetSection(PaymentOptions.SectionName));
         services.AddSingleton<IPaymentService, NoOpPaymentService>();

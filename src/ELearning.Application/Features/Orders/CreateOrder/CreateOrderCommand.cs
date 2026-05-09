@@ -9,7 +9,8 @@ public sealed record CreateOrderCommand(
     Guid? OrganizationId,
     string Currency,
     IReadOnlyList<CreateOrderItem> Items,
-    long DiscountCents = 0)
+    long DiscountCents = 0,
+    string? CouponCode = null)
     : IRequest<Result<OrderDto>>;
 
 public sealed record CreateOrderItem(

@@ -11,5 +11,6 @@ public sealed record CreateOrderRequest(
     Guid? OrganizationId,
     string Currency,
     IReadOnlyList<CreateOrderItemRequest> Items,
-    long DiscountCents = 0);
+    long DiscountCents = 0,
+    string? CouponCode = null);
 

@@ -13,6 +13,9 @@ public sealed class CompleteOrderPaymentCommandHandler(
     IOrderRepository orderRepository,
     IInvoiceRepository invoiceRepository,
     ICheckoutReservationRepository reservationRepository,
+    ICouponRepository couponRepository,
+    ICouponRedemptionRepository couponRedemptionRepository,
+    ICouponUsageReservationRepository couponUsageReservationRepository,
     IPaymentService paymentService,
     IUnitOfWork unitOfWork)
     : IRequestHandler<CompleteOrderPaymentCommand, Result>
@@ -65,6 +68,16 @@ public sealed class CompleteOrderPaymentCommandHandler(
             }
 
             await reservationRepository.ReleaseForOrderAsync(order.Id, ct);
+            await couponUsageReservationRepository.ReleaseForOrderAsync(order.Id, ct);
+
+            if (!string.IsNullOrWhiteSpace(order.AppliedCouponCode))
+            {
+                var normalized = Domain.Aggregates.PromotionAggregate.Coupon.NormalizeCode(order.AppliedCouponCode);
+                var coupon = await couponRepository.GetByCodeNormalizedAsync(normalized, ct);
+                if (coupon is not null)
+                    couponRedemptionRepository.AddRedemption(coupon.Id, order.BuyerUserId, order.Id, utcNow);
+            }
+
             await unitOfWork.SaveChangesAsync(ct);
 
             return Result.Success();

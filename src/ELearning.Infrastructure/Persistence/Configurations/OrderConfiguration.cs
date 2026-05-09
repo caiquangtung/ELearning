@@ -21,6 +21,7 @@ public sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(o => o.SubtotalCents).HasColumnName("subtotal_cents").IsRequired();
         builder.Property(o => o.DiscountCents).HasColumnName("discount_cents").IsRequired();
         builder.Property(o => o.TotalCents).HasColumnName("total_cents").IsRequired();
+        builder.Property(o => o.AppliedCouponCode).HasColumnName("applied_coupon_code").HasMaxLength(64);
 
         builder.Property(o => o.CheckoutExpiresAtUtc).HasColumnName("checkout_expires_at");
 

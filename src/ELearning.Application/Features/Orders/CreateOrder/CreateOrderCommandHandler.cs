@@ -1,4 +1,5 @@
 using ELearning.Application.Features.Orders.Common;
+using ELearning.Application.Features.Promotions.Common;
 using ELearning.Core.Abstractions;
 using ELearning.Core.Common;
 using ELearning.Domain.Aggregates.CommerceAggregate;
@@ -14,6 +15,10 @@ public sealed class CreateOrderCommandHandler(
     ITrainingClassRepository trainingClassRepository,
     ILicensePoolRepository licensePoolRepository,
     ICheckoutReservationRepository reservationRepository,
+    ICouponRepository couponRepository,
+    ICampaignRepository campaignRepository,
+    ICouponRedemptionRepository redemptionRepository,
+    ICouponUsageReservationRepository couponUsageReservationRepository,
     IUnitOfWork unitOfWork)
     : IRequestHandler<CreateOrderCommand, Result<OrderDto>>
 {
@@ -50,6 +55,9 @@ public sealed class CreateOrderCommandHandler(
 
             var order = Order.CreateDraft(request.BuyerUserId, request.OrganizationId, request.Currency);
 
+            var quantityLines = new List<(OrderItemType ItemType, int Quantity, long UnitPriceCents)>();
+            var pricedLines = new List<(OrderItemType ItemType, long LineTotalCents)>();
+
             foreach (var i in parsedItems)
             {
                 var priced = await GetUnitPriceAsync(i.Type, i.ReferenceId, ct);
@@ -60,12 +68,48 @@ public sealed class CreateOrderCommandHandler(
                             $"Item currency {priced.Currency} does not match order currency {order.Currency}."));
 
                 order.AddItem(i.Type, i.ReferenceId, i.Quantity, priced.UnitPriceCents);
+                quantityLines.Add((i.Type, i.Quantity, priced.UnitPriceCents));
+                pricedLines.Add((i.Type, priced.UnitPriceCents * i.Quantity));
             }
 
-            if (request.DiscountCents > 0)
-                order.ApplyManualDiscount(request.DiscountCents);
+            // Apply promotions server-side (client-supplied DiscountCents is treated as informational only).
+            // Stacking + B2B volume discount rules live here to keep order totals authoritative.
+            var calculator = new PromotionDiscountCalculator(couponRepository, campaignRepository, redemptionRepository);
+            var (discount, appliedCouponCode) = await calculator.CalculateDiscountAsync(
+                request.BuyerUserId,
+                request.OrganizationId,
+                order.Currency,
+                pricedLines,
+                request.CouponCode,
+                isB2B: request.OrganizationId is not null,
+                quantityLines,
+                ct);
+
+            if (discount > 0)
+                order.ApplyManualDiscount(discount);
+            order.SetAppliedCouponCode(appliedCouponCode);
 
             order.SubmitForPayment(CommerceConstants.CheckoutTimeout);
+
+            // Atomic per-buyer coupon reservation (expires with checkout window).
+            if (!string.IsNullOrWhiteSpace(appliedCouponCode))
+            {
+                var normalized = Domain.Aggregates.PromotionAggregate.Coupon.NormalizeCode(appliedCouponCode);
+                var coupon = await couponRepository.GetByCodeNormalizedAsync(normalized, ct);
+                if (coupon is null)
+                    return Result.Failure<OrderDto>(Error.Validation("CouponCode", "Invalid coupon code."));
+
+                var reserved = await couponUsageReservationRepository.TryReserveAsync(
+                    coupon.Id,
+                    request.BuyerUserId,
+                    order.Id,
+                    order.CheckoutExpiresAtUtc!.Value,
+                    coupon.PerBuyerMaxRedemptions,
+                    ct);
+
+                if (!reserved)
+                    return Result.Failure<OrderDto>(Error.Conflict("Coupon.UsageLimit", "Coupon usage limit reached."));
+            }
 
             foreach (var item in order.Items.Where(it => it.ItemType == OrderItemType.TrainingClass))
             {

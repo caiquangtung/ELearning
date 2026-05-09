@@ -459,6 +459,11 @@ namespace ELearning.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("AppliedCouponCode")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("applied_coupon_code");
+
                     b.Property<Guid>("BuyerUserId")
                         .HasColumnType("uuid")
                         .HasColumnName("buyer_user_id");
@@ -656,6 +661,214 @@ namespace ELearning.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("organization_members", (string)null);
+                });
+
+            modelBuilder.Entity("ELearning.Domain.Aggregates.PromotionAggregate.Campaign", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTime?>("EndUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("end_utc");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<Guid?>("OrganizationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("organization_id");
+
+                    b.Property<string>("Scope")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("scope");
+
+                    b.Property<DateTime>("StartUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("start_utc");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("status");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrganizationId");
+
+                    b.HasIndex("Scope");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("campaigns", (string)null);
+                });
+
+            modelBuilder.Entity("ELearning.Domain.Aggregates.PromotionAggregate.Coupon", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CampaignId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("campaign_id");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("code");
+
+                    b.Property<string>("CodeNormalized")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("code_normalized");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTime?>("ExpiresUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_utc");
+
+                    b.Property<int>("PerBuyerMaxRedemptions")
+                        .HasColumnType("integer")
+                        .HasColumnName("per_buyer_max_redemptions");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("status");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CampaignId");
+
+                    b.HasIndex("CodeNormalized")
+                        .IsUnique();
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("coupons", (string)null);
+                });
+
+            modelBuilder.Entity("ELearning.Domain.Aggregates.PromotionAggregate.CouponRedemption", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("BuyerUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("buyer_user_id");
+
+                    b.Property<Guid>("CouponId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("coupon_id");
+
+                    b.Property<Guid?>("OrderId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("order_id");
+
+                    b.Property<DateTime>("RedeemedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("redeemed_at_utc");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CouponId");
+
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("CouponId", "BuyerUserId");
+
+                    b.ToTable("coupon_redemptions", (string)null);
+                });
+
+            modelBuilder.Entity("ELearning.Domain.Aggregates.PromotionAggregate.CouponUsageReservation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("BuyerUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("buyer_user_id");
+
+                    b.Property<Guid>("CouponId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("coupon_id");
+
+                    b.Property<DateTime>("ExpiresAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at_utc");
+
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("order_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("CouponId", "BuyerUserId");
+
+                    b.ToTable("coupon_usage_reservations", (string)null);
+                });
+
+            modelBuilder.Entity("ELearning.Domain.Aggregates.PromotionAggregate.PromotionRule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CampaignId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("campaign_id");
+
+                    b.Property<int>("PercentOff")
+                        .HasColumnType("integer")
+                        .HasColumnName("percent_off");
+
+                    b.Property<string>("RuleType")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("rule_type");
+
+                    b.Property<string>("_appliesToItemTypes")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("applies_to_item_types");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CampaignId");
+
+                    b.ToTable("promotion_rules", (string)null);
                 });
 
             modelBuilder.Entity("ELearning.Domain.Aggregates.TrainingClassAggregate.ClassInstructor", b =>
@@ -943,6 +1156,24 @@ namespace ELearning.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("ELearning.Domain.Aggregates.PromotionAggregate.Coupon", b =>
+                {
+                    b.HasOne("ELearning.Domain.Aggregates.PromotionAggregate.Campaign", null)
+                        .WithMany("Coupons")
+                        .HasForeignKey("CampaignId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("ELearning.Domain.Aggregates.PromotionAggregate.PromotionRule", b =>
+                {
+                    b.HasOne("ELearning.Domain.Aggregates.PromotionAggregate.Campaign", null)
+                        .WithMany("Rules")
+                        .HasForeignKey("CampaignId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("ELearning.Domain.Aggregates.TrainingClassAggregate.ClassInstructor", b =>
                 {
                     b.HasOne("ELearning.Domain.Aggregates.TrainingClassAggregate.TrainingClass", null)
@@ -1006,6 +1237,13 @@ namespace ELearning.Infrastructure.Persistence.Migrations
                     b.Navigation("Departments");
 
                     b.Navigation("Members");
+                });
+
+            modelBuilder.Entity("ELearning.Domain.Aggregates.PromotionAggregate.Campaign", b =>
+                {
+                    b.Navigation("Coupons");
+
+                    b.Navigation("Rules");
                 });
 
             modelBuilder.Entity("ELearning.Domain.Aggregates.TrainingClassAggregate.TrainingClass", b =>
