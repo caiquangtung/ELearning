@@ -11,6 +11,7 @@ using ELearning.Infrastructure.TrainingClasses;
 using ELearning.Infrastructure.Zoom;
 using ELearning.Infrastructure.Persistence;
 using ELearning.Infrastructure.Payments;
+using ELearning.Infrastructure.Quizzes;
 using ELearning.Infrastructure.Storage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -44,6 +45,8 @@ public static class DependencyInjection
         services.AddScoped<ICouponRepository, CouponRepository>();
         services.AddScoped<ICouponRedemptionRepository, CouponRedemptionRepository>();
         services.AddScoped<ICouponUsageReservationRepository, CouponUsageReservationRepository>();
+        services.AddScoped<IQuizRepository, QuizRepository>();
+        services.AddScoped<IQuizAttemptRepository, QuizAttemptRepository>();
 
         services.Configure<PaymentOptions>(configuration.GetSection(PaymentOptions.SectionName));
         services.AddSingleton<IPaymentService, NoOpPaymentService>();
