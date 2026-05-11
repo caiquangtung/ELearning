@@ -479,7 +479,7 @@ status: in-progress
 **Goal**: Implement quiz, questions, attempts, and grading.
 
 ### Backend Tasks
-- [ ] **Quiz aggregate**: Quiz, Question, QuestionOption, Attempt, Score entities
+- [x] **Quiz aggregate**: Quiz, Question, QuestionOption, Attempt, Score entities
 - [ ] **Feature: Create quiz**
 - [ ] **Feature: Add questions to quiz**
 - [ ] **Feature: Submit quiz attempt**
