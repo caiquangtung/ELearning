@@ -39,6 +39,7 @@ status: in-progress
 - Sprint 2: **In progress — backend core done** (course CRUD, sections/lessons, assets, migrations `Sprint2_CoursesAndContent`; cloud blob storage, sample seed, course UI **not done**)
 - Sprint 3: **Backend MVP done** — `TrainingClass` aggregate, sessions, instructors, conflict checks, `IZoomMeetingService` stub; **real Zoom OAuth + webhooks + Angular UI** still open (see `docs/notice.md`)
 - Sprint 4: **MVP done (Angular SPA)** — `frontend/web` Angular 19 app + Docker build; integrates auth, orgs, courses, training classes (see `docs/sprint4-completion.md`); Angular 21 upgrade optional; enrollment/attendance remains Sprint 5+
+- Sprint 9: **Backend MVP done** — certificate aggregate, issue/get/verify/download APIs, completion rule validation, PDF generation, EF migration `Sprint9_Certificates`; Angular certificate UI still open (see `docs/sprint9-completion.md`)
 - **Sprint 4 polish (optional, 2–4 days)**: recommended before full Sprint 5 — thin `shared/ui` wrappers, pilot screen, global loading, E2E smoke, UX polish (see **Sprint 4b** below and `docs/sprint4-completion.md` *Sprint 4 review*)
 
 ### Completed Work Checklist
@@ -57,6 +58,7 @@ status: in-progress
 - [x] **Sprint 2 (backend)**: Course aggregate, `CoursesController` API, local file storage via `IFileStorage`
 - [x] **Sprint 3 (backend)**: Training class aggregate, `TrainingClassesController`, migration `Sprint3_TrainingClassesAndSessions`, `NoOpZoomMeetingService`
 - [x] **Sprint 4 (frontend MVP)**: Angular app in `frontend/web`, auth/orgs/courses/training-classes UI, HTTP interceptors, Docker/nginx alignment
+- [x] **Sprint 9 (backend MVP)**: Certificate aggregate, issue/get/verify APIs, completion rules, migration `Sprint9_Certificates`
 
 ### Remaining Immediate Priorities
 - [ ] **Frontend (recommended before Sprint 5)**: Sprint 4b polish — `UiButton` / `PageShell` / `UiDataTable`, pilot list screen, global loading indicator, minimal E2E, doc refresh (`docs/sprint4-completion.md`)
@@ -510,18 +512,19 @@ status: in-progress
 
 ---
 
-## Sprint 9: Certificate & Completion (2 weeks)
+## Sprint 9: Certificate & Completion (2 weeks) — **BACKEND MVP DONE** *(PDF + UI follow-up)*
 
 **Goal**: Implement certificate issuance and course completion logic.
 
 ### Backend Tasks
-- [ ] **Certificate aggregate**: Certificate, CertificateTemplate entities
-- [ ] **Feature: Issue certificate** (on completion)
-- [ ] **Feature: Get certificate**
-- [ ] **Feature: Verify certificate** (public endpoint)
-- [ ] Implement completion rules (attendance + progress + quiz)
-- [ ] Generate certificate PDF
-- [ ] Write unit + integration tests
+- [x] **Certificate aggregate**: Certificate, CertificateTemplate entities
+- [x] **Feature: Issue certificate** (on completion)
+- [x] **Feature: Get certificate**
+- [x] **Feature: Verify certificate** (public endpoint)
+- [x] Implement completion rules (attendance + progress + quiz)
+- [x] Generate certificate PDF
+- [x] Write unit tests
+- [ ] Write integration tests
 
 ### Frontend Tasks
 - [ ] Create certificate template editor (admin)
@@ -531,10 +534,10 @@ status: in-progress
 - [ ] Display completion status
 
 ### Infrastructure
-- [ ] Set up PDF generation service
+- [x] Set up PDF generation service
 
 ### Database
-- [ ] Create migrations for Certificate, CertificateTemplate tables
+- [x] Create migrations for Certificate, CertificateTemplate tables
 
 **Definition of Done**:
 - Certificates are issued on completion

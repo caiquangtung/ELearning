@@ -2,6 +2,7 @@ using ELearning.Application.Common.Interfaces;
 using ELearning.Application.Common.Options;
 using ELearning.Core.Abstractions;
 using ELearning.Infrastructure.Commerce;
+using ELearning.Infrastructure.Certificates;
 using ELearning.Infrastructure.Courses;
 using ELearning.Infrastructure.Identity;
 using ELearning.Infrastructure.Licenses;
@@ -47,9 +48,11 @@ public static class DependencyInjection
         services.AddScoped<ICouponUsageReservationRepository, CouponUsageReservationRepository>();
         services.AddScoped<IQuizRepository, QuizRepository>();
         services.AddScoped<IQuizAttemptRepository, QuizAttemptRepository>();
+        services.AddScoped<ICertificateRepository, CertificateRepository>();
 
         services.Configure<PaymentOptions>(configuration.GetSection(PaymentOptions.SectionName));
         services.AddSingleton<IPaymentService, NoOpPaymentService>();
+        services.AddSingleton<ICertificatePdfService, SimpleCertificatePdfService>();
 
         services.AddSingleton<IFileStorage, LocalFileStorage>();
         services.AddSingleton<IZoomMeetingService, NoOpZoomMeetingService>();

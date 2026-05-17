@@ -69,6 +69,12 @@ public static class Permissions
         public const string Grade = "Quizzes.Grade";
     }
 
+    public static class Certificates
+    {
+        public const string Read = "Certificates.Read";
+        public const string Issue = "Certificates.Issue";
+    }
+
     public static class Admin
     {
         public const string Access = "Admin.Access";
@@ -85,6 +91,7 @@ public static class Permissions
         Reports.Read, Reports.Export,
         Commerce.Read, Commerce.Create, Commerce.Pay,
         Quizzes.Read, Quizzes.Create, Quizzes.Update, Quizzes.Delete, Quizzes.Publish, Quizzes.Grade,
+        Certificates.Read, Certificates.Issue,
         Admin.Access
     ];
 }
