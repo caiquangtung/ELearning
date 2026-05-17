@@ -356,7 +356,7 @@ WHERE id = 'CLASS_123'
 
 **Solutions:**
 - **CDN**: CloudFront, Cloudflare cho video streaming
-- **Caching**: Redis cho frequently accessed data
+- **Caching & coordination**: Redis cho course catalog, analytics dashboard, notification counters, payment idempotency, distributed locks, rate limiting, và AI cost control
 - **Read replicas**: Separate read/write DB
 - **Background jobs**: Async processing (Hangfire, RabbitMQ)
 - **Pagination**: Cursor-based pagination cho large lists
@@ -410,10 +410,11 @@ WHERE id = 'CLASS_123'
 3. ⚠️ **Learning path**: Structured learning
 4. ⚠️ **Notification system**: Multi-channel
 5. ⚠️ **White-labeling**: Branding cho organizations
+6. ⚠️ **AI-assisted learning**: quiz generation, recommendation, essay grading assistant, learner risk prediction, semantic search
 
 ### 4.4 Low Priority (Nice to have)
 1. ⚠️ **Blockchain verification**: Certificate verification
-2. ⚠️ **Adaptive learning**: AI-powered recommendations
+2. ⚠️ **Advanced adaptive learning**: fully personalized curriculum and adaptive testing
 3. ⚠️ **Gamification**: Badges, leaderboard
 4. ⚠️ **Mobile app**: Native iOS/Android
 5. ⚠️ **Offline learning**: Download content
@@ -434,6 +435,7 @@ graph TB
     S[Certification] --> T[Certificate, Template]
     U[Notification] --> V[Notification, Template]
     W[Audit] --> X[AuditLog, ChangeHistory]
+    Y[AI Assistance] --> Z[AIRequestLog, Recommendation, RiskSnapshot, Embedding]
 ```
 
 ## 6. Kết Luận

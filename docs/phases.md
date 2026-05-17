@@ -25,6 +25,8 @@ timeline
         Course Unit              : Granular Lesson Units · Drip Content · Unit Analytics
     section Phase 6
         Live Online Integration  : Zoom API · Auto-Attendance · Recording Playback
+    section Phase 7
+        AI-Assisted Learning     : Quiz Generation · Recommendation · Risk Prediction · Semantic Search
 ```
 
 ---
@@ -238,6 +240,7 @@ PathCompletion   = ALL required courses completed
 | Path Certificate | Auto-issue certificate when all required items are completed |
 | B2B Path Assignment | Org admin assigns a full path to a department or individual |
 | Recommended Paths | Suggest paths based on learner role or goal |
+| AI Path Drafting | Generate editable learning path drafts from learner goals and available catalog |
 
 ### Path Dependency Example
 
@@ -281,12 +284,14 @@ Certificate (UserId, SourceType=Path, SourceId=PathId, IssuedAt)
 - [ ] Path certificate auto-issue on completion
 - [ ] B2B: assign learning path to department
 - [ ] Learner: My Learning Paths dashboard with progress view
+- [ ] AI-generated path draft from learner goal (review before publish/assignment)
 
 ### Acceptance Criteria
 - Admin creates a path with ordered courses and prerequisites
 - Learner cannot start Course B if Course A is not yet completed
 - System auto-issues path certificate when all required courses are passed
 - Org admin assigns path to an entire department; all members are enrolled
+- AI-generated paths remain editable drafts until reviewed and saved
 
 ---
 
@@ -454,29 +459,86 @@ Session
 
 ---
 
+## Phase 7 – AI-Assisted Learning
+
+**Goal**: Add practical AI integrations that improve course authoring, learner discovery, assessment support, and B2B intervention workflows.
+
+### Core Features
+
+| Module | Features |
+|---|---|
+| AI Quiz Authoring | Generate draft questions from course/lesson content; instructor reviews before saving |
+| Course Recommendation | Recommend published courses based on learner history, organization role, popularity, and semantic similarity |
+| Essay Grading Assistant | Suggest rubric-based scores for essay answers; instructor keeps final control |
+| Risk Prediction | Flag learners at risk of not completing based on progress, quiz scores, attendance, inactivity, and license expiry |
+| Semantic Search | Find courses by natural-language intent using embeddings with keyword fallback |
+| Learning Path Generation | Generate editable course sequences from learner goals and current skill level |
+
+### AI Service Boundary
+
+```
+WebApi Controller
+  -> Application Feature
+      -> IAiService / IEmbeddingService
+          -> Infrastructure Provider (OpenAI/Azure OpenAI/local model)
+      -> Domain/Application validation
+      -> Audit metadata persistence
+```
+
+### Controls
+- Generated content is saved only after user review.
+- Essay grading suggestions cannot submit final grades directly.
+- Recommendation and risk prediction must return explainable reasons.
+- Prompts avoid unnecessary PII and store prompt/model metadata for audit.
+- AI endpoints are rate-limited and have graceful fallback behavior.
+
+### Deliverables
+- [ ] AI provider abstraction and provider configuration
+- [ ] Prompt templates with versioning
+- [ ] AI audit metadata table
+- [ ] Quiz question generator
+- [ ] Course recommendation endpoint and dashboard widget
+- [ ] Essay grading assistant
+- [ ] Learner risk prediction report
+- [ ] Semantic course search
+- [ ] AI learning path draft generator
+
+### Acceptance Criteria
+- Instructor can generate and review quiz questions before adding them to a quiz
+- Learner sees explainable course recommendations
+- Instructor receives essay grading suggestions but manually submits final grade
+- Org admin can filter high-risk learners and see clear risk reasons
+- Natural-language search returns relevant published courses with keyword fallback
+
+---
+
 ## Feature Matrix by Phase
 
-| Feature | Ph.1 B2B | Ph.2 B2C | Ph.3 Quiz | Ph.4 Path | Ph.5 Unit | Ph.6 Live |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|
-| User Auth + SSO | ✅ | ✅ | — | — | — | — |
-| Organization + Department | ✅ | — | — | — | — | — |
-| License Pool (B2B seats) | ✅ | — | — | — | — | — |
-| Course Builder (Module → Lesson) | ✅ | ✅ | — | — | — | — |
-| Course Unit (granular) | — | — | — | — | ✅ | — |
-| Drip Content | — | — | — | — | ✅ | — |
-| Payment + Commerce | — | ✅ | — | — | — | — |
-| Campaign & Coupon | — | ✅ | — | — | — | — |
-| Quiz & Auto-grading | — | — | ✅ | — | ✅ | — |
-| Question Bank | — | — | ✅ | — | — | — |
-| Completion Criteria Engine | ✅ (basic) | ✅ | ✅ | ✅ | ✅ | — |
-| Learning Path + Prerequisites | — | — | — | ✅ | — | — |
-| Certificate (course) | ✅ | ✅ | ✅ | — | — | — |
-| Certificate (path) | — | — | — | ✅ | — | — |
-| Zoom / Live Session | — | — | — | — | — | ✅ |
-| Auto-Attendance (Zoom) | — | — | — | — | — | ✅ |
-| Recording Playback | — | — | — | — | — | ✅ |
-| Reporting & Analytics | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Notification System | ✅ | ✅ | — | — | — | ✅ |
+| Feature | Ph.1 B2B | Ph.2 B2C | Ph.3 Quiz | Ph.4 Path | Ph.5 Unit | Ph.6 Live | Ph.7 AI |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| User Auth + SSO | ✅ | ✅ | — | — | — | — | — |
+| Organization + Department | ✅ | — | — | — | — | — | ✅ |
+| License Pool (B2B seats) | ✅ | — | — | — | — | — | ✅ |
+| Course Builder (Module → Lesson) | ✅ | ✅ | — | — | — | — | ✅ |
+| Course Unit (granular) | — | — | — | — | ✅ | — | ✅ |
+| Drip Content | — | — | — | — | ✅ | — | — |
+| Payment + Commerce | — | ✅ | — | — | — | — | — |
+| Campaign & Coupon | — | ✅ | — | — | — | — | — |
+| Quiz & Auto-grading | — | — | ✅ | — | ✅ | — | ✅ |
+| Question Bank | — | — | ✅ | — | — | — | ✅ |
+| Completion Criteria Engine | ✅ (basic) | ✅ | ✅ | ✅ | ✅ | — | ✅ |
+| Learning Path + Prerequisites | — | — | — | ✅ | — | — | ✅ |
+| Certificate (course) | ✅ | ✅ | ✅ | — | — | — | — |
+| Certificate (path) | — | — | — | ✅ | — | — | — |
+| Zoom / Live Session | — | — | — | — | — | ✅ | — |
+| Auto-Attendance (Zoom) | — | — | — | — | — | ✅ | ✅ |
+| Recording Playback | — | — | — | — | — | ✅ | — |
+| Reporting & Analytics | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Notification System | ✅ | ✅ | — | — | — | ✅ | ✅ |
+| AI Quiz Generation | — | — | — | — | — | — | ✅ |
+| AI Recommendation | — | — | — | — | — | — | ✅ |
+| AI Risk Prediction | — | — | — | — | — | — | ✅ |
+| Semantic Search | — | — | — | — | — | — | ✅ |
 
 ---
 
@@ -491,6 +553,8 @@ Session
 | Ph.5 Unit | Breaking progress tracking when wrapping existing content | Migration script wraps assets into default units; run smoke tests before deploy |
 | Ph.6 Live | Zoom participant ≠ LMS user identity | Match by email first; fallback to display-name fuzzy match; always allow manual override |
 | Ph.6 Live | Recording webhook delay / failure | Idempotent handler + retry queue; manual recording upload fallback |
+| Ph.7 AI | Inaccurate or low-quality generated output | Keep AI output as draft, validate structured responses, and require human approval for authoring/grading/path actions |
+| Ph.7 AI | Cost and privacy exposure from provider calls | Rate-limit AI endpoints, log token/cost metadata, cache stable outputs, and omit unnecessary PII from prompts |
 
 ---
 
@@ -503,7 +567,7 @@ Session
 | **Multi-tenancy** | All queries scoped by `OrganizationId`; row-level filtering in `DbContext` |
 | **Background Jobs** | Hangfire for: seat release, certificate generation, report export, recording download |
 | **Domain Events** | MediatR `INotification` for: `EnrollmentCreated`, `LessonCompleted`, `QuizPassed`, `PathCompleted`, `SessionCreated`, `AttendanceMarked` |
-| **Caching** | Redis for: course catalog, price plans, active campaigns; TTL per entity type |
+| **Caching & Coordination** | Redis for: course catalog, analytics, notification counters, idempotency keys, short-lived locks, rate limits, and AI cost control |
 | **Observability** | Serilog + OpenTelemetry; correlation ID on every request; structured logs to Seq / Datadog |
 
 ---

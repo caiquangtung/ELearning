@@ -62,6 +62,8 @@ status: in-progress
 
 ### Remaining Immediate Priorities
 - [ ] **Frontend (recommended before Sprint 5)**: Sprint 4b polish — `UiButton` / `PageShell` / `UiDataTable`, pilot list screen, global loading indicator, minimal E2E, doc refresh (`docs/sprint4-completion.md`)
+- [ ] **Redis performance layer**: add cache, distributed lock, idempotency, and rate-limit abstractions before broad analytics/search/AI rollout (see **Sprint 15a**)
+- [ ] **AI Sprint Track (after Sprint 13 foundation)**: add AI-assisted quiz generation, course recommendation, essay grading assistant, learner risk prediction, and semantic search (see **AI Sprint Track** below)
 - [ ] **Sprint 3 follow-up**: real Zoom API implementation, webhooks, API integration tests for training classes
 - [x] Angular SPA MVP: login, register, profile, orgs, courses, training classes (see `frontend/README.md`, `docs/sprint4-completion.md`)
 - [ ] API integration tests (identity, organizations, **courses**)
@@ -80,6 +82,12 @@ status: in-progress
 | Class / session scheduling API | Sprint 3 | Backend Team | — | **Done (MVP)** |
 | Angular SPA MVP (auth + org + courses + classes) | Sprint 4 | Frontend Team | 2 weeks | **MVP done** (see `docs/sprint4-completion.md`) |
 | Sprint 4b — FE polish & wrappers (optional) | Pre–Sprint 5 | Frontend Team | 2–4 days | **Recommended** (see Sprint 4b) |
+| AI-1 — Quiz question generator | AI Sprint Track | Backend + Frontend | 2 weeks | Planned |
+| AI-2 — Course recommendation | AI Sprint Track | Backend + Data | 2 weeks | Planned |
+| AI-3 — Essay grading assistant | AI Sprint Track | Backend + Frontend | 2 weeks | Planned |
+| AI-4 — Learner risk prediction | AI Sprint Track | Backend + Data | 2 weeks | Planned |
+| AI-5 — Semantic search + learning path generator | AI Sprint Track | Backend + Frontend | 2 weeks | Planned |
+| Sprint 15a — Redis performance & consistency layer | Pre–Sprint 15 | Backend + DevOps | 1 week | Planned |
 | API integration tests | Sprint 1–2 | Backend + QA | 2-3 days | Planned |
 | API rate limiting + lockout + auth audit log | Sprint 1 | Backend + DevOps | 3-5 days | Planned |
 | CI/CD + code quality pipeline | Sprint 0 (carry-over) | DevOps | 3-4 days | Planned |
@@ -93,6 +101,142 @@ status: in-progress
 - Sprint 4: **MVP done**; stretch/deferred items tracked in **Sprint 4b** (wrappers, loading, E2E, section/lesson UI depth)
 
 **Related docs**: `docs/notice.md` (triển khai — lưu ý kỹ thuật), `docs/dotnet-backend-techniques.md` (patterns backend).
+
+---
+
+## AI Sprint Track: AI-Assisted Learning Features (5 sprints)
+
+**Goal**: Add practical AI capabilities that demonstrate NLP, recommendation, prediction, and AI service integration while keeping human review and auditability in the LMS workflow.
+
+**Recommended placement**: Start after Sprint 13, when quiz, course content, analytics/progress, and basic search data are available. AI-1 can start earlier after Sprint 8 if the team wants an early AI demo.
+
+**AI Platform Baseline**
+- [ ] Add `IAiService` / `ILlmService` abstraction in Application/Core and provider implementation in Infrastructure.
+- [ ] Configure provider options through environment variables (`Provider`, `ApiKey`, `Model`, timeout, retry policy).
+- [ ] Add prompt templates with version IDs for audit and repeatability.
+- [ ] Store AI request metadata: user, feature, input hash, model, prompt version, token/cost estimate, created time.
+- [ ] Add guardrails: content size limits, profanity/sensitive-data filtering where applicable, structured JSON response validation, graceful fallback when provider fails.
+- [ ] Add permissions for instructor/admin AI actions and rate limits for AI endpoints.
+
+### AI-1: Quiz Question Generator (Priority 1, 2 weeks)
+
+**Goal**: Let instructors generate draft quiz questions from course/lesson content, then review before saving.
+
+#### Backend Tasks
+- [ ] **Feature: Generate quiz questions** — `POST /api/v1/ai/quizzes/generate-questions`
+- [ ] Input: `courseId`, `lessonId`, `questionCount`, `difficulty`, `questionTypes`
+- [ ] Output structured draft questions: text, type, options, correct answers, explanation, difficulty
+- [ ] Validate generated JSON before returning to UI
+- [ ] Add “accept generated question” flow that reuses existing quiz question commands
+- [ ] Persist AI generation metadata for audit
+- [ ] Unit tests for prompt builder, response parser, validation, and failure fallback
+
+#### Frontend Tasks
+- [ ] Add “Generate with AI” action in quiz create/detail screen
+- [ ] Add review panel for generated questions before insertion
+- [ ] Allow instructor to edit, discard, or accept each generated question
+- [ ] Show provider failure as a recoverable UI state
+
+**Definition of Done**:
+- Instructor can generate 5-10 draft questions from a lesson
+- Generated questions are never saved until explicitly accepted
+- Invalid provider responses are rejected safely
+- Audit metadata is recorded for each generation
+
+### AI-2: Course Recommendation (Priority 2, 2 weeks)
+
+**Goal**: Recommend courses to learners based on profile, organization context, course history, and semantic similarity.
+
+#### Backend Tasks
+- [ ] **Feature: Get learner course recommendations** — `GET /api/v1/ai/recommendations/courses`
+- [ ] Implement hybrid scoring: role/department rules, popularity, completion history, quiz performance, and course similarity
+- [ ] Add explainable recommendation reasons (`Because you completed...`, `Popular in your department...`)
+- [ ] Add fallback recommendations when learner history is sparse
+- [ ] Add tests for score ranking and tenant isolation
+
+#### Frontend Tasks
+- [ ] Add “Recommended for you” section to learner dashboard
+- [ ] Add recommendation cards to course catalog
+- [ ] Display concise recommendation reasons
+
+**Definition of Done**:
+- Learner receives ranked, explainable course recommendations
+- Recommendations respect organization boundaries and published-course status
+- Empty-history users still receive sensible fallback recommendations
+
+### AI-3: Essay Grading Assistant (Priority 3, 2 weeks)
+
+**Goal**: Assist instructors with rubric-based essay grading while keeping final grading human-controlled.
+
+#### Backend Tasks
+- [ ] **Feature: Suggest essay grades** — `POST /api/v1/ai/quizzes/attempts/{attemptId}/grade-suggestions`
+- [ ] Input: essay answers, question text, max score, optional rubric
+- [ ] Output: suggested score, confidence, reasoning, rubric breakdown
+- [ ] Add guardrail: AI suggestion cannot submit final grade directly
+- [ ] Record accepted/overridden suggestions for audit and model-quality review
+- [ ] Unit tests for authorization, response parsing, and manual override behavior
+
+#### Frontend Tasks
+- [ ] Add AI suggestion panel to manual grading screen
+- [ ] Let instructor apply, edit, or ignore suggested score
+- [ ] Show rubric explanation without hiding the learner answer
+
+**Definition of Done**:
+- Instructor can request AI suggestions for essay answers
+- Final grade is still submitted through the existing grading workflow
+- Accepted vs overridden suggestions are auditable
+
+### AI-4: Learner Risk Prediction (Priority 4, 2 weeks)
+
+**Goal**: Predict learners at risk of not completing a course or license assignment and suggest interventions.
+
+#### Backend Tasks
+- [ ] **Feature: Get learner risk** — `GET /api/v1/ai/learners/{userId}/risk`
+- [ ] **Feature: Organization risk report** — `GET /api/v1/ai/organizations/{organizationId}/risk-report`
+- [ ] Implement explainable scoring from progress, quiz score, inactivity, attendance, license expiry, and class timeline
+- [ ] Return `riskScore`, `riskLevel`, `reasons`, and `recommendedActions`
+- [ ] Add scheduled risk snapshot job for B2B reporting
+- [ ] Tests for scoring thresholds, data isolation, and missing-data behavior
+
+#### Frontend Tasks
+- [ ] Add risk badges to organization learner report
+- [ ] Add risk detail drawer with reasons and recommended actions
+- [ ] Add filter for high-risk learners
+
+**Definition of Done**:
+- Organization admin can see high-risk learners with reasons
+- Risk model is explainable and deterministic for MVP
+- Missing progress data does not produce misleading high-risk labels
+
+### AI-5: Semantic Search + Learning Path Generator (Priority 5, 2 weeks)
+
+**Goal**: Improve discovery with semantic search and generate draft learning paths from learner goals.
+
+#### Backend Tasks
+- [ ] **Feature: Semantic course search** — `GET /api/v1/ai/search/courses?q=...`
+- [ ] Generate and refresh course embeddings for published courses
+- [ ] Implement vector similarity with fallback keyword search
+- [ ] **Feature: Generate learning path** — `POST /api/v1/ai/learning-paths/generate`
+- [ ] Input: learner goal, current skills, target role, optional organization scope
+- [ ] Output: ordered courses with reasons and estimated effort
+- [ ] Tests for embedding refresh, ranking, fallback, and tenant boundaries
+
+#### Frontend Tasks
+- [ ] Add semantic search mode to course catalog search
+- [ ] Add “Create learning path with AI” entry point
+- [ ] Show generated path as draft that admin/learner can edit before saving
+
+**Definition of Done**:
+- Natural-language queries can find semantically related courses
+- AI-generated paths are drafts, not automatically assigned
+- Search and path generation respect published status and organization visibility
+
+### AI Track Risks & Controls
+- [ ] **Cost control**: rate limit AI endpoints, log token/cost estimates, and cache stable outputs where appropriate.
+- [ ] **Reliability**: every AI feature must have a non-AI fallback or recoverable UI state.
+- [ ] **Privacy**: do not send unnecessary PII to the provider; hash or omit learner identifiers in prompts.
+- [ ] **Quality**: use structured outputs and validation; do not persist invalid AI responses.
+- [ ] **Human control**: generated questions, essay grades, and learning paths remain drafts until a user accepts them.
 
 ---
 
@@ -561,6 +705,8 @@ status: in-progress
 - [ ] Implement notification templates
 - [ ] Implement email templates
 - [ ] Set up background job for notification delivery
+- [ ] Use Redis cache for unread notification counts (`notifications:unread:{userId}`)
+- [ ] Optional: use Redis Pub/Sub or SignalR backplane for multi-instance real-time notifications
 - [ ] Write unit + integration tests
 
 ### Frontend Tasks
@@ -582,6 +728,7 @@ status: in-progress
 - Emails are sent
 - Announcements can be posted
 - Notification preferences work
+- Unread counters do not require a database aggregate query on every page load
 - All tests pass
 
 ---
@@ -597,7 +744,9 @@ status: in-progress
 - [ ] **Feature: Get course analytics** (enrollments, completion rate)
 - [ ] **Feature: Get organization analytics** (license usage, member activity)
 - [ ] **Feature: Export reports** (CSV, Excel)
-- [ ] Implement caching for analytics queries
+- [ ] Implement Redis caching for analytics queries with short TTL and explicit invalidation on key writes
+- [ ] Cache dashboard cards: admin, instructor, student, course analytics, organization analytics
+- [ ] Add cache-key conventions for tenant-safe analytics (`analytics:{scope}:{id}:{version}`)
 - [ ] Write unit + integration tests
 
 ### Frontend Tasks
@@ -616,7 +765,7 @@ status: in-progress
 - Dashboards are functional
 - Analytics are accurate
 - Reports can be exported
-- Performance is acceptable
+- Redis-backed analytics cache keeps repeated dashboard loads performant
 - All tests pass
 
 ---
@@ -665,6 +814,8 @@ status: in-progress
 - [ ] **Feature: Search courses** (full-text)
 - [ ] **Feature: Filter courses** (category, price, level, instructor)
 - [ ] **Feature: Sort courses** (popularity, rating, date)
+- [ ] Use Redis cache for published course catalog, course detail, filter metadata, and frequent search results
+- [ ] Invalidate catalog cache on course create/update/publish/delete and review/rating changes
 - [ ] Implement Elasticsearch integration (optional)
 - [ ] Optimize search queries
 - [ ] Write unit + integration tests
@@ -683,6 +834,7 @@ status: in-progress
 - Search works across courses
 - Filters work correctly
 - Search is performant
+- Course catalog cache is invalidated correctly when course visibility/content changes
 - All tests pass
 
 ---
@@ -714,6 +866,45 @@ status: in-progress
 - Average rating is calculated
 - Reviews can be moderated
 - All tests pass
+
+---
+
+## Sprint 15a: Redis Performance & Consistency Layer (1 week)
+
+**Goal**: Add reusable Redis-backed infrastructure for high-read paths, concurrency control, idempotency, and rate limiting before broad optimization work.
+
+### Backend Tasks
+- [ ] Add `ICacheService` abstraction with get/set/remove/get-or-create helpers and JSON serialization.
+- [ ] Add cache key conventions and tenant-safe key builder.
+- [ ] Add `IDistributedLockService` for short-lived locks around checkout, seat reservation, coupon usage, license assignment, and background jobs.
+- [ ] Add `IIdempotencyStore` for payment webhook event IDs and payment completion attempts.
+- [ ] Add Redis-backed rate limit primitives for auth, checkout, upload, and AI endpoints.
+- [ ] Add cache invalidation hooks for course create/update/publish/delete.
+- [ ] Add Redis health check and startup configuration validation.
+- [ ] Add structured logs/metrics for cache hit/miss, lock acquisition failure, idempotency duplicate, and rate-limit rejection.
+- [ ] Unit tests for key generation, TTL behavior, idempotency duplicate detection, and lock failure behavior.
+
+### Application Integration Targets
+- [ ] Course catalog/detail cache: `courses:list:{hash}`, `courses:detail:{courseId}`.
+- [ ] Dashboard analytics cache: `analytics:{scope}:{id}:{hash}`.
+- [ ] Payment webhook idempotency: `payment:webhook:{gateway}:{eventId}`.
+- [ ] Checkout and seat lock: `lock:checkout:{userId}`, `lock:class-seat:{classId}`.
+- [ ] Coupon/campaign lock: `lock:coupon:{couponCode}`, `lock:campaign:{campaignId}`.
+- [ ] License pool lock: `lock:license-pool:{poolId}`.
+- [ ] Permission cache: `permissions:user:{userId}` with invalidation on role assignment.
+- [ ] AI cost/rate cache: `rate:ai:{userId}`, `ai:recommendations:{userId}`, `ai:semantic-search:{queryHash}`.
+
+### Infrastructure Tasks
+- [ ] Verify local Redis in `docker-compose.yml` is production-like enough for development.
+- [ ] Add environment variables for Redis connection, default TTLs, lock TTLs, and rate-limit windows.
+- [ ] Document Redis key naming, TTL policy, and invalidation strategy.
+
+**Definition of Done**:
+- Shared Redis abstractions are available to Application/Infrastructure without leaking provider-specific APIs into feature handlers.
+- Payment webhooks are idempotent across retries.
+- Checkout/license/coupon operations can use short-lived distributed locks while keeping database constraints as the source of truth.
+- Course catalog and analytics have measurable cache hit/miss logging.
+- Rate limit primitives are ready for auth, checkout, uploads, and AI endpoints.
 
 ---
 
