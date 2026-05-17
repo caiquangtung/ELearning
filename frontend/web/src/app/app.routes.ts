@@ -94,6 +94,10 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/campaigns/campaign-detail.component').then((m) => m.CampaignDetailComponent),
       },
+      {
+        path: 'quizzes',
+        loadChildren: () => import('./features/quizzes/quizzes.routes').then(m => m.QUIZZES_ROUTES)
+      },
     ],
   },
   { path: '**', redirectTo: '' },

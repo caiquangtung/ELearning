@@ -313,11 +313,169 @@ export interface CreateOrderRequest {
 }
 
 export interface LicenseUsageReportDto {
-  licensePoolId: string;
-  totalSeats: number;
-  activeSeats: number;
-  availableSeats: number;
-}
+   licensePoolId: string;
+   totalSeats: number;
+   activeSeats: number;
+   availableSeats: number;
+ }
+
+ // Quiz DTOs
+ export interface QuizDto {
+   id: string;
+   courseId: string | null;
+   lessonId: string | null;
+   title: string;
+   description: string | null;
+   status: string;
+   timeLimitMinutes: number | null;
+   passingScore: number | null;
+   createdAt: string;
+   updatedAt: string | null;
+ }
+
+ export interface QuizListItemDto {
+   id: string;
+   title: string;
+   status: string;
+   questionCount: number;
+   createdAt: string;
+ }
+
+ export interface QuizDetailDto {
+   id: string;
+   courseId: string | null;
+   lessonId: string | null;
+   title: string;
+   description: string | null;
+   status: string;
+   timeLimitMinutes: number | null;
+   passingScore: number | null;
+   createdAt: string;
+   updatedAt: string | null;
+   questions: QuestionDto[];
+ }
+
+ export interface QuestionDto {
+   id: string;
+   text: string;
+   type: string; // MultipleChoice, Essay, Code
+   points: number;
+   sortOrder: number;
+   options: QuestionOptionDto[];
+ }
+
+ export interface QuestionOptionDto {
+   id: string;
+   text: string;
+   isCorrect: boolean;
+   sortOrder: number;
+ }
+
+ export interface QuizAttemptDto {
+   id: string;
+   quizId: string;
+   userId: string;
+   startedAt: string;
+   submittedAt: string | null;
+   status: string; // InProgress, Submitted, Graded
+   totalScore: number | null;
+   createdAt: string;
+ }
+
+ export interface QuizResultDto {
+   attemptId: string;
+   quizId: string;
+   quizTitle: string;
+   totalScore: number | null;
+   passingScore: number | null;
+   passed: boolean;
+   submittedAt: string;
+   questionResults: QuestionResultDto[];
+ }
+
+ export interface QuestionResultDto {
+   questionId: string;
+   questionText: string;
+   points: number;
+   score: number | null;
+   isCorrect: boolean | null;
+   textAnswer: string | null;
+   selectedOptionId: string | null;
+ }
+
+ export interface QuizAnalyticsDto {
+   quizId: string;
+   quizTitle: string;
+   totalAttempts: number;
+   completedAttempts: number;
+   averageScore: number;
+   passRate: number;
+   highestScore: number;
+   lowestScore: number;
+ }
+
+ // Quiz request DTOs
+ export interface CreateQuizRequest {
+   courseId: string | null;
+   lessonId: string | null;
+   title: string;
+   description: string | null;
+   timeLimitMinutes: number | null;
+   passingScore: number | null;
+ }
+
+ export interface UpdateQuizRequest {
+   title: string;
+   description: string | null;
+   timeLimitMinutes: number | null;
+   passingScore: number | null;
+ }
+
+ export interface AddQuestionRequest {
+   text: string;
+   type: string; // MultipleChoice, Essay, Code
+   points: number;
+   sortOrder: number;
+   options: AddQuestionOptionRequest[];
+ }
+
+ export interface AddQuestionOptionRequest {
+   text: string;
+   isCorrect: boolean;
+   sortOrder: number;
+ }
+
+ export interface UpdateQuestionRequest {
+   text: string;
+   type: string; // MultipleChoice, Essay, Code
+   points: number;
+   sortOrder: number;
+ }
+
+ export interface StartAttemptRequest {
+   userId: string;
+ }
+
+ export interface SubmitAttemptRequest {
+   userId: string;
+   answers: AnswerSubmissionRequest[];
+ }
+
+ export interface AnswerSubmissionRequest {
+   questionId: string;
+   selectedOptionId: string | null;
+   textAnswer: string | null;
+ }
+
+ export interface GradeAttemptRequest {
+   grades: QuestionGradeRequest[];
+ }
+
+ export interface QuestionGradeRequest {
+   questionId: string;
+   score: number;
+   isCorrect: boolean | null;
+ }
 
 @Injectable({ providedIn: 'root' })
 export class LmsApiService {
@@ -500,6 +658,75 @@ export class LmsApiService {
   }
 
   previewCampaign(campaignId: string, body: PreviewCampaignQuoteRequest): Observable<PromotionQuoteDto> {
-    return this.http.post<PromotionQuoteDto>(`${this.base}/campaigns/${campaignId}/preview`, body);
-  }
-}
+     return this.http.post<PromotionQuoteDto>(`${this.base}/campaigns/${campaignId}/preview`, body);
+   }
+
+   // Quiz API methods
+   listQuizzes(
+     page: number,
+     pageSize: number,
+     search?: string,
+     status?: string,
+   ): Observable<PagedList<QuizListItemDto>> {
+     let params = new HttpParams().set('page', page).set('pageSize', pageSize);
+     if (search?.trim()) {
+       params = params.set('search', search.trim());
+     }
+     if (status?.trim()) {
+       params = params.set('status', status.trim());
+     }
+     return this.http.get<PagedList<QuizListItemDto>>(`${this.base}/quizzes`, { params });
+   }
+
+   getQuiz(id: string): Observable<QuizDetailDto> {
+     return this.http.get<QuizDetailDto>(`${this.base}/quizzes/${id}`);
+   }
+
+   createQuiz(body: CreateQuizRequest): Observable<QuizDto> {
+     return this.http.post<QuizDto>(`${this.base}/quizzes`, body);
+   }
+
+   updateQuiz(id: string, body: UpdateQuizRequest): Observable<QuizDto> {
+     return this.http.put<QuizDto>(`${this.base}/quizzes/${id}`, body);
+   }
+
+   deleteQuiz(id: string): Observable<unknown> {
+     return this.http.delete(`${this.base}/quizzes/${id}`, { responseType: 'text' });
+   }
+
+   publishQuiz(id: string): Observable<QuizDto> {
+     return this.http.post<QuizDto>(`${this.base}/quizzes/${id}/publish`, {});
+   }
+
+   addQuestion(quizId: string, body: AddQuestionRequest): Observable<QuestionDto> {
+     return this.http.post<QuestionDto>(`${this.base}/quizzes/${quizId}/questions`, body);
+   }
+
+   updateQuestion(quizId: string, questionId: string, body: UpdateQuestionRequest): Observable<QuestionDto> {
+     return this.http.put<QuestionDto>(`${this.base}/quizzes/${quizId}/questions/${questionId}`, body);
+   }
+
+   removeQuestion(quizId: string, questionId: string): Observable<unknown> {
+     return this.http.delete(`${this.base}/quizzes/${quizId}/questions/${questionId}`, { responseType: 'text' });
+   }
+
+   startAttempt(quizId: string, body: StartAttemptRequest): Observable<QuizAttemptDto> {
+     return this.http.post<QuizAttemptDto>(`${this.base}/quizzes/${quizId}/attempts`, body);
+   }
+
+   getAttempt(attemptId: string, userId: string): Observable<QuizResultDto> {
+     return this.http.get<QuizResultDto>(`${this.base}/quizzes/attempts/${attemptId}?userId=${userId}`);
+   }
+
+   submitAttempt(attemptId: string, body: SubmitAttemptRequest): Observable<QuizAttemptDto> {
+     return this.http.post<QuizAttemptDto>(`${this.base}/quizzes/attempts/${attemptId}/submit`, body);
+   }
+
+   gradeAttempt(attemptId: string, body: GradeAttemptRequest): Observable<QuizAttemptDto> {
+     return this.http.post<QuizAttemptDto>(`${this.base}/quizzes/attempts/${attemptId}/grade`, body);
+   }
+
+   getQuizAnalytics(id: string): Observable<QuizAnalyticsDto> {
+     return this.http.get<QuizAnalyticsDto>(`${this.base}/quizzes/${id}/analytics`);
+   }
+ }
