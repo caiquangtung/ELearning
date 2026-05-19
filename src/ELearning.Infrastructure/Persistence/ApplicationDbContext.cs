@@ -5,6 +5,7 @@ using ELearning.Domain.Aggregates.CourseAggregate;
 using ELearning.Domain.Aggregates.LicensePoolAggregate;
 using ELearning.Domain.Aggregates.NotificationAggregate;
 using ELearning.Domain.Aggregates.OrderAggregate;
+using ELearning.Domain.Aggregates.OrganizationAggregate;
 using ELearning.Domain.Aggregates.PromotionAggregate;
 using ELearning.Domain.Aggregates.QuizAggregate;
 using ELearning.Domain.Aggregates.TrainingClassAggregate;
@@ -20,6 +21,7 @@ public class ApplicationDbContext(
     : DbContext(options), IUnitOfWork
 {
     public DbSet<User> Users => Set<User>();
+    public DbSet<Organization> Organizations => Set<Organization>();
     public DbSet<Course> Courses => Set<Course>();
     public DbSet<TrainingClass> TrainingClasses => Set<TrainingClass>();
     public DbSet<LicensePool> LicensePools => Set<LicensePool>();
