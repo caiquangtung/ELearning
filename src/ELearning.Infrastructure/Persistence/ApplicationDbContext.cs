@@ -10,6 +10,7 @@ using ELearning.Domain.Aggregates.PromotionAggregate;
 using ELearning.Domain.Aggregates.QuizAggregate;
 using ELearning.Domain.Aggregates.TrainingClassAggregate;
 using ELearning.Domain.Aggregates.UserAggregate;
+using ELearning.Domain.Aggregates.VideoAggregate;
 using ELearning.Domain.Shared;
 using Microsoft.EntityFrameworkCore;
 
@@ -40,6 +41,8 @@ public class ApplicationDbContext(
     public DbSet<CertificateTemplate> CertificateTemplates => Set<CertificateTemplate>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<Message> Messages => Set<Message>();
+    public DbSet<VideoAsset> VideoAssets => Set<VideoAsset>();
+    public DbSet<WatchEvent> WatchEvents => Set<WatchEvent>();
     public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
     {
         ApplyAuditInfo();

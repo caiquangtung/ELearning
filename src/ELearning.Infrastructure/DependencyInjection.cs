@@ -10,6 +10,7 @@ using ELearning.Infrastructure.Notifications;
 using ELearning.Infrastructure.Orders;
 using ELearning.Infrastructure.Promotions;
 using ELearning.Infrastructure.TrainingClasses;
+using ELearning.Infrastructure.Videos;
 using ELearning.Infrastructure.Zoom;
 using ELearning.Infrastructure.Persistence;
 using ELearning.Infrastructure.Payments;
@@ -54,6 +55,8 @@ public static class DependencyInjection
         services.AddScoped<INotificationRepository, NotificationRepository>();
         services.AddScoped<IMessageRepository, MessageRepository>();
         services.AddScoped<IReportingReadService, ReportingReadService>();
+        services.AddScoped<IVideoAssetRepository, VideoAssetRepository>();
+        services.AddScoped<IWatchEventRepository, WatchEventRepository>();
 
         services.Configure<PaymentOptions>(configuration.GetSection(PaymentOptions.SectionName));
         services.AddSingleton<IPaymentService, NoOpPaymentService>();

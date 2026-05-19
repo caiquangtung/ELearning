@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 using ELearning.Core.Abstractions;
 using Microsoft.AspNetCore.Http;
 
@@ -9,7 +10,13 @@ public class CurrentUserService(IHttpContextAccessor httpContextAccessor) : ICur
     private ClaimsPrincipal? User => httpContextAccessor.HttpContext?.User;
 
     public Guid? UserId =>
-        Guid.TryParse(User?.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : null;
+        Guid.TryParse(
+            User?.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? User?.FindFirstValue(JwtRegisteredClaimNames.Sub)
+            ?? User?.FindFirstValue("sub"),
+            out var id)
+            ? id
+            : null;
 
     public string? Email => User?.FindFirstValue(ClaimTypes.Email);
 
