@@ -1,5 +1,11 @@
 namespace ELearning.WebApi.Contracts.v1;
 
+public sealed record ListTrainingClassesRequest(
+    int Page = 1,
+    int PageSize = 20,
+    Guid? CourseId = null,
+    string? Search = null);
+
 public sealed record CreateTrainingClassRequest(Guid CourseId, string Title, int MaxLearners);
 
 public sealed record UpdateTrainingClassRequest(string Title, int MaxLearners);

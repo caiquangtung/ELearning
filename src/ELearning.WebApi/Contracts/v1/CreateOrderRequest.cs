@@ -1,5 +1,7 @@
 namespace ELearning.WebApi.Contracts.v1;
 
+public sealed record ListMyOrdersRequest(Guid BuyerUserId, int Take = 50);
+
 public sealed record CreateOrderItemRequest(
     string ItemType,
     Guid ReferenceId,
@@ -13,4 +15,3 @@ public sealed record CreateOrderRequest(
     IReadOnlyList<CreateOrderItemRequest> Items,
     long DiscountCents = 0,
     string? CouponCode = null);
-

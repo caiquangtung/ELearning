@@ -2,6 +2,11 @@ using ELearning.Domain.Aggregates.NotificationAggregate;
 
 namespace ELearning.WebApi.Contracts.v1;
 
+public sealed record ListNotificationsRequest(
+    int Page = 1,
+    int PageSize = 20,
+    bool UnreadOnly = false);
+
 public sealed record SendNotificationRequest(
     Guid UserId,
     string Title,

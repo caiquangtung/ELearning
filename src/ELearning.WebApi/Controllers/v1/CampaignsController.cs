@@ -25,9 +25,9 @@ public sealed class CampaignsController(IMediator mediator) : ControllerBase
     [HttpGet]
     [HasPermission(Permissions.Admin.Access)]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> List([FromQuery] Guid? organizationId, [FromQuery] bool includeGlobal = true, [FromQuery] int take = 50, CancellationToken ct = default)
+    public async Task<IActionResult> List([FromQuery] ListCampaignsRequest query, CancellationToken ct = default)
     {
-        var result = await mediator.Send(new ListCampaignsQuery(organizationId, includeGlobal, take), ct);
+        var result = await mediator.Send(new ListCampaignsQuery(query.OrganizationId, query.IncludeGlobal, query.Take), ct);
         return result.IsSuccess ? Ok(result.Value) : ProblemFrom(result.Error);
     }
 
@@ -110,4 +110,3 @@ public sealed class CampaignsController(IMediator mediator) : ControllerBase
         return Problem(detail: error.Description, title: error.Code, statusCode: statusCode);
     }
 }
-
