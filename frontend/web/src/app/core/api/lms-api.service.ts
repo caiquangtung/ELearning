@@ -467,7 +467,7 @@ export interface LicenseUsageReportDto {
    textAnswer: string | null;
  }
 
- export interface GradeAttemptRequest {
+export interface GradeAttemptRequest {
    grades: QuestionGradeRequest[];
  }
 
@@ -476,6 +476,47 @@ export interface LicenseUsageReportDto {
    score: number;
    isCorrect: boolean | null;
  }
+
+export interface NotificationDto {
+  id: string;
+  userId: string;
+  messageId: string | null;
+  title: string;
+  body: string;
+  type: string;
+  actionUrl: string | null;
+  isRead: boolean;
+  readAt: string | null;
+  createdAt: string;
+}
+
+export interface UnreadNotificationCountDto {
+  count: number;
+}
+
+export interface MessageDto {
+  id: string;
+  senderUserId: string;
+  subject: string;
+  body: string;
+  scope: string;
+  organizationId: string | null;
+  courseId: string | null;
+  trainingClassId: string | null;
+  recipientCount: number;
+  sentAt: string;
+}
+
+export interface SendAnnouncementRequest {
+  recipientUserIds: string[];
+  subject: string;
+  body: string;
+  scope: string;
+  organizationId: string | null;
+  courseId: string | null;
+  trainingClassId: string | null;
+  actionUrl: string | null;
+}
 
 @Injectable({ providedIn: 'root' })
 export class LmsApiService {
@@ -729,4 +770,24 @@ export class LmsApiService {
    getQuizAnalytics(id: string): Observable<QuizAnalyticsDto> {
      return this.http.get<QuizAnalyticsDto>(`${this.base}/quizzes/${id}/analytics`);
    }
+
+  listNotifications(page = 1, pageSize = 20, unreadOnly = false): Observable<PagedList<NotificationDto>> {
+    const params = new HttpParams()
+      .set('page', page)
+      .set('pageSize', pageSize)
+      .set('unreadOnly', String(unreadOnly));
+    return this.http.get<PagedList<NotificationDto>>(`${this.base}/notifications`, { params });
+  }
+
+  getUnreadNotificationCount(): Observable<UnreadNotificationCountDto> {
+    return this.http.get<UnreadNotificationCountDto>(`${this.base}/notifications/unread-count`);
+  }
+
+  markNotificationRead(id: string): Observable<NotificationDto> {
+    return this.http.post<NotificationDto>(`${this.base}/notifications/${id}/read`, {});
+  }
+
+  sendAnnouncement(body: SendAnnouncementRequest): Observable<MessageDto> {
+    return this.http.post<MessageDto>(`${this.base}/notifications/announcements`, body);
+  }
  }

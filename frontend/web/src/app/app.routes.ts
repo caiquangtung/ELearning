@@ -95,6 +95,16 @@ export const routes: Routes = [
           import('./features/campaigns/campaign-detail.component').then((m) => m.CampaignDetailComponent),
       },
       {
+        path: 'notifications',
+        loadComponent: () =>
+          import('./features/notifications/notification-list.component').then((m) => m.NotificationListComponent),
+      },
+      {
+        path: 'notifications/announcements',
+        loadComponent: () =>
+          import('./features/notifications/announcement.component').then((m) => m.AnnouncementComponent),
+      },
+      {
         path: 'quizzes',
         loadChildren: () => import('./features/quizzes/quizzes.routes').then(m => m.QUIZZES_ROUTES)
       },

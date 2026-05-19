@@ -1,11 +1,11 @@
 ---
-title: Sprint 10 completion — Notifications & Messaging
-status: Backend MVP delivered
+title: Sprint 10 completion - Notifications & Messaging
+status: MVP delivered
 date: 2026-05-19
-scope: Backend MVP
+scope: Backend + Frontend MVP
 ---
 
-# Sprint 10 Completion — Notifications & Messaging
+# Sprint 10 Completion - Notifications & Messaging
 
 ## Delivered
 
@@ -34,6 +34,11 @@ scope: Backend MVP
 - Tests:
   - Domain tests for notification creation, mark-read idempotency, announcement creation, and domain validation.
   - Application validator smoke tests for notification, announcement, email, and notification list paging.
+- Frontend:
+  - Notification bell with unread badge in the main layout.
+  - Notification list page with unread filter, refresh, action link, and mark-read action.
+  - Announcement form for sending in-app announcements to explicit recipient user IDs.
+  - Routes: `/notifications` and `/notifications/announcements`.
 
 ## Deferred
 
@@ -42,7 +47,7 @@ scope: Backend MVP
 - Redis-backed unread count cache using `notifications:unread:{userId}`.
 - Real email provider integration such as SendGrid or AWS SES.
 - SignalR or Redis Pub/Sub real-time notification delivery.
-- Angular notification bell, notification list page, announcement UI, and email preferences.
+- Email preference settings.
 - API integration tests for notification endpoints.
 
 ## Verification
@@ -51,6 +56,7 @@ scope: Backend MVP
   - Domain unit tests: 34 passed.
   - Application unit tests: 16 passed.
   - Architecture tests: 1 passed.
+- `npm run build` passes for `frontend/web`.
 
 ## Notes
 

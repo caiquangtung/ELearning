@@ -40,7 +40,7 @@ status: in-progress
 - Sprint 3: **Backend MVP done** — `TrainingClass` aggregate, sessions, instructors, conflict checks, `IZoomMeetingService` stub; **real Zoom OAuth + webhooks + Angular UI** still open (see `docs/notice.md`)
 - Sprint 4: **MVP done (Angular SPA)** — `frontend/web` Angular 19 app + Docker build; integrates auth, orgs, courses, training classes (see `docs/sprint4-completion.md`); Angular 21 upgrade optional; enrollment/attendance remains Sprint 5+
 - Sprint 9: **Backend MVP done** — certificate aggregate, issue/get/verify/download APIs, completion rule validation, PDF generation, EF migration `Sprint9_Certificates`; Angular certificate UI still open (see `docs/sprint9-completion.md`)
-- Sprint 10: **Backend MVP done** — notification/message aggregate, in-app notification APIs, announcements, email service abstraction, unread count endpoint, EF migration `Sprint10_NotificationsMessaging`; delivery templates/background jobs/Redis cache and Angular notification UI still open (see `docs/sprint10-completion.md`)
+- Sprint 10: **MVP done** — notification/message aggregate, in-app notification APIs, announcements, email service abstraction, unread count endpoint, Angular notification bell/list/announcement UI, EF migration `Sprint10_NotificationsMessaging`; delivery templates/background jobs/Redis cache, realtime notifications, and preferences still open (see `docs/sprint10-completion.md`)
 - **Sprint 4 polish (optional, 2–4 days)**: recommended before full Sprint 5 — thin `shared/ui` wrappers, pilot screen, global loading, E2E smoke, UX polish (see **Sprint 4b** below and `docs/sprint4-completion.md` *Sprint 4 review*)
 
 ### Completed Work Checklist
@@ -60,12 +60,12 @@ status: in-progress
 - [x] **Sprint 3 (backend)**: Training class aggregate, `TrainingClassesController`, migration `Sprint3_TrainingClassesAndSessions`, `NoOpZoomMeetingService`
 - [x] **Sprint 4 (frontend MVP)**: Angular app in `frontend/web`, auth/orgs/courses/training-classes UI, HTTP interceptors, Docker/nginx alignment
 - [x] **Sprint 9 (backend MVP)**: Certificate aggregate, issue/get/verify APIs, completion rules, migration `Sprint9_Certificates`
-- [x] **Sprint 10 (backend MVP)**: Notifications/messages aggregate, in-app notifications, announcements, unread counts, `IEmailService`/`NoOpEmailService`, migration `Sprint10_NotificationsMessaging`
+- [x] **Sprint 10 (MVP)**: Notifications/messages aggregate, in-app notifications, announcements, unread counts, `IEmailService`/`NoOpEmailService`, Angular notification bell/list/announcement UI, migration `Sprint10_NotificationsMessaging`
 
 ### Remaining Immediate Priorities
 - [ ] **Frontend (recommended before Sprint 5)**: Sprint 4b polish — `UiButton` / `PageShell` / `UiDataTable`, pilot list screen, global loading indicator, minimal E2E, doc refresh (`docs/sprint4-completion.md`)
 - [ ] **Redis performance layer**: add cache, distributed lock, idempotency, and rate-limit abstractions before broad analytics/search/AI rollout (see **Sprint 15a**)
-- [ ] **Sprint 10 follow-up**: notification templates, background delivery, Redis unread-count cache, Angular notification bell/list/announcement UI
+- [ ] **Sprint 10 follow-up**: notification templates, background delivery, Redis unread-count cache, realtime notifications, email preference settings
 - [ ] **AI Sprint Track (after Sprint 13 foundation)**: add AI-assisted quiz generation, course recommendation, essay grading assistant, learner risk prediction, and semantic search (see **AI Sprint Track** below)
 - [ ] **Sprint 3 follow-up**: real Zoom API implementation, webhooks, API integration tests for training classes
 - [x] Angular SPA MVP: login, register, profile, orgs, courses, training classes (see `frontend/README.md`, `docs/sprint4-completion.md`)
@@ -714,9 +714,9 @@ status: in-progress
 - [ ] Write integration tests
 
 ### Frontend Tasks
-- [ ] Create notification bell UI
-- [ ] Create notification list page
-- [ ] Create announcement UI (instructor)
+- [x] Create notification bell UI
+- [x] Create notification list page
+- [x] Create announcement UI (instructor)
 - [ ] Display real-time notifications (optional: SignalR)
 - [ ] Create email preference settings
 
