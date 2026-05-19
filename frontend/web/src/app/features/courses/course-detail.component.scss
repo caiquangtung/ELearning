@@ -2,3 +2,34 @@
   white-space: pre-wrap;
   font-size: 0.9rem;
 }
+
+.video-box {
+  margin-top: 1rem;
+  display: grid;
+  gap: .5rem;
+}
+
+.video-box video {
+  width: min(100%, 760px);
+  aspect-ratio: 16 / 9;
+  display: block;
+  border-radius: .5rem;
+  background: #0f172a;
+}
+
+.video-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  max-width: 760px;
+  color: var(--text-color-secondary);
+  font-size: .9rem;
+}
+
+.video-meta strong {
+  color: var(--primary-color);
+}
+
+.video-upload {
+  margin-top: .75rem;
+}

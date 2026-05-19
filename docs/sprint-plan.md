@@ -42,6 +42,7 @@ status: in-progress
 - Sprint 9: **Backend MVP done** — certificate aggregate, issue/get/verify/download APIs, completion rule validation, PDF generation, EF migration `Sprint9_Certificates`; Angular certificate UI still open (see `docs/sprint9-completion.md`)
 - Sprint 10: **MVP done** — notification/message aggregate, in-app notification APIs, announcements, email service abstraction, unread count endpoint, Angular notification bell/list/announcement UI, EF migration `Sprint10_NotificationsMessaging`; delivery templates/background jobs/Redis cache, realtime notifications, and preferences still open (see `docs/sprint10-completion.md`)
 - Sprint 11: **MVP done** — reporting read-model service, admin/student/instructor dashboard APIs, course/organization analytics APIs, Angular dashboard KPI cards; export, Redis analytics cache, chart library, and integration tests still open (see `docs/sprint11-completion.md`)
+- Sprint 12: **MVP done** — video asset/watch progress aggregates, upload/playback/progress/complete APIs, EF migration `Sprint12_VideoProgress`, Angular course lesson video player/upload/progress tracking; CDN/transcoding and production video storage still open (see `docs/sprint12-completion.md`)
 - **Sprint 4 polish (optional, 2–4 days)**: recommended before full Sprint 5 — thin `shared/ui` wrappers, pilot screen, global loading, E2E smoke, UX polish (see **Sprint 4b** below and `docs/sprint4-completion.md` *Sprint 4 review*)
 
 ### Completed Work Checklist
@@ -63,12 +64,14 @@ status: in-progress
 - [x] **Sprint 9 (backend MVP)**: Certificate aggregate, issue/get/verify APIs, completion rules, migration `Sprint9_Certificates`
 - [x] **Sprint 10 (MVP)**: Notifications/messages aggregate, in-app notifications, announcements, unread counts, `IEmailService`/`NoOpEmailService`, Angular notification bell/list/announcement UI, migration `Sprint10_NotificationsMessaging`
 - [x] **Sprint 11 (MVP)**: Admin/student/instructor dashboard APIs, course/organization analytics APIs, Angular dashboard KPI cards
+- [x] **Sprint 12 (MVP)**: Video upload/playback/progress tracking, watch completion threshold, course lesson video UI, migration `Sprint12_VideoProgress`
 
 ### Remaining Immediate Priorities
 - [ ] **Frontend (recommended before Sprint 5)**: Sprint 4b polish — `UiButton` / `PageShell` / `UiDataTable`, pilot list screen, global loading indicator, minimal E2E, doc refresh (`docs/sprint4-completion.md`)
 - [ ] **Redis performance layer**: add cache, distributed lock, idempotency, and rate-limit abstractions before broad analytics/search/AI rollout (see **Sprint 15a**)
 - [ ] **Sprint 10 follow-up**: notification templates, background delivery, Redis unread-count cache, realtime notifications, email preference settings
 - [ ] **Sprint 11 follow-up**: CSV/Excel export, Redis analytics cache, dedicated course/org analytics pages, chart library visualizations, reporting integration tests
+- [ ] **Sprint 12 follow-up**: S3/Azure/Mux storage, CDN delivery, transcoding, richer player UX, reporting integration with completion rules
 - [ ] **AI Sprint Track (after Sprint 13 foundation)**: add AI-assisted quiz generation, course recommendation, essay grading assistant, learner risk prediction, and semantic search (see **AI Sprint Track** below)
 - [ ] **Sprint 3 follow-up**: real Zoom API implementation, webhooks, API integration tests for training classes
 - [x] Angular SPA MVP: login, register, profile, orgs, courses, training classes (see `frontend/README.md`, `docs/sprint4-completion.md`)
@@ -782,27 +785,28 @@ status: in-progress
 **Goal**: Implement video streaming, watch tracking, and completion logic.
 
 ### Backend Tasks
-- [ ] **Video aggregate**: VideoAsset, WatchEvent entities
-- [ ] **Feature: Upload video** (to S3/Azure/Mux)
-- [ ] **Feature: Get video URL** (signed URL)
-- [ ] **Feature: Track watch progress** (heartbeat)
-- [ ] **Feature: Mark lesson complete** (watch threshold)
+- [x] **Video aggregate**: VideoAsset, WatchEvent entities
+- [x] **Feature: Upload video** *(MVP: local storage via existing `IFileStorage`; S3/Azure/Mux deferred)*
+- [x] **Feature: Get video URL** *(MVP: local asset URL with range support; signed CDN URL deferred)*
+- [x] **Feature: Track watch progress** (heartbeat)
+- [x] **Feature: Mark lesson complete** (watch threshold)
 - [ ] Implement video transcoding (optional)
-- [ ] Write unit + integration tests
+- [x] Write unit tests
+- [ ] Write integration tests
 
 ### Frontend Tasks
-- [ ] Integrate video player (Video.js / Plyr)
-- [ ] Implement watch tracking (heartbeat every 30s)
-- [ ] Display video progress bar
-- [ ] Auto-mark lesson complete at 80% watched
-- [ ] Create video upload UI (instructor)
+- [x] Integrate video player *(MVP: native HTML5 player)*
+- [x] Implement watch tracking (heartbeat every 30s)
+- [x] Display video progress indicator
+- [x] Auto-mark lesson complete at 80% watched
+- [x] Create video upload UI (instructor)
 
 ### Infrastructure
 - [ ] Set up video storage (S3 / Azure Blob / Mux)
 - [ ] Configure CDN for video delivery
 
 ### Database
-- [ ] Create migrations for VideoAsset, WatchEvent tables
+- [x] Create migrations for VideoAsset, WatchEvent tables
 
 **Definition of Done**:
 - Videos can be uploaded

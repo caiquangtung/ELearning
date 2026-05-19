@@ -4,7 +4,7 @@ import { Button } from 'primeng/button';
 import { Divider } from 'primeng/divider';
 import { Panel } from 'primeng/panel';
 import { Tag } from 'primeng/tag';
-import { CourseDetailDto, LmsApiService } from '../../core/api/lms-api.service';
+import { CourseDetailDto, LmsApiService, VideoAssetDto, WatchProgressDto } from '../../core/api/lms-api.service';
 import { GlobalErrorService } from '../../core/error/global-error.service';
 
 function assetTypeLabel(t: number): string {
@@ -67,6 +67,30 @@ function assetTypeLabel(t: number): string {
                     }
                   </ul>
                 }
+                @if (videos()[l.id]; as video) {
+                  <div class="video-box">
+                    <video
+                      controls
+                      preload="metadata"
+                      [src]="video.url"
+                      (timeupdate)="trackVideo(video, $event)"
+                    ></video>
+                    <div class="video-meta">
+                      <span>{{ video.fileName }}</span>
+                      @if (progress()[video.id]; as p) {
+                        <strong>{{ p.progressPercent }}% watched</strong>
+                      }
+                    </div>
+                  </div>
+                }
+                <div class="video-upload">
+                  <input
+                    type="file"
+                    accept="video/*"
+                    [id]="'video-' + l.id"
+                    (change)="uploadVideo(c.id, s.id, l.id, $event)"
+                  />
+                </div>
               </div>
               @if (!last) {
                 <p-divider />
@@ -86,6 +110,9 @@ export class CourseDetailComponent implements OnInit {
 
   readonly course = signal<CourseDetailDto | null>(null);
   readonly loading = signal(true);
+  readonly videos = signal<Record<string, VideoAssetDto>>({});
+  readonly progress = signal<Record<string, WatchProgressDto>>({});
+  private readonly lastTrackedAt: Record<string, number> = {};
 
   readonly assetTypeLabel = assetTypeLabel;
 
@@ -104,8 +131,61 @@ export class CourseDetailComponent implements OnInit {
       next: (c) => {
         this.course.set(c);
         this.loading.set(false);
+        this.loadLessonVideos(c);
       },
       error: () => this.loading.set(false),
     });
+  }
+
+  uploadVideo(courseId: string, sectionId: string, lessonId: string, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    this.api.uploadVideo(courseId, sectionId, lessonId, file).subscribe({
+      next: (video) => {
+        this.videos.update((items) => ({ ...items, [lessonId]: video }));
+        input.value = '';
+      },
+      error: () => {
+        input.value = '';
+      },
+    });
+  }
+
+  trackVideo(video: VideoAssetDto, event: Event): void {
+    const element = event.target as HTMLVideoElement;
+    if (!Number.isFinite(element.duration) || element.duration <= 0) return;
+
+    const now = Date.now();
+    const last = this.lastTrackedAt[video.id] ?? 0;
+    const current = Math.floor(element.currentTime);
+    const duration = Math.floor(element.duration);
+    const watched = Math.min(duration, Math.max(current, this.progress()[video.id]?.watchedSeconds ?? 0));
+
+    if (now - last < 30000 && watched < Math.ceil(duration * 0.8)) return;
+    this.lastTrackedAt[video.id] = now;
+
+    this.api.trackVideoProgress(video.id, {
+      positionSeconds: current,
+      durationSeconds: duration,
+      watchedSeconds: watched,
+    }).subscribe((p) => {
+      this.progress.update((items) => ({ ...items, [video.id]: p }));
+      if (p.isCompleted) {
+        this.lastTrackedAt[video.id] = Number.MAX_SAFE_INTEGER;
+      }
+    });
+  }
+
+  private loadLessonVideos(course: CourseDetailDto): void {
+    for (const section of course.sections) {
+      for (const lesson of section.lessons) {
+        this.api.getLessonVideo(lesson.id).subscribe({
+          next: (video) => this.videos.update((items) => ({ ...items, [lesson.id]: video })),
+          error: () => undefined,
+        });
+      }
+    }
   }
 }

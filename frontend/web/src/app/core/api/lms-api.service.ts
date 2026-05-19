@@ -550,6 +550,30 @@ export interface InstructorDashboardDto {
   scheduledClasses: number;
 }
 
+export interface VideoAssetDto {
+  id: string;
+  lessonId: string;
+  fileName: string;
+  contentType: string;
+  sizeBytes: number;
+  url: string;
+  durationSeconds: number | null;
+  uploadedAt: string;
+}
+
+export interface WatchProgressDto {
+  id: string;
+  videoAssetId: string;
+  lessonId: string;
+  userId: string;
+  lastPositionSeconds: number;
+  durationSeconds: number;
+  watchedSeconds: number;
+  progressPercent: number;
+  isCompleted: boolean;
+  completedAt: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class LmsApiService {
   private readonly http = inject(HttpClient);
@@ -833,5 +857,38 @@ export class LmsApiService {
 
   getInstructorDashboard(): Observable<InstructorDashboardDto> {
     return this.http.get<InstructorDashboardDto>(`${this.base}/reports/dashboard/instructor`);
+  }
+
+  getLessonVideo(lessonId: string): Observable<VideoAssetDto> {
+    return this.http.get<VideoAssetDto>(`${this.base}/videos/lessons/${lessonId}`);
+  }
+
+  uploadVideo(
+    courseId: string,
+    sectionId: string,
+    lessonId: string,
+    file: File,
+    durationSeconds?: number | null,
+  ): Observable<VideoAssetDto> {
+    const form = new FormData();
+    form.append('file', file);
+    if (durationSeconds) {
+      form.append('durationSeconds', String(durationSeconds));
+    }
+    return this.http.post<VideoAssetDto>(
+      `${this.base}/videos/courses/${courseId}/sections/${sectionId}/lessons/${lessonId}`,
+      form,
+    );
+  }
+
+  trackVideoProgress(
+    videoAssetId: string,
+    body: { positionSeconds: number; durationSeconds: number; watchedSeconds: number },
+  ): Observable<WatchProgressDto> {
+    return this.http.post<WatchProgressDto>(`${this.base}/videos/${videoAssetId}/progress`, body);
+  }
+
+  markVideoComplete(videoAssetId: string): Observable<WatchProgressDto> {
+    return this.http.post<WatchProgressDto>(`${this.base}/videos/${videoAssetId}/complete`, {});
   }
  }
