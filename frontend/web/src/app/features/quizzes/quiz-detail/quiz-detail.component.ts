@@ -122,26 +122,7 @@ import { MessageService } from 'primeng/api';
 
     <p-toast />
   `,
-  styles: [`
-    .space-y-6 > * + * {
-      margin-top: 1.5rem;
-    }
-    .space-y-4 > * + * {
-      margin-top: 1rem;
-    }
-    .space-y-3 > * + * {
-      margin-top: 0.75rem;
-    }
-    .space-y-2 > * + * {
-      margin-top: 0.5rem;
-    }
-    .gap-4 > * + * {
-      margin-left: 1rem;
-    }
-    .gap-2 > * + * {
-      margin-left: 0.5rem;
-    }
-  `]
+  styleUrl: './quiz-detail.component.scss',
 })
 export class QuizDetailComponent implements OnInit {
   private readonly api = inject(LmsApiService);

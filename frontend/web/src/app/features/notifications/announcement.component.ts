@@ -78,21 +78,7 @@ import { LmsApiService } from '../../core/api/lms-api.service';
       </p-card>
     </div>
   `,
-  styles: [`
-    .page { padding: 1.5rem; max-width: 920px; }
-    .page-header { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
-    h1 { margin: 0; font-size: 1.75rem; }
-    .page-header p { margin: .25rem 0 0; color: var(--text-color-secondary); }
-    .form { display: grid; gap: 1rem; }
-    label { display: grid; gap: .35rem; font-weight: 600; }
-    input, textarea, p-dropdown { width: 100%; }
-    .grid { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 1rem; }
-    .footer { display: flex; justify-content: flex-end; }
-    @media (max-width: 720px) {
-      .page-header, .grid { display: block; }
-      .grid label + label { margin-top: 1rem; }
-    }
-  `],
+  styleUrl: './announcement.component.scss',
 })
 export class AnnouncementComponent {
   private readonly api = inject(LmsApiService);

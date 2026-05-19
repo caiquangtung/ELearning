@@ -518,6 +518,38 @@ export interface SendAnnouncementRequest {
   actionUrl: string | null;
 }
 
+export interface AdminDashboardDto {
+  totalUsers: number;
+  activeUsers: number;
+  totalCourses: number;
+  publishedCourses: number;
+  totalClasses: number;
+  scheduledClasses: number;
+  paidOrders: number;
+  pendingOrders: number;
+  revenueCents: number;
+  currency: string;
+  certificatesIssued: number;
+}
+
+export interface StudentDashboardDto {
+  userId: string;
+  paidOrders: number;
+  coursePurchases: number;
+  classPurchases: number;
+  certificatesIssued: number;
+  upcomingSessions: number;
+}
+
+export interface InstructorDashboardDto {
+  userId: string;
+  assignedClasses: number;
+  upcomingSessions: number;
+  completedSessions: number;
+  draftClasses: number;
+  scheduledClasses: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class LmsApiService {
   private readonly http = inject(HttpClient);
@@ -789,5 +821,17 @@ export class LmsApiService {
 
   sendAnnouncement(body: SendAnnouncementRequest): Observable<MessageDto> {
     return this.http.post<MessageDto>(`${this.base}/notifications/announcements`, body);
+  }
+
+  getAdminDashboard(): Observable<AdminDashboardDto> {
+    return this.http.get<AdminDashboardDto>(`${this.base}/reports/dashboard/admin`);
+  }
+
+  getStudentDashboard(): Observable<StudentDashboardDto> {
+    return this.http.get<StudentDashboardDto>(`${this.base}/reports/dashboard/student`);
+  }
+
+  getInstructorDashboard(): Observable<InstructorDashboardDto> {
+    return this.http.get<InstructorDashboardDto>(`${this.base}/reports/dashboard/instructor`);
   }
  }

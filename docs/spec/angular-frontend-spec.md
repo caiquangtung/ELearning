@@ -62,8 +62,46 @@ Examples:
 - **Peer dependencies**: `@angular/animations`, **`@angular/cdk`** (required by PrimeNG).
 - TypeScript **strict** mode; path aliases (`@core/*`, `@shared/*`) in `tsconfig.app.json`.
 - Style guide: **Angular style guide** + **PrimeNG** usage patterns + project ESLint rules.
-- File naming: `feature-name.routes.ts`, `*.component.ts`, `*.store.ts` (when using a store).
+- File naming: `feature-name.routes.ts`, `*.component.ts`, `*.component.scss`, `*.store.ts` (when using a store).
 - Prefer **PrimeNG primitives** (`p-table`, `p-button`, `p-card`, `p-panel`, `p-dropdown`, `p-message`, `p-menubar`, `p-toolbar`, `p-paginator`, `p-tag`, `p-floatlabel`, `p-password`, …) in features. Introduce **`shared/ui/`** wrappers for repeated composition, loading/a11y conventions, or future design-system swaps (see §3.4).
+
+### 1.5.1 Module layout & styles (mandatory)
+
+**Feature modules (folder boundaries, not `NgModule`)**
+
+- Every business area lives under **`features/<feature-name>/`** with a lazy route file **`<feature-name>.routes.ts`** (e.g. `features/courses/courses.routes.ts`).
+- Inside a feature folder keep screens, local stores, and route config together. Do **not** register feature routes or screen components outside that folder.
+- **`core/`** — singletons (auth, HTTP, layout shell wiring). **`shared/`** — reusable UI, pipes, directives. **`features/`** — product screens only.
+- Import direction: `features` → `shared` / `core` public APIs only; **never** `features/A` → `features/B`. Share cross-cutting UI via `shared/`.
+- Do **not** add new feature **`NgModule`s**; use **standalone** components and import PrimeNG per screen (see first bullet in §1.5).
+
+**Component styles (no inline CSS in `.ts`)**
+
+- **Forbidden**: `styles: [\`...\`]` or `styles: ['...']` in `@Component({ ... })`.
+- **Required**: sibling **`*.component.scss`** + `styleUrl: './<component-name>.component.scss'` (same basename as the `.ts` file).
+- **Global / theme only**: `src/styles.scss`, `shared/ui/theme/` preset (§3.5). Do not put screen-specific rules in global SCSS.
+
+```typescript
+// ✅ Correct
+@Component({
+  selector: 'app-course-list',
+  standalone: true,
+  templateUrl: './course-list.component.html',
+  styleUrl: './course-list.component.scss',
+})
+export class CourseListComponent {}
+
+// ❌ Wrong — inline styles in the component file
+@Component({
+  selector: 'app-course-list',
+  styles: [`:host { display: block; }`],
+})
+export class CourseListComponent {}
+```
+
+Shared stack/gap helpers used by quiz screens live in `shared/styles/_layout-utilities.scss`; import from feature `*.component.scss` with `@use '../../../shared/styles/layout-utilities' as *;` (adjust path per folder depth).
+
+**Cursor rule:** `.cursor/rules/angular-frontend.mdc` applies when editing `frontend/web/**/*`.
 
 ### 1.6 Acceptance criteria
 
@@ -72,6 +110,8 @@ Use checklists verifiable manually or via E2E:
 - [ ] Loading state appears when a request lasts longer than 300ms (or per UX).
 - [ ] 4xx/5xx errors show user-friendly messages; 403 does not leak sensitive details.
 - [ ] Invalid forms do not call the API; field-level errors are shown.
+- [ ] New/changed UI lives under the correct **`features/<name>/`** folder with lazy routes in that feature’s `*.routes.ts`.
+- [ ] Component uses **`styleUrl`** + **`*.component.scss`**; no inline `styles` array in `@Component`.
 
 ---
 
@@ -95,6 +135,23 @@ frontend/web/src/app/
 ```
 
 **Rules**: `core` may import from `shared`, not the reverse. `features` import only `shared` and `core` (public APIs), not other features—except via `shared` or a shared domain library.
+
+**Per-feature module layout** (example `features/courses/`):
+
+```
+features/courses/
+├── courses.routes.ts          # lazy routes for this feature only
+├── course-list/
+│   ├── course-list.component.ts
+│   ├── course-list.component.html
+│   └── course-list.component.scss
+└── course-detail/
+    ├── course-detail.component.ts
+    ├── course-detail.component.html
+    └── course-detail.component.scss
+```
+
+See §1.5.1 for import boundaries and the **no inline `styles`** rule.
 
 ---
 
@@ -215,6 +272,7 @@ Adjust palettes (`sky`, `indigo`, custom hex via token maps) when design finaliz
 
 - Global icon font: `@import 'primeicons/primeicons.css';` in `src/styles.scss`.
 - Prefer PrimeNG **severity** (`p-tag`, `p-message`) and **built-in spacing** utilities; keep custom SCSS minimal.
+- Screen-specific styling belongs in **`*.component.scss`** (§1.5.1), not inline in the component `.ts` and not as large overrides in `styles.scss`.
 
 ---
 

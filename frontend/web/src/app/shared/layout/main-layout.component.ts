@@ -35,36 +35,7 @@ import { LoadingService } from '../../core/loading/loading.service';
       <router-outlet />
     </div>
   `,
-  styles: [`
-    .notification-button {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 2.25rem;
-      height: 2.25rem;
-      margin-right: .75rem;
-      color: var(--text-color);
-      text-decoration: none;
-      border-radius: 50%;
-    }
-    .notification-button:hover { background: var(--surface-hover); }
-    .notification-button span {
-      position: absolute;
-      top: .2rem;
-      right: .15rem;
-      min-width: 1rem;
-      height: 1rem;
-      padding: 0 .2rem;
-      border-radius: 999px;
-      background: var(--red-500);
-      color: #fff;
-      font-size: .65rem;
-      line-height: 1rem;
-      text-align: center;
-      font-weight: 700;
-    }
-  `],
+  styleUrl: './main-layout.component.scss',
 })
 export class MainLayoutComponent {
   readonly auth = inject(AuthService);

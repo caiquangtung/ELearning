@@ -25,11 +25,7 @@ import { Toolbar } from 'primeng/toolbar';
       </div>
     </div>
   `,
-  styles: [`
-    :host {
-      display: block;
-    }
-  `]
+  styleUrl: './page-shell.component.scss',
 })
 export class PageShellComponent {
   title = input.required<string>();
