@@ -15,10 +15,19 @@ public sealed class ListCoursesQueryHandler(ICourseRepository courseRepository)
             request.PageSize,
             request.Search,
             request.Status,
+            request.MinPriceCents,
+            request.MaxPriceCents,
+            request.Sort,
             ct);
 
         var dto = PagedList<CourseListItemDto>.Create(
-            paged.Items.Select(c => new CourseListItemDto(c.Id, c.Title, c.Status.ToString(), c.CreatedAt)).ToList(),
+            paged.Items.Select(c => new CourseListItemDto(
+                c.Id,
+                c.Title,
+                c.Status.ToString(),
+                c.PriceCents,
+                c.Currency,
+                c.CreatedAt)).ToList(),
             paged.Page,
             paged.PageSize,
             paged.TotalCount);
@@ -26,4 +35,3 @@ public sealed class ListCoursesQueryHandler(ICourseRepository courseRepository)
         return dto;
     }
 }
-

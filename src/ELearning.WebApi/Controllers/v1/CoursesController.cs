@@ -27,18 +27,23 @@ public sealed class CoursesController(IMediator mediator) : ControllerBase
     [HttpGet]
     [HasPermission(Permissions.Courses.Read)]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> List(
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20,
-        [FromQuery] string? search = null,
-        [FromQuery] string? status = null,
-        CancellationToken ct = default)
+    public async Task<IActionResult> List([FromQuery] ListCoursesRequest query, CancellationToken ct = default)
     {
-        var parsedStatus = Enum.TryParse(status, true, out Domain.Aggregates.CourseAggregate.CourseStatus s)
+        var parsedStatus = Enum.TryParse(query.Status, true, out Domain.Aggregates.CourseAggregate.CourseStatus s)
             ? s
             : (Domain.Aggregates.CourseAggregate.CourseStatus?)null;
+        var parsedSort = Enum.TryParse(query.Sort, true, out Domain.Aggregates.CourseAggregate.CourseSortOption so)
+            ? so
+            : Domain.Aggregates.CourseAggregate.CourseSortOption.Newest;
 
-        var result = await mediator.Send(new ListCoursesQuery(page, pageSize, search, parsedStatus), ct);
+        var result = await mediator.Send(new ListCoursesQuery(
+            query.Page,
+            query.PageSize,
+            query.Search,
+            parsedStatus,
+            query.MinPriceCents,
+            query.MaxPriceCents,
+            parsedSort), ct);
         return result.IsSuccess ? Ok(result.Value) : Problem(result.Error);
     }
 
@@ -151,4 +156,3 @@ public sealed class CoursesController(IMediator mediator) : ControllerBase
         return Problem(detail: error.Description, title: error.Code, statusCode: statusCode);
     }
 }
-
