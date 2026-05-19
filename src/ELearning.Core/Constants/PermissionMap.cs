@@ -69,6 +69,7 @@ public static class PermissionMap
                 set.Add(Permissions.Commerce.Read);
                 set.Add(Permissions.Commerce.Create);
                 set.Add(Permissions.Commerce.Pay);
+                set.Add(Permissions.Reports.Read);
                 set.Add(Permissions.Notifications.Read);
             }
         }

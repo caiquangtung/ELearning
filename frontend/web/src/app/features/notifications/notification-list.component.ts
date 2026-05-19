@@ -59,26 +59,7 @@ import { LmsApiService, NotificationDto } from '../../core/api/lms-api.service';
       </div>
     </div>
   `,
-  styles: [`
-    .page { padding: 1.5rem; }
-    .page-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1rem; }
-    h1 { margin: 0; font-size: 1.75rem; }
-    .page-header p { margin: .25rem 0 0; color: var(--text-color-secondary); }
-    .actions { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; justify-content: flex-end; }
-    .unread-filter { display: flex; align-items: center; gap: .5rem; white-space: nowrap; }
-    .notification-list { display: grid; gap: .75rem; }
-    .notification-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1rem; align-items: start; }
-    .notification-title { display: flex; align-items: center; gap: .5rem; font-weight: 700; }
-    .notification-row p { margin: .5rem 0; color: var(--text-color); }
-    .meta, .empty { color: var(--text-color-secondary); }
-    .row-actions { display: flex; align-items: center; gap: .5rem; }
-    .action-link { color: var(--primary-color); text-decoration: none; font-weight: 600; }
-    :host ::ng-deep .notification-card.unread { border-left: 4px solid var(--primary-color); }
-    @media (max-width: 720px) {
-      .page-header, .notification-row { display: block; }
-      .actions, .row-actions { justify-content: flex-start; margin-top: .75rem; }
-    }
-  `],
+  styleUrl: './notification-list.component.scss',
 })
 export class NotificationListComponent {
   private readonly api = inject(LmsApiService);

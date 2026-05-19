@@ -77,12 +77,7 @@ function assetTypeLabel(t: number): string {
       }
     }
   `,
-  styles: `
-    .content-block {
-      white-space: pre-wrap;
-      font-size: 0.9rem;
-    }
-  `,
+  styleUrl: './course-detail.component.scss',
 })
 export class CourseDetailComponent implements OnInit {
   private readonly api = inject(LmsApiService);

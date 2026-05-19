@@ -14,6 +14,7 @@ using ELearning.Infrastructure.Zoom;
 using ELearning.Infrastructure.Persistence;
 using ELearning.Infrastructure.Payments;
 using ELearning.Infrastructure.Quizzes;
+using ELearning.Infrastructure.Reports;
 using ELearning.Infrastructure.Storage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -52,6 +53,7 @@ public static class DependencyInjection
         services.AddScoped<ICertificateRepository, CertificateRepository>();
         services.AddScoped<INotificationRepository, NotificationRepository>();
         services.AddScoped<IMessageRepository, MessageRepository>();
+        services.AddScoped<IReportingReadService, ReportingReadService>();
 
         services.Configure<PaymentOptions>(configuration.GetSection(PaymentOptions.SectionName));
         services.AddSingleton<IPaymentService, NoOpPaymentService>();

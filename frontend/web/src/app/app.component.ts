@@ -18,11 +18,7 @@ import { GlobalErrorService } from './core/error/global-error.service';
     }
     <router-outlet />
   `,
-  styles: `
-    :host ::ng-deep .p-message {
-      border-radius: 0;
-    }
-  `,
+  styleUrl: './app.component.scss',
 })
 export class AppComponent {
   readonly errors = inject(GlobalErrorService);

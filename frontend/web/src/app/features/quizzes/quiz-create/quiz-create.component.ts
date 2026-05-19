@@ -122,20 +122,7 @@ import { MessageService } from 'primeng/api';
 
     <p-toast />
   `,
-  styles: [`
-    .space-y-4 > * + * {
-      margin-top: 1rem;
-    }
-    .space-y-2 > * + * {
-      margin-top: 0.5rem;
-    }
-    .gap-3 > * + * {
-      margin-left: 0.75rem;
-    }
-    .gap-4 > * + * {
-      margin-left: 1rem;
-    }
-  `]
+  styleUrl: './quiz-create.component.scss',
 })
 export class QuizCreateComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
