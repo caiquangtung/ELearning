@@ -75,6 +75,13 @@ public static class Permissions
         public const string Issue = "Certificates.Issue";
     }
 
+    public static class Notifications
+    {
+        public const string Read = "Notifications.Read";
+        public const string Send = "Notifications.Send";
+        public const string Manage = "Notifications.Manage";
+    }
+
     public static class Admin
     {
         public const string Access = "Admin.Access";
@@ -92,6 +99,7 @@ public static class Permissions
         Commerce.Read, Commerce.Create, Commerce.Pay,
         Quizzes.Read, Quizzes.Create, Quizzes.Update, Quizzes.Delete, Quizzes.Publish, Quizzes.Grade,
         Certificates.Read, Certificates.Issue,
+        Notifications.Read, Notifications.Send, Notifications.Manage,
         Admin.Access
     ];
 }
