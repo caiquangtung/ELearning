@@ -43,6 +43,7 @@ status: in-progress
 - Sprint 10: **MVP done** — notification/message aggregate, in-app notification APIs, announcements, email service abstraction, unread count endpoint, Angular notification bell/list/announcement UI, EF migration `Sprint10_NotificationsMessaging`; delivery templates/background jobs/Redis cache, realtime notifications, and preferences still open (see `docs/sprint10-completion.md`)
 - Sprint 11: **MVP done** — reporting read-model service, admin/student/instructor dashboard APIs, course/organization analytics APIs, Angular dashboard KPI cards; export, Redis analytics cache, chart library, and integration tests still open (see `docs/sprint11-completion.md`)
 - Sprint 12: **MVP done** — video asset/watch progress aggregates, upload/playback/progress/complete APIs, EF migration `Sprint12_VideoProgress`, Angular course lesson video player/upload/progress tracking; CDN/transcoding and production video storage still open (see `docs/sprint12-completion.md`)
+- Sprint 13: **MVP done** — course catalog search across title/description/lessons, status/price filters, sort options, global course search, and course results UI; category/level/instructor facets, Redis catalog cache, suggestions, and Elasticsearch still open (see `docs/sprint13-completion.md`)
 - **Sprint 4 polish (optional, 2–4 days)**: recommended before full Sprint 5 — thin `shared/ui` wrappers, pilot screen, global loading, E2E smoke, UX polish (see **Sprint 4b** below and `docs/sprint4-completion.md` *Sprint 4 review*)
 
 ### Completed Work Checklist
@@ -65,6 +66,7 @@ status: in-progress
 - [x] **Sprint 10 (MVP)**: Notifications/messages aggregate, in-app notifications, announcements, unread counts, `IEmailService`/`NoOpEmailService`, Angular notification bell/list/announcement UI, migration `Sprint10_NotificationsMessaging`
 - [x] **Sprint 11 (MVP)**: Admin/student/instructor dashboard APIs, course/organization analytics APIs, Angular dashboard KPI cards
 - [x] **Sprint 12 (MVP)**: Video upload/playback/progress tracking, watch completion threshold, course lesson video UI, migration `Sprint12_VideoProgress`
+- [x] **Sprint 13 (MVP)**: Course search/filter/sort API, global course search, advanced course list filters
 
 ### Remaining Immediate Priorities
 - [ ] **Frontend (recommended before Sprint 5)**: Sprint 4b polish — `UiButton` / `PageShell` / `UiDataTable`, pilot list screen, global loading indicator, minimal E2E, doc refresh (`docs/sprint4-completion.md`)
@@ -72,6 +74,7 @@ status: in-progress
 - [ ] **Sprint 10 follow-up**: notification templates, background delivery, Redis unread-count cache, realtime notifications, email preference settings
 - [ ] **Sprint 11 follow-up**: CSV/Excel export, Redis analytics cache, dedicated course/org analytics pages, chart library visualizations, reporting integration tests
 - [ ] **Sprint 12 follow-up**: S3/Azure/Mux storage, CDN delivery, transcoding, richer player UX, reporting integration with completion rules
+- [ ] **Sprint 13 follow-up**: category/level/instructor course metadata, Redis catalog cache, search suggestions, Elasticsearch, dedicated faceted search page
 - [ ] **AI Sprint Track (after Sprint 13 foundation)**: add AI-assisted quiz generation, course recommendation, essay grading assistant, learner risk prediction, and semantic search (see **AI Sprint Track** below)
 - [ ] **Sprint 3 follow-up**: real Zoom API implementation, webhooks, API integration tests for training classes
 - [x] Angular SPA MVP: login, register, profile, orgs, courses, training classes (see `frontend/README.md`, `docs/sprint4-completion.md`)
@@ -822,20 +825,21 @@ status: in-progress
 **Goal**: Implement full-text search and advanced filtering.
 
 ### Backend Tasks
-- [ ] **Feature: Search courses** (full-text)
-- [ ] **Feature: Filter courses** (category, price, level, instructor)
-- [ ] **Feature: Sort courses** (popularity, rating, date)
+- [x] **Feature: Search courses** *(MVP: title, description, lesson title/content using database query; full-text index deferred)*
+- [x] **Feature: Filter courses** *(MVP: status + price range; category/level/instructor metadata deferred)*
+- [x] **Feature: Sort courses** *(MVP: newest, oldest, title, price; popularity/rating deferred)*
 - [ ] Use Redis cache for published course catalog, course detail, filter metadata, and frequent search results
 - [ ] Invalidate catalog cache on course create/update/publish/delete and review/rating changes
 - [ ] Implement Elasticsearch integration (optional)
-- [ ] Optimize search queries
-- [ ] Write unit + integration tests
+- [x] Optimize search queries *(MVP: server-side filtering/sorting/pagination; DB full-text indexes deferred)*
+- [x] Write unit tests
+- [ ] Write integration tests
 
 ### Frontend Tasks
-- [ ] Create search bar (global)
-- [ ] Create advanced filter UI
-- [ ] Create search results page
-- [ ] Implement faceted search
+- [x] Create search bar (global)
+- [x] Create advanced filter UI
+- [x] Create search results page *(MVP: Courses page with query params)*
+- [x] Implement faceted search *(MVP: status + price + sort controls)*
 - [ ] Add search suggestions (autocomplete)
 
 ### Infrastructure

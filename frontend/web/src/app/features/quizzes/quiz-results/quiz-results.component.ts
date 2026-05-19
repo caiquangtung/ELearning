@@ -132,7 +132,7 @@ export class QuizResultsComponent implements OnInit {
   loadResult(attemptId: string, userId: string): void {
     this.errors.clear();
 
-    this.api.getAttempt(attemptId, userId).subscribe({
+    this.api.getAttempt(attemptId, { userId }).subscribe({
       next: (result) => {
         this.result.set(result);
         this.loading.set(false);

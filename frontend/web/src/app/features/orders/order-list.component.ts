@@ -76,7 +76,7 @@ export class OrderListComponent implements OnInit {
     const user = this.auth.user();
     this.errors.clear();
     if (!user) return;
-    this.api.listMyOrders(user.id, 100).subscribe({
+    this.api.listMyOrders({ buyerUserId: user.id, take: 100 }).subscribe({
       next: (rows) => this.items.set(rows),
     });
   }

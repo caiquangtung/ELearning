@@ -129,7 +129,7 @@ export class CampaignListComponent implements OnInit {
 
   reload(): void {
     this.errors.clear();
-    this.api.listCampaigns(null, true, 200).subscribe({
+    this.api.listCampaigns({ organizationId: null, includeGlobal: true, take: 200 }).subscribe({
       next: (rows) => this.items.set(rows),
     });
   }
@@ -173,4 +173,3 @@ export class CampaignListComponent implements OnInit {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 }
-

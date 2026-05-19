@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputText } from 'primeng/inputtext';
 import { InputTextarea } from 'primeng/inputtextarea';
@@ -89,6 +89,32 @@ import {
             styleClass="w-12rem"
             name="cstatus"
           />
+          <input
+            pInputText
+            type="number"
+            min="0"
+            [(ngModel)]="minPrice"
+            placeholder="Min price"
+            class="ml-2 w-8rem"
+            name="minPrice"
+          />
+          <input
+            pInputText
+            type="number"
+            min="0"
+            [(ngModel)]="maxPrice"
+            placeholder="Max price"
+            class="ml-2 w-8rem"
+            name="maxPrice"
+          />
+          <p-dropdown
+            [options]="sortOptions"
+            [(ngModel)]="sort"
+            optionLabel="label"
+            optionValue="value"
+            styleClass="ml-2 w-12rem"
+            name="csort"
+          />
           <app-ui-button label="Apply" icon="pi pi-filter" class="ml-2" (clicked)="applyFilters()" />
         </ng-template>
       </p-toolbar>
@@ -99,13 +125,14 @@ import {
           [rows]="pageSize"
           [totalRecords]="p.totalCount"
           [first]="(p.page - 1) * pageSize"
-          [emptyColspan]="3"
+          [emptyColspan]="4"
           (pageChange)="onPageChange($event)"
         >
           <ng-template uiDataTableHeader>
             <tr>
               <th>Title</th>
               <th>Status</th>
+              <th>Price</th>
               <th>Created</th>
             </tr>
           </ng-template>
@@ -116,6 +143,7 @@ import {
                 <a [routerLink]="['/courses', c.id]" class="text-primary font-medium">{{ c.title }}</a>
               </td>
               <td><p-tag [value]="c.status" [severity]="c.status === 'Published' ? 'success' : 'warn'" /></td>
+              <td>{{ formatPrice(c.priceCents, c.currency) }}</td>
               <td>{{ c.createdAt | date: 'mediumDate' }}</td>
             </tr>
           </ng-template>
@@ -126,6 +154,8 @@ import {
 })
 export class CourseListComponent implements OnInit {
   private readonly api = inject(LmsApiService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly errors = inject(GlobalErrorService);
   readonly auth = inject(AuthService);
 
@@ -135,6 +165,9 @@ export class CourseListComponent implements OnInit {
 
   search = '';
   status = '';
+  minPrice: number | null = null;
+  maxPrice: number | null = null;
+  sort = 'Newest';
   newTitle = '';
   newDescription = '';
 
@@ -147,18 +180,45 @@ export class CourseListComponent implements OnInit {
     { label: 'Published', value: 'Published' },
   ];
 
+  readonly sortOptions = [
+    { label: 'Newest', value: 'Newest' },
+    { label: 'Oldest', value: 'Oldest' },
+    { label: 'Title A-Z', value: 'TitleAsc' },
+    { label: 'Title Z-A', value: 'TitleDesc' },
+    { label: 'Price low-high', value: 'PriceAsc' },
+    { label: 'Price high-low', value: 'PriceDesc' },
+  ];
+
   canCreate(): boolean {
     const roles = this.auth.user()?.roles ?? [];
     return roles.some((r) => r === 'Admin' || r === 'Instructor');
   }
 
   ngOnInit(): void {
-    this.reload();
+    this.route.queryParamMap.subscribe((query) => {
+      this.search = query.get('search') ?? '';
+      this.status = query.get('status') ?? '';
+      this.sort = query.get('sort') ?? 'Newest';
+      this.minPrice = this.parsePriceParam(query.get('minPrice'));
+      this.maxPrice = this.parsePriceParam(query.get('maxPrice'));
+      this.pageNum = 1;
+      this.reload();
+    });
   }
 
   applyFilters(): void {
     this.pageNum = 1;
-    this.reload();
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        search: this.search.trim() || null,
+        status: this.status || null,
+        sort: this.sort === 'Newest' ? null : this.sort,
+        minPrice: this.minPrice ?? null,
+        maxPrice: this.maxPrice ?? null,
+      },
+      queryParamsHandling: 'merge',
+    });
   }
 
   onPageChange(event: import('primeng/paginator').PaginatorState): void {
@@ -172,7 +232,15 @@ export class CourseListComponent implements OnInit {
     this.errors.clear();
     this.loading.set(true);
     this.api
-      .listCourses(this.pageNum, this.pageSize, this.search, this.status || undefined)
+      .listCourses({
+        page: this.pageNum,
+        pageSize: this.pageSize,
+        search: this.search,
+        status: this.status || null,
+        minPriceCents: this.priceToCents(this.minPrice),
+        maxPriceCents: this.priceToCents(this.maxPrice),
+        sort: this.sort,
+      })
       .subscribe({
         next: (p) => {
           this.page.set(p);
@@ -180,6 +248,14 @@ export class CourseListComponent implements OnInit {
         },
         error: () => this.loading.set(false),
       });
+  }
+
+  formatPrice(cents: number, currency: string): string {
+    if (cents <= 0) return 'Free';
+    return new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency: currency || 'USD',
+    }).format(cents / 100);
   }
 
   createCourse(): void {
@@ -198,5 +274,15 @@ export class CourseListComponent implements OnInit {
         },
         error: () => this.creating.set(false),
       });
+  }
+
+  private parsePriceParam(value: string | null): number | null {
+    if (!value) return null;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+  }
+
+  private priceToCents(value: number | null): number | null {
+    return value === null || value === undefined ? null : Math.round(value * 100);
   }
 }

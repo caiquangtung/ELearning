@@ -28,7 +28,54 @@ export interface CourseListItemDto {
   id: string;
   title: string;
   status: string;
+  priceCents: number;
+  currency: string;
   createdAt: string;
+}
+
+export interface ListCoursesRequest {
+  page: number;
+  pageSize: number;
+  search?: string | null;
+  status?: string | null;
+  minPriceCents?: number | null;
+  maxPriceCents?: number | null;
+  sort?: string | null;
+}
+
+export interface ListTrainingClassesRequest {
+  page: number;
+  pageSize: number;
+  courseId?: string | null;
+  search?: string | null;
+}
+
+export interface ListMyOrdersRequest {
+  buyerUserId: string;
+  take?: number;
+}
+
+export interface ListCampaignsRequest {
+  organizationId?: string | null;
+  includeGlobal?: boolean;
+  take?: number;
+}
+
+export interface ListQuizzesRequest {
+  page: number;
+  pageSize: number;
+  search?: string | null;
+  status?: string | null;
+}
+
+export interface GetAttemptRequest {
+  userId: string;
+}
+
+export interface ListNotificationsRequest {
+  page?: number;
+  pageSize?: number;
+  unreadOnly?: boolean;
 }
 
 export interface ContentAssetDto {
@@ -602,18 +649,22 @@ export class LmsApiService {
     return this.http.post<OrganizationDto>(`${this.base}/organizations`, payload);
   }
 
-  listCourses(
-    page: number,
-    pageSize: number,
-    search?: string,
-    status?: string,
-  ): Observable<PagedList<CourseListItemDto>> {
-    let params = new HttpParams().set('page', page).set('pageSize', pageSize);
-    if (search?.trim()) {
-      params = params.set('search', search.trim());
+  listCourses(request: ListCoursesRequest): Observable<PagedList<CourseListItemDto>> {
+    let params = new HttpParams().set('page', request.page).set('pageSize', request.pageSize);
+    if (request.search?.trim()) {
+      params = params.set('search', request.search.trim());
     }
-    if (status?.trim()) {
-      params = params.set('status', status.trim());
+    if (request.status?.trim()) {
+      params = params.set('status', request.status.trim());
+    }
+    if (request.minPriceCents !== null && request.minPriceCents !== undefined) {
+      params = params.set('minPriceCents', request.minPriceCents);
+    }
+    if (request.maxPriceCents !== null && request.maxPriceCents !== undefined) {
+      params = params.set('maxPriceCents', request.maxPriceCents);
+    }
+    if (request.sort?.trim()) {
+      params = params.set('sort', request.sort.trim());
     }
     return this.http.get<PagedList<CourseListItemDto>>(`${this.base}/courses`, { params });
   }
@@ -626,18 +677,13 @@ export class LmsApiService {
     return this.http.post<CourseListItemDto>(`${this.base}/courses`, body);
   }
 
-  listTrainingClasses(
-    page: number,
-    pageSize: number,
-    courseId?: string,
-    search?: string,
-  ): Observable<PagedList<TrainingClassListItemDto>> {
-    let params = new HttpParams().set('page', page).set('pageSize', pageSize);
-    if (courseId) {
-      params = params.set('courseId', courseId);
+  listTrainingClasses(request: ListTrainingClassesRequest): Observable<PagedList<TrainingClassListItemDto>> {
+    let params = new HttpParams().set('page', request.page).set('pageSize', request.pageSize);
+    if (request.courseId) {
+      params = params.set('courseId', request.courseId);
     }
-    if (search?.trim()) {
-      params = params.set('search', search.trim());
+    if (request.search?.trim()) {
+      params = params.set('search', request.search.trim());
     }
     return this.http.get<PagedList<TrainingClassListItemDto>>(`${this.base}/training-classes`, { params });
   }
@@ -711,8 +757,10 @@ export class LmsApiService {
     return this.http.get<OrderDto>(`${this.base}/orders/${id}`);
   }
 
-  listMyOrders(buyerUserId: string, take = 50): Observable<OrderListItemDto[]> {
-    const params = new HttpParams().set('buyerUserId', buyerUserId).set('take', String(take));
+  listMyOrders(request: ListMyOrdersRequest): Observable<OrderListItemDto[]> {
+    const params = new HttpParams()
+      .set('buyerUserId', request.buyerUserId)
+      .set('take', String(request.take ?? 50));
     return this.http.get<OrderListItemDto[]>(`${this.base}/orders/my`, { params });
   }
 
@@ -728,9 +776,11 @@ export class LmsApiService {
     return this.http.post<PromotionQuoteDto>(`${this.base}/checkout/quote`, body);
   }
 
-  listCampaigns(organizationId: string | null, includeGlobal = true, take = 50): Observable<CampaignListItemDto[]> {
-    let params = new HttpParams().set('includeGlobal', String(includeGlobal)).set('take', String(take));
-    if (organizationId) params = params.set('organizationId', organizationId);
+  listCampaigns(request: ListCampaignsRequest): Observable<CampaignListItemDto[]> {
+    let params = new HttpParams()
+      .set('includeGlobal', String(request.includeGlobal ?? true))
+      .set('take', String(request.take ?? 50));
+    if (request.organizationId) params = params.set('organizationId', request.organizationId);
     return this.http.get<CampaignListItemDto[]>(`${this.base}/campaigns`, { params });
   }
 
@@ -759,18 +809,13 @@ export class LmsApiService {
    }
 
    // Quiz API methods
-   listQuizzes(
-     page: number,
-     pageSize: number,
-     search?: string,
-     status?: string,
-   ): Observable<PagedList<QuizListItemDto>> {
-     let params = new HttpParams().set('page', page).set('pageSize', pageSize);
-     if (search?.trim()) {
-       params = params.set('search', search.trim());
+   listQuizzes(request: ListQuizzesRequest): Observable<PagedList<QuizListItemDto>> {
+     let params = new HttpParams().set('page', request.page).set('pageSize', request.pageSize);
+     if (request.search?.trim()) {
+       params = params.set('search', request.search.trim());
      }
-     if (status?.trim()) {
-       params = params.set('status', status.trim());
+     if (request.status?.trim()) {
+       params = params.set('status', request.status.trim());
      }
      return this.http.get<PagedList<QuizListItemDto>>(`${this.base}/quizzes`, { params });
    }
@@ -811,8 +856,9 @@ export class LmsApiService {
      return this.http.post<QuizAttemptDto>(`${this.base}/quizzes/${quizId}/attempts`, body);
    }
 
-   getAttempt(attemptId: string, userId: string): Observable<QuizResultDto> {
-     return this.http.get<QuizResultDto>(`${this.base}/quizzes/attempts/${attemptId}?userId=${userId}`);
+   getAttempt(attemptId: string, request: GetAttemptRequest): Observable<QuizResultDto> {
+     const params = new HttpParams().set('userId', request.userId);
+     return this.http.get<QuizResultDto>(`${this.base}/quizzes/attempts/${attemptId}`, { params });
    }
 
    submitAttempt(attemptId: string, body: SubmitAttemptRequest): Observable<QuizAttemptDto> {
@@ -827,11 +873,11 @@ export class LmsApiService {
      return this.http.get<QuizAnalyticsDto>(`${this.base}/quizzes/${id}/analytics`);
    }
 
-  listNotifications(page = 1, pageSize = 20, unreadOnly = false): Observable<PagedList<NotificationDto>> {
+  listNotifications(request: ListNotificationsRequest = {}): Observable<PagedList<NotificationDto>> {
     const params = new HttpParams()
-      .set('page', page)
-      .set('pageSize', pageSize)
-      .set('unreadOnly', String(unreadOnly));
+      .set('page', request.page ?? 1)
+      .set('pageSize', request.pageSize ?? 20)
+      .set('unreadOnly', String(request.unreadOnly ?? false));
     return this.http.get<PagedList<NotificationDto>>(`${this.base}/notifications`, { params });
   }
 
