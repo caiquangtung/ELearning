@@ -1,3 +1,14 @@
+.global-search {
+  display: inline-block;
+  margin-right: 0.75rem;
+  width: min(18rem, 28vw);
+}
+
+.global-search input {
+  width: 100%;
+  height: 2.25rem;
+}
+
 .notification-button {
   position: relative;
   display: inline-flex;
@@ -29,4 +40,10 @@
   line-height: 1rem;
   text-align: center;
   font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .global-search {
+    display: none;
+  }
 }

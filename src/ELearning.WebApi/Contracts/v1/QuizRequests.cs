@@ -1,5 +1,13 @@
 namespace ELearning.WebApi.Contracts.v1;
 
+public sealed record ListQuizzesRequest(
+    int Page = 1,
+    int PageSize = 20,
+    string? Search = null,
+    string? Status = null);
+
+public sealed record GetAttemptRequest(Guid UserId);
+
 public sealed record CreateQuizRequest(
     Guid? CourseId,
     Guid? LessonId,

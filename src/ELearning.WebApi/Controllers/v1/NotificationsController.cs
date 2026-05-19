@@ -24,13 +24,9 @@ public sealed class NotificationsController(IMediator mediator) : ControllerBase
     [HttpGet]
     [HasPermission(Permissions.Notifications.Read)]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> List(
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20,
-        [FromQuery] bool unreadOnly = false,
-        CancellationToken ct = default)
+    public async Task<IActionResult> List([FromQuery] ListNotificationsRequest query, CancellationToken ct = default)
     {
-        var result = await mediator.Send(new ListMyNotificationsQuery(page, pageSize, unreadOnly), ct);
+        var result = await mediator.Send(new ListMyNotificationsQuery(query.Page, query.PageSize, query.UnreadOnly), ct);
         return result.IsSuccess ? Ok(result.Value) : ProblemFrom(result.Error);
     }
 

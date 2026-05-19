@@ -133,7 +133,7 @@ export class TrainingClassListComponent implements OnInit {
   ngOnInit(): void {
     this.errors.clear();
     if (this.canCreate()) {
-      this.api.listCourses(1, 100, undefined, 'Published').subscribe({
+      this.api.listCourses({ page: 1, pageSize: 100, status: 'Published' }).subscribe({
         next: (p) => this.publishedCourses.set(p.items),
       });
     }
@@ -154,7 +154,11 @@ export class TrainingClassListComponent implements OnInit {
 
   reload(): void {
     this.loading.set(true);
-    this.api.listTrainingClasses(this.pageNum, this.pageSize, undefined, this.search || undefined).subscribe({
+    this.api.listTrainingClasses({
+      page: this.pageNum,
+      pageSize: this.pageSize,
+      search: this.search || null,
+    }).subscribe({
       next: (p) => {
         this.page.set(p);
         this.loading.set(false);

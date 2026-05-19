@@ -72,7 +72,7 @@ export class NotificationListComponent {
   }
 
   load(): void {
-    this.api.listNotifications(1, 50, this.unreadOnly()).subscribe((page) => this.items.set(page.items));
+    this.api.listNotifications({ page: 1, pageSize: 50, unreadOnly: this.unreadOnly() }).subscribe((page) => this.items.set(page.items));
   }
 
   toggleUnread(value: boolean): void {

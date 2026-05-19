@@ -29,14 +29,9 @@ public sealed class TrainingClassesController(IMediator mediator) : ControllerBa
     [HttpGet]
     [HasPermission(Permissions.Classes.Read)]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> List(
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20,
-        [FromQuery] Guid? courseId = null,
-        [FromQuery] string? search = null,
-        CancellationToken ct = default)
+    public async Task<IActionResult> List([FromQuery] ListTrainingClassesRequest query, CancellationToken ct = default)
     {
-        var result = await mediator.Send(new ListTrainingClassesQuery(page, pageSize, courseId, search), ct);
+        var result = await mediator.Send(new ListTrainingClassesQuery(query.Page, query.PageSize, query.CourseId, query.Search), ct);
         return result.IsSuccess ? Ok(result.Value) : Problem(result.Error);
     }
 

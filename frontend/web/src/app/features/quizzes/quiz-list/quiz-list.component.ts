@@ -194,7 +194,12 @@ export class QuizListComponent implements OnInit {
     this.isLoading.set(true);
 
     this.api
-      .listQuizzes(this.currentPage, this.pageSize, this.searchTerm || undefined, this.statusFilter || undefined)
+      .listQuizzes({
+        page: this.currentPage,
+        pageSize: this.pageSize,
+        search: this.searchTerm || null,
+        status: this.statusFilter || null,
+      })
       .subscribe({
         next: (result) => {
           this.page.set(result);

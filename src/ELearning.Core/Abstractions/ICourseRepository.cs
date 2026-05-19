@@ -11,6 +11,8 @@ public interface ICourseRepository : IRepository<Course>
         int pageSize,
         string? search,
         CourseStatus? status,
+        long? minPriceCents,
+        long? maxPriceCents,
+        CourseSortOption sort,
         CancellationToken ct = default);
 }
-

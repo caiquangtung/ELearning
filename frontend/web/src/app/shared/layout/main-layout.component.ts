@@ -1,9 +1,11 @@
 import { Component, inject, signal } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { Router, RouterModule } from '@angular/router';
 import { MenuItem, PrimeTemplate } from 'primeng/api';
 import { Button } from 'primeng/button';
 import { Menubar } from 'primeng/menubar';
 import { ProgressBar } from 'primeng/progressbar';
+import { InputText } from 'primeng/inputtext';
 import { LmsApiService } from '../../core/api/lms-api.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { LoadingService } from '../../core/loading/loading.service';
@@ -11,13 +13,22 @@ import { LoadingService } from '../../core/loading/loading.service';
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [RouterModule, Menubar, Button, PrimeTemplate, ProgressBar],
+  imports: [FormsModule, RouterModule, Menubar, Button, PrimeTemplate, ProgressBar, InputText],
   template: `
     <p-menubar [model]="navItems" styleClass="mb-0">
       <ng-template pTemplate="start">
         <span class="font-bold text-xl mr-3">ELearning</span>
       </ng-template>
       <ng-template pTemplate="end">
+        <form class="global-search" (ngSubmit)="submitGlobalSearch()">
+          <input
+            pInputText
+            name="globalSearch"
+            [(ngModel)]="globalSearch"
+            placeholder="Search courses"
+            aria-label="Search courses"
+          />
+        </form>
         <a class="notification-button" routerLink="/notifications" aria-label="Notifications">
           <i class="pi pi-bell"></i>
           @if (unreadCount() > 0) {
@@ -40,8 +51,10 @@ import { LoadingService } from '../../core/loading/loading.service';
 export class MainLayoutComponent {
   readonly auth = inject(AuthService);
   readonly loading = inject(LoadingService);
+  private readonly router = inject(Router);
   private readonly api = inject(LmsApiService);
   readonly unreadCount = signal(0);
+  globalSearch = '';
 
   readonly navItems: MenuItem[] = [
     { label: 'Dashboard', icon: 'pi pi-home', routerLink: '/dashboard' },
@@ -64,6 +77,13 @@ export class MainLayoutComponent {
 
   signOut(): void {
     this.auth.logout();
+  }
+
+  submitGlobalSearch(): void {
+    const search = this.globalSearch.trim();
+    void this.router.navigate(['/courses'], {
+      queryParams: search ? { search, sort: 'Newest' } : {},
+    });
   }
 
   private refreshUnreadCount(): void {

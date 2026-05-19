@@ -14,6 +14,8 @@ public sealed record CourseListItemDto(
     Guid Id,
     string Title,
     string Status,
+    long PriceCents,
+    string Currency,
     DateTime CreatedAt);
 
 public sealed record SectionDto(
@@ -59,4 +61,3 @@ public sealed record CourseLessonDetailDto(
     int SortOrder,
     string? Content,
     IReadOnlyList<ContentAssetDto> Assets);
-

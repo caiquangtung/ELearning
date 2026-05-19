@@ -23,9 +23,9 @@ public sealed class OrdersController(IMediator mediator) : ControllerBase
     [HttpGet("my")]
     [HasPermission(Permissions.Commerce.Read)]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> ListMy([FromQuery] Guid buyerUserId, [FromQuery] int take = 50, CancellationToken ct = default)
+    public async Task<IActionResult> ListMy([FromQuery] ListMyOrdersRequest query, CancellationToken ct = default)
     {
-        var result = await mediator.Send(new ListMyOrdersQuery(buyerUserId, take), ct);
+        var result = await mediator.Send(new ListMyOrdersQuery(query.BuyerUserId, query.Take), ct);
         return result.IsSuccess ? Ok(result.Value) : Problem(result.Error);
     }
 
@@ -90,4 +90,3 @@ public sealed class OrdersController(IMediator mediator) : ControllerBase
         return Problem(detail: error.Description, title: error.Code, statusCode: statusCode);
     }
 }
-

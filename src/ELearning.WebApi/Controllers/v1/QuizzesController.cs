@@ -33,14 +33,9 @@ public sealed class QuizzesController(IMediator mediator) : ControllerBase
     [HttpGet]
     [HasPermission(Permissions.Quizzes.Read)]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> List(
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20,
-        [FromQuery] string? search = null,
-        [FromQuery] string? status = null,
-        CancellationToken ct = default)
+    public async Task<IActionResult> List([FromQuery] ListQuizzesRequest query, CancellationToken ct = default)
     {
-        var result = await mediator.Send(new ListQuizzesQuery(page, pageSize, search, status), ct);
+        var result = await mediator.Send(new ListQuizzesQuery(query.Page, query.PageSize, query.Search, query.Status), ct);
         return result.IsSuccess ? Ok(result.Value) : Problem(result.Error);
     }
 
@@ -145,9 +140,9 @@ public sealed class QuizzesController(IMediator mediator) : ControllerBase
     [HttpGet("attempts/{attemptId:guid}")]
     [HasPermission(Permissions.Quizzes.Read)]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAttempt(Guid attemptId, [FromQuery] Guid userId, CancellationToken ct)
+    public async Task<IActionResult> GetAttempt(Guid attemptId, [FromQuery] GetAttemptRequest query, CancellationToken ct)
     {
-        var result = await mediator.Send(new GetQuizResultsQuery(attemptId, userId), ct);
+        var result = await mediator.Send(new GetQuizResultsQuery(attemptId, query.UserId), ct);
         return result.IsSuccess ? Ok(result.Value) : Problem(result.Error);
     }
 
