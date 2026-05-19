@@ -3,6 +3,7 @@ using ELearning.Domain.Aggregates.CommerceAggregate;
 using ELearning.Domain.Aggregates.CertificateAggregate;
 using ELearning.Domain.Aggregates.CourseAggregate;
 using ELearning.Domain.Aggregates.LicensePoolAggregate;
+using ELearning.Domain.Aggregates.NotificationAggregate;
 using ELearning.Domain.Aggregates.OrderAggregate;
 using ELearning.Domain.Aggregates.PromotionAggregate;
 using ELearning.Domain.Aggregates.QuizAggregate;
@@ -35,6 +36,8 @@ public class ApplicationDbContext(
     public DbSet<QuizAttempt> QuizAttempts => Set<QuizAttempt>();
     public DbSet<Certificate> Certificates => Set<Certificate>();
     public DbSet<CertificateTemplate> CertificateTemplates => Set<CertificateTemplate>();
+    public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<Message> Messages => Set<Message>();
     public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
     {
         ApplyAuditInfo();
