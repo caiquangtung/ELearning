@@ -854,26 +854,26 @@ status: in-progress
 
 ---
 
-## Sprint 14: Review & Rating (2 weeks)
+## Sprint 14: Review & Rating (2 weeks) - Completed
 
 **Goal**: Implement course reviews and ratings.
 
 ### Backend Tasks
-- [ ] **Review aggregate**: Review, Rating entities
-- [ ] **Feature: Submit review** (after completion)
-- [ ] **Feature: Get course reviews** (paginated)
-- [ ] **Feature: Calculate average rating**
-- [ ] **Feature: Moderate reviews** (admin)
-- [ ] Write unit + integration tests
+- [x] **Review aggregate**: Review/rating fields and moderation status
+- [x] **Feature: Submit review** (after completion)
+- [x] **Feature: Get course reviews** (paginated)
+- [x] **Feature: Calculate average rating**
+- [x] **Feature: Moderate reviews** (admin)
+- [x] Write unit + integration tests
 
 ### Frontend Tasks
-- [ ] Create review submission form
-- [ ] Display course reviews
-- [ ] Display average rating (stars)
-- [ ] Create review moderation UI (admin)
+- [x] Create review submission form
+- [x] Display course reviews
+- [x] Display average rating (stars)
+- [x] Create review moderation UI (admin)
 
 ### Database
-- [ ] Create migrations for Review, Rating tables
+- [x] Create migration for Review/rating data
 
 **Definition of Done**:
 - Reviews can be submitted
