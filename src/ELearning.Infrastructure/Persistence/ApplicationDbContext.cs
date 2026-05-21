@@ -8,6 +8,7 @@ using ELearning.Domain.Aggregates.OrderAggregate;
 using ELearning.Domain.Aggregates.OrganizationAggregate;
 using ELearning.Domain.Aggregates.PromotionAggregate;
 using ELearning.Domain.Aggregates.QuizAggregate;
+using ELearning.Domain.Aggregates.ReviewAggregate;
 using ELearning.Domain.Aggregates.TrainingClassAggregate;
 using ELearning.Domain.Aggregates.UserAggregate;
 using ELearning.Domain.Aggregates.VideoAggregate;
@@ -43,6 +44,7 @@ public class ApplicationDbContext(
     public DbSet<Message> Messages => Set<Message>();
     public DbSet<VideoAsset> VideoAssets => Set<VideoAsset>();
     public DbSet<WatchEvent> WatchEvents => Set<WatchEvent>();
+    public DbSet<Review> Reviews => Set<Review>();
     public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
     {
         ApplyAuditInfo();
