@@ -11,6 +11,7 @@ import {
   CourseDetailDto,
   CourseRatingSummaryDto,
   LmsApiService,
+  ReviewEligibilityDto,
   ReviewDto,
   VideoAssetDto,
   WatchProgressDto,
@@ -122,30 +123,34 @@ function assetTypeLabel(t: number): string {
             @if (isAdmin()) {
               <label class="review-toggle">
                 <input type="checkbox" [ngModel]="includeRejected()" (ngModelChange)="toggleRejected($event)" />
-                Include rejected
+                Include pending/rejected
               </label>
             }
           </div>
 
-          <form class="review-form" (ngSubmit)="submitReview(c.id)">
-            <label for="review-rating">Your rating</label>
-            <select id="review-rating" name="reviewRating" [(ngModel)]="reviewRating">
-              @for (value of ratingOptions; track value) {
-                <option [ngValue]="value">{{ value }} stars</option>
-              }
-            </select>
-            <label for="review-comment">Your review</label>
-            <textarea
-              id="review-comment"
-              pInputTextarea
-              rows="4"
-              name="reviewComment"
-              [(ngModel)]="reviewComment"
-              maxlength="4000"
-              placeholder="Share what helped you learn from this course"
-            ></textarea>
-            <p-button type="submit" label="Submit review" icon="pi pi-star" [disabled]="submittingReview()" />
-          </form>
+          @if (eligibility()?.canReview) {
+            <form class="review-form" (ngSubmit)="submitReview(c.id)">
+              <label for="review-rating">Your rating</label>
+              <select id="review-rating" name="reviewRating" [(ngModel)]="reviewRating">
+                @for (value of ratingOptions; track value) {
+                  <option [ngValue]="value">{{ value }} stars</option>
+                }
+              </select>
+              <label for="review-comment">Your review</label>
+              <textarea
+                id="review-comment"
+                pInputTextarea
+                rows="4"
+                name="reviewComment"
+                [(ngModel)]="reviewComment"
+                maxlength="4000"
+                placeholder="Share what helped you learn from this course"
+              ></textarea>
+              <p-button type="submit" label="Submit review" icon="pi pi-star" [disabled]="submittingReview()" />
+            </form>
+          } @else {
+            <p class="review-locked">{{ eligibility()?.reason ?? 'Complete the course before submitting a review.' }}</p>
+          }
 
           @if (reviews().length) {
             <div class="review-list">
@@ -153,7 +158,7 @@ function assetTypeLabel(t: number): string {
                 <article class="review-item">
                   <div class="review-topline">
                     <span class="stars">{{ stars(review.rating) }}</span>
-                    <p-tag [value]="review.status" [severity]="review.status === 'Published' ? 'success' : 'danger'" />
+                    <p-tag [value]="review.status" [severity]="review.status === 'Published' ? 'success' : review.status === 'Pending' ? 'warn' : 'danger'" />
                   </div>
                   <p>{{ review.comment }}</p>
                   <small class="text-color-secondary">Submitted {{ review.submittedAt | date: 'mediumDate' }}</small>
@@ -202,6 +207,7 @@ export class CourseDetailComponent implements OnInit {
   readonly videos = signal<Record<string, VideoAssetDto>>({});
   readonly progress = signal<Record<string, WatchProgressDto>>({});
   readonly summary = signal<CourseRatingSummaryDto | null>(null);
+  readonly eligibility = signal<ReviewEligibilityDto | null>(null);
   readonly reviews = signal<ReviewDto[]>([]);
   readonly includeRejected = signal(false);
   readonly submittingReview = signal(false);
@@ -235,6 +241,7 @@ export class CourseDetailComponent implements OnInit {
         this.loading.set(false);
         this.loadLessonVideos(c);
         this.loadReviewSummary(c.id);
+        this.loadReviewEligibility(c.id);
         this.loadReviews(c.id);
       },
       error: () => this.loading.set(false),
@@ -293,6 +300,7 @@ export class CourseDetailComponent implements OnInit {
         this.reviewComment = '';
         this.reviews.update((items) => [review, ...items.filter((item) => item.id !== review.id)]);
         this.loadReviewSummary(courseId);
+        this.loadReviews(courseId);
       },
       error: () => this.submittingReview.set(false),
     });
@@ -329,6 +337,17 @@ export class CourseDetailComponent implements OnInit {
     this.api.getCourseRatingSummary(courseId).subscribe({
       next: (summary) => this.summary.set(summary),
       error: () => undefined,
+    });
+  }
+
+  private loadReviewEligibility(courseId: string): void {
+    this.api.getCourseReviewEligibility(courseId).subscribe({
+      next: (eligibility) => this.eligibility.set(eligibility),
+      error: () => this.eligibility.set({
+        courseId,
+        canReview: false,
+        reason: 'Complete the course before submitting a review.',
+      }),
     });
   }
 

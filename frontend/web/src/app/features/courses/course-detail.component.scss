@@ -82,6 +82,16 @@
   max-width: 760px;
 }
 
+.review-locked {
+  max-width: 760px;
+  margin: 1rem 0 1.25rem;
+  padding: .85rem 1rem;
+  border: 1px solid var(--surface-border);
+  border-radius: .5rem;
+  background: var(--surface-ground);
+  color: var(--text-color-secondary);
+}
+
 .review-form label {
   font-weight: 600;
   font-size: .9rem;

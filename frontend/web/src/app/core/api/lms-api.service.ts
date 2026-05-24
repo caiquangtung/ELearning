@@ -140,6 +140,12 @@ export interface CourseRatingSummaryDto {
   reviewCount: number;
 }
 
+export interface ReviewEligibilityDto {
+  courseId: string;
+  canReview: boolean;
+  reason: string | null;
+}
+
 export interface TrainingClassListItemDto {
   id: string;
   courseId: string;
@@ -708,6 +714,10 @@ export class LmsApiService {
 
   getCourseRatingSummary(courseId: string): Observable<CourseRatingSummaryDto> {
     return this.http.get<CourseRatingSummaryDto>(`${this.base}/courses/${courseId}/reviews/summary`);
+  }
+
+  getCourseReviewEligibility(courseId: string): Observable<ReviewEligibilityDto> {
+    return this.http.get<ReviewEligibilityDto>(`${this.base}/courses/${courseId}/reviews/eligibility`);
   }
 
   submitCourseReview(courseId: string, body: { rating: number; comment: string }): Observable<ReviewDto> {
