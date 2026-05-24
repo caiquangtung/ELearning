@@ -24,7 +24,7 @@ public sealed class SubmitReviewCommandHandler(
         if (!await courseRepository.ExistsAsync(c => c.Id == request.CourseId, ct))
             return Result.Failure<ReviewDto>(Error.NotFound("Course", request.CourseId));
 
-        if (!await certificateRepository.ExistsForCourseAsync(userId.Value, request.CourseId, ct))
+        if (!await certificateRepository.ExistsVerifiableForCourseAsync(userId.Value, request.CourseId, ct))
             return Result.Failure<ReviewDto>(
                 Error.Forbidden("Course completion is required before submitting a review."));
 
