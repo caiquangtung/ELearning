@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using ELearning.Application.Features.Reviews.GetCourseRatingSummary;
+using ELearning.Application.Features.Reviews.GetReviewEligibility;
 using ELearning.Application.Features.Reviews.ListCourseReviews;
 using ELearning.Application.Features.Reviews.ModerateReview;
 using ELearning.Application.Features.Reviews.SubmitReview;
@@ -42,6 +43,15 @@ public sealed class ReviewsController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> Summary(Guid courseId, CancellationToken ct)
     {
         var result = await mediator.Send(new GetCourseRatingSummaryQuery(courseId), ct);
+        return result.IsSuccess ? Ok(result.Value) : Problem(result.Error);
+    }
+
+    [HttpGet("api/v{version:apiVersion}/courses/{courseId:guid}/reviews/eligibility")]
+    [HasPermission(Permissions.Courses.Read)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> Eligibility(Guid courseId, CancellationToken ct)
+    {
+        var result = await mediator.Send(new GetReviewEligibilityQuery(courseId), ct);
         return result.IsSuccess ? Ok(result.Value) : Problem(result.Error);
     }
 

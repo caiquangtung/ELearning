@@ -29,7 +29,7 @@ public sealed class Review : AuditableAggregateRoot
             UserId = userId,
             Rating = rating,
             Comment = comment.Trim(),
-            Status = ReviewStatus.Published,
+            Status = ReviewStatus.Pending,
             SubmittedAt = now,
             CreatedAt = now
         };
@@ -41,7 +41,7 @@ public sealed class Review : AuditableAggregateRoot
 
         Rating = rating;
         Comment = comment.Trim();
-        Status = ReviewStatus.Published;
+        Status = ReviewStatus.Pending;
         ModeratedAt = null;
         ModeratedByUserId = null;
         ModerationReason = null;

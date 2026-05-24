@@ -11,4 +11,16 @@ public sealed class VideoAssetRepository(ApplicationDbContext context)
 {
     public async Task<VideoAsset?> GetByLessonAsync(Guid lessonId, CancellationToken ct = default) =>
         await DbSet.AsNoTracking().FirstOrDefaultAsync(v => v.LessonId == lessonId, ct);
+
+    public async Task<IReadOnlyList<VideoAsset>> ListByLessonIdsAsync(
+        IReadOnlyCollection<Guid> lessonIds,
+        CancellationToken ct = default)
+    {
+        if (lessonIds.Count == 0)
+            return [];
+
+        return await DbSet.AsNoTracking()
+            .Where(v => lessonIds.Contains(v.LessonId))
+            .ToListAsync(ct);
+    }
 }
