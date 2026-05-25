@@ -68,41 +68,43 @@ import {
             <p-skeleton height="2.75rem" width="100%" />
           }
         </div>
-      } @else if (page(); as page) {
-        <app-ui-data-table
-          [value]="page.items"
-          [emptyColspan]="5"
-          [rows]="page.pageSize"
-          [totalRecords]="page.totalCount"
-          [first]="(page.page - 1) * page.pageSize"
-          [tableStyle]="{ 'min-width': '52rem' }"
-          [virtualScroll]="page.items.length > 25"
-          (pageChange)="onPageChange($event)"
-        >
-          <ng-template uiDataTableHeader>
-            <tr>
-              <th>Name</th>
-              <th>Seats</th>
-              <th>Available</th>
-              <th>Expiry</th>
-              <th>Created</th>
-            </tr>
-          </ng-template>
+      } @else {
+        @if (page(); as p) {
+          <app-ui-data-table
+            [value]="p.items"
+            [emptyColspan]="5"
+            [rows]="p.pageSize"
+            [totalRecords]="p.totalCount"
+            [first]="(p.page - 1) * p.pageSize"
+            [tableStyle]="{ 'min-width': '52rem' }"
+            [virtualScroll]="p.items.length > 25"
+            (pageChange)="onPageChange($event)"
+          >
+            <ng-template uiDataTableHeader>
+              <tr>
+                <th>Name</th>
+                <th>Seats</th>
+                <th>Available</th>
+                <th>Expiry</th>
+                <th>Created</th>
+              </tr>
+            </ng-template>
 
-          <ng-template uiDataTableBody let-p>
-            <tr>
-              <td>
-                <a [routerLink]="['/license-pools', p.id]" class="text-primary font-medium">{{ p.name }}</a>
-              </td>
-              <td>{{ p.activeSeats }} / {{ p.totalSeats }}</td>
-              <td>
-                <p-tag [value]="p.availableSeats.toString()" [severity]="p.availableSeats > 0 ? 'success' : 'danger'" />
-              </td>
-              <td>{{ p.expiresAt ? (p.expiresAt | date: 'mediumDate') : '—' }}</td>
-              <td>{{ p.createdAt | date: 'mediumDate' }}</td>
-            </tr>
-          </ng-template>
-        </app-ui-data-table>
+            <ng-template uiDataTableBody let-pool>
+              <tr>
+                <td>
+                  <a [routerLink]="['/license-pools', pool.id]" class="text-primary font-medium">{{ pool.name }}</a>
+                </td>
+                <td>{{ pool.activeSeats }} / {{ pool.totalSeats }}</td>
+                <td>
+                  <p-tag [value]="pool.availableSeats.toString()" [severity]="pool.availableSeats > 0 ? 'success' : 'danger'" />
+                </td>
+                <td>{{ pool.expiresAt ? (pool.expiresAt | date: 'mediumDate') : '—' }}</td>
+                <td>{{ pool.createdAt | date: 'mediumDate' }}</td>
+              </tr>
+            </ng-template>
+          </app-ui-data-table>
+        }
       }
     </app-page-shell>
   `,

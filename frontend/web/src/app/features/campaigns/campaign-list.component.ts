@@ -86,40 +86,42 @@ type ScopeOption = { label: string; value: string };
             <p-skeleton height="2.75rem" width="100%" />
           }
         </div>
-      } @else if (page(); as page) {
-        <app-ui-data-table
-          [value]="page.items"
-          [emptyColspan]="6"
-          [rows]="page.pageSize"
-          [totalRecords]="page.totalCount"
-          [first]="(page.page - 1) * page.pageSize"
-          [tableStyle]="{ 'min-width': '58rem' }"
-          [virtualScroll]="page.items.length > 25"
-          (pageChange)="onPageChange($event)"
-        >
-          <ng-template uiDataTableHeader>
-            <tr>
-              <th>Name</th>
-              <th>Scope</th>
-              <th>Organization</th>
-              <th>Status</th>
-              <th>Window</th>
-              <th></th>
-            </tr>
-          </ng-template>
-          <ng-template uiDataTableBody let-c>
-            <tr>
-              <td>{{ c.name }}</td>
-              <td>{{ c.scope }}</td>
-              <td class="font-mono text-sm">{{ c.organizationId ?? '—' }}</td>
-              <td>{{ c.status }}</td>
-              <td>{{ c.startUtc | date: 'mediumDate' }} → {{ c.endUtc ? (c.endUtc | date: 'mediumDate') : '—' }}</td>
-              <td class="text-right">
-                <a [routerLink]="['/campaigns', c.id]" class="text-primary font-medium">Manage</a>
-              </td>
-            </tr>
-          </ng-template>
-        </app-ui-data-table>
+      } @else {
+        @if (page(); as p) {
+          <app-ui-data-table
+            [value]="p.items"
+            [emptyColspan]="6"
+            [rows]="p.pageSize"
+            [totalRecords]="p.totalCount"
+            [first]="(p.page - 1) * p.pageSize"
+            [tableStyle]="{ 'min-width': '58rem' }"
+            [virtualScroll]="p.items.length > 25"
+            (pageChange)="onPageChange($event)"
+          >
+            <ng-template uiDataTableHeader>
+              <tr>
+                <th>Name</th>
+                <th>Scope</th>
+                <th>Organization</th>
+                <th>Status</th>
+                <th>Window</th>
+                <th></th>
+              </tr>
+            </ng-template>
+            <ng-template uiDataTableBody let-c>
+              <tr>
+                <td>{{ c.name }}</td>
+                <td>{{ c.scope }}</td>
+                <td class="font-mono text-sm">{{ c.organizationId ?? '—' }}</td>
+                <td>{{ c.status }}</td>
+                <td>{{ c.startUtc | date: 'mediumDate' }} → {{ c.endUtc ? (c.endUtc | date: 'mediumDate') : '—' }}</td>
+                <td class="text-right">
+                  <a [routerLink]="['/campaigns', c.id]" class="text-primary font-medium">Manage</a>
+                </td>
+              </tr>
+            </ng-template>
+          </app-ui-data-table>
+        }
       }
     </app-page-shell>
   `,

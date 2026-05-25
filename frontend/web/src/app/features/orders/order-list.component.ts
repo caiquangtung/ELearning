@@ -44,39 +44,41 @@ function formatMoney(cents: number, currency: string): string {
             <p-skeleton height="2.75rem" width="100%" />
           }
         </div>
-      } @else if (page(); as page) {
-        <app-ui-data-table
-          [value]="page.items"
-          [emptyColspan]="5"
-          [rows]="page.pageSize"
-          [totalRecords]="page.totalCount"
-          [first]="(page.page - 1) * page.pageSize"
-          [tableStyle]="{ 'min-width': '48rem' }"
-          [virtualScroll]="page.items.length > 25"
-          (pageChange)="onPageChange($event)"
-        >
-          <ng-template uiDataTableHeader>
-            <tr>
-              <th>Order</th>
-              <th>Status</th>
-              <th>Total</th>
-              <th>Created</th>
-              <th></th>
-            </tr>
-          </ng-template>
+      } @else {
+        @if (page(); as p) {
+          <app-ui-data-table
+            [value]="p.items"
+            [emptyColspan]="5"
+            [rows]="p.pageSize"
+            [totalRecords]="p.totalCount"
+            [first]="(p.page - 1) * p.pageSize"
+            [tableStyle]="{ 'min-width': '48rem' }"
+            [virtualScroll]="p.items.length > 25"
+            (pageChange)="onPageChange($event)"
+          >
+            <ng-template uiDataTableHeader>
+              <tr>
+                <th>Order</th>
+                <th>Status</th>
+                <th>Total</th>
+                <th>Created</th>
+                <th></th>
+              </tr>
+            </ng-template>
 
-          <ng-template uiDataTableBody let-o>
-            <tr>
-              <td class="font-mono text-sm">{{ o.id }}</td>
-              <td>{{ o.status }}</td>
-              <td>{{ formatMoney(o.totalCents, o.currency) }}</td>
-              <td>{{ o.createdAt | date: 'medium' }}</td>
-              <td class="text-right">
-                <a [routerLink]="['/orders', o.id]" class="text-primary font-medium">View</a>
-              </td>
-            </tr>
-          </ng-template>
-        </app-ui-data-table>
+            <ng-template uiDataTableBody let-o>
+              <tr>
+                <td class="font-mono text-sm">{{ o.id }}</td>
+                <td>{{ o.status }}</td>
+                <td>{{ formatMoney(o.totalCents, o.currency) }}</td>
+                <td>{{ o.createdAt | date: 'medium' }}</td>
+                <td class="text-right">
+                  <a [routerLink]="['/orders', o.id]" class="text-primary font-medium">View</a>
+                </td>
+              </tr>
+            </ng-template>
+          </app-ui-data-table>
+        }
       }
     </app-page-shell>
   `,

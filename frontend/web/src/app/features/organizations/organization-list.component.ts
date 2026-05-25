@@ -54,47 +54,49 @@ import { PagedList } from '../../core/models/paged-list.model';
           <p-skeleton height="2.75rem" width="100%" />
         }
       </div>
-    } @else if (page(); as p) {
-      <p-table
-        [value]="p.items"
-        styleClass="p-datatable-sm"
-        [tableStyle]="{ 'min-width': '50rem' }"
-        [scrollable]="p.items.length > 25"
-        [virtualScroll]="p.items.length > 25"
-        [virtualScrollItemSize]="46"
-        scrollHeight="420px"
-      >
-        <ng-template pTemplate="header">
-          <tr>
-            <th>Name</th>
-            <th>Slug</th>
-            <th>Status</th>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-o>
-          <tr>
-            <td>
-              <a [routerLink]="['/organizations', o.id]" class="text-primary font-medium">{{ o.name }}</a>
-            </td>
-            <td>{{ o.slug }}</td>
-            <td><p-tag [value]="o.status" severity="secondary" /></td>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="emptymessage">
-          <tr>
-            <td colspan="3">No organizations found.</td>
-          </tr>
-        </ng-template>
-      </p-table>
+    } @else {
+      @if (page(); as p) {
+        <p-table
+          [value]="p.items"
+          styleClass="p-datatable-sm"
+          [tableStyle]="{ 'min-width': '50rem' }"
+          [scrollable]="p.items.length > 25"
+          [virtualScroll]="p.items.length > 25"
+          [virtualScrollItemSize]="46"
+          scrollHeight="420px"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Name</th>
+              <th>Slug</th>
+              <th>Status</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-o>
+            <tr>
+              <td>
+                <a [routerLink]="['/organizations', o.id]" class="text-primary font-medium">{{ o.name }}</a>
+              </td>
+              <td>{{ o.slug }}</td>
+              <td><p-tag [value]="o.status" severity="secondary" /></td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="3">No organizations found.</td>
+            </tr>
+          </ng-template>
+        </p-table>
 
-      <p-paginator
-        [rows]="p.pageSize"
-        [totalRecords]="p.totalCount"
-        [first]="(p.page - 1) * p.pageSize"
-        [showCurrentPageReport]="true"
-        currentPageReportTemplate="{first}–{last} of {totalRecords}"
-        (onPageChange)="onPageChange($event)"
-      />
+        <p-paginator
+          [rows]="p.pageSize"
+          [totalRecords]="p.totalCount"
+          [first]="(p.page - 1) * p.pageSize"
+          [showCurrentPageReport]="true"
+          currentPageReportTemplate="{first}–{last} of {totalRecords}"
+          (onPageChange)="onPageChange($event)"
+        />
+      }
     }
   `,
 })
