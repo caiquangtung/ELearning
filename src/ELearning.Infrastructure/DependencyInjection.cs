@@ -1,5 +1,6 @@
 using ELearning.Application.Common.Interfaces;
 using ELearning.Application.Common.Options;
+using ELearning.Infrastructure.Caching;
 using ELearning.Core.Abstractions;
 using ELearning.Infrastructure.Commerce;
 using ELearning.Infrastructure.Certificates;
@@ -59,6 +60,14 @@ public static class DependencyInjection
         services.AddScoped<IVideoAssetRepository, VideoAssetRepository>();
         services.AddScoped<IWatchEventRepository, WatchEventRepository>();
         services.AddScoped<IReviewRepository, ReviewRepository>();
+
+        services.Configure<RedisOptions>(configuration.GetSection(RedisOptions.SectionName));
+        services.AddSingleton<IRedisConnectionProvider, RedisConnectionProvider>();
+        services.AddSingleton<ICacheKeyBuilder, CacheKeyBuilder>();
+        services.AddSingleton<ICacheService, RedisCacheService>();
+        services.AddSingleton<IDistributedLockService, RedisDistributedLockService>();
+        services.AddSingleton<IIdempotencyStore, RedisIdempotencyStore>();
+        services.AddSingleton<IRateLimitStore, RedisRateLimitStore>();
 
         services.Configure<PaymentOptions>(configuration.GetSection(PaymentOptions.SectionName));
         services.AddSingleton<IPaymentService, NoOpPaymentService>();

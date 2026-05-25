@@ -8,7 +8,9 @@ namespace ELearning.Application.Features.Reports.GetInstructorDashboard;
 
 public sealed class GetInstructorDashboardQueryHandler(
     IReportingReadService reportingReadService,
-    ICurrentUserService currentUserService)
+    ICurrentUserService currentUserService,
+    ICacheService cache,
+    ICacheKeyBuilder cacheKeyBuilder)
     : IRequestHandler<GetInstructorDashboardQuery, Result<InstructorDashboardDto>>
 {
     public async Task<Result<InstructorDashboardDto>> Handle(GetInstructorDashboardQuery request, CancellationToken ct)
@@ -17,6 +19,10 @@ public sealed class GetInstructorDashboardQueryHandler(
         if (!userId.HasValue)
             return Result.Failure<InstructorDashboardDto>(Error.Unauthorized());
 
-        return await reportingReadService.GetInstructorDashboardAsync(userId.Value, ct);
+        return await cache.GetOrCreateAsync(
+            cacheKeyBuilder.Build("analytics", "dashboard", "instructor", userId.Value.ToString("N")),
+            token => reportingReadService.GetInstructorDashboardAsync(userId.Value, token),
+            TimeSpan.FromMinutes(3),
+            ct);
     }
 }

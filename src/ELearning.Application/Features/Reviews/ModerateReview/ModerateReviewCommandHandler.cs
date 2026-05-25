@@ -10,7 +10,8 @@ namespace ELearning.Application.Features.Reviews.ModerateReview;
 public sealed class ModerateReviewCommandHandler(
     IReviewRepository reviewRepository,
     ICurrentUserService currentUserService,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    ICacheService cache)
     : IRequestHandler<ModerateReviewCommand, Result<ReviewDto>>
 {
     public async Task<Result<ReviewDto>> Handle(ModerateReviewCommand request, CancellationToken ct)
@@ -31,6 +32,7 @@ public sealed class ModerateReviewCommandHandler(
                 review.Reject(moderatorUserId.Value, request.Reason ?? string.Empty);
 
             await unitOfWork.SaveChangesAsync(ct);
+            await cache.RemoveByPrefixAsync("courses:list", ct);
             return ReviewMapper.ToDto(review);
         }
         catch (DomainException ex)

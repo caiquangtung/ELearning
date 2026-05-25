@@ -1,5 +1,6 @@
 using ELearning.Application;
 using ELearning.Infrastructure;
+using ELearning.Infrastructure.Caching;
 using ELearning.Infrastructure.Persistence;
 using ELearning.WebApi.Authorization;
 using ELearning.WebApi.Middlewares;
@@ -31,6 +32,7 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
+builder.Services.AddHealthChecks().AddCheck<RedisHealthCheck>("redis");
 
 var jwtSecret = builder.Configuration["JwtSettings:Secret"]
     ?? throw new InvalidOperationException("JwtSettings:Secret must be configured.");
@@ -101,5 +103,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHealthChecks("/health");
 
 app.Run();
