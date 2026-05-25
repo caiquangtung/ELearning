@@ -5,8 +5,11 @@ import { RouterLink } from '@angular/router';
 import { InputTextModule } from 'primeng/inputtext';
 import { Panel } from 'primeng/panel';
 import { DropdownModule } from 'primeng/dropdown';
+import { PaginatorState } from 'primeng/paginator';
+import { Skeleton } from 'primeng/skeleton';
 import { LmsApiService, CampaignListItemDto, CreateCampaignRequest } from '../../core/api/lms-api.service';
 import { GlobalErrorService } from '../../core/error/global-error.service';
+import { PagedList } from '../../core/models/paged-list.model';
 import { PageShellComponent } from '../../shared/ui/page-shell/page-shell.component';
 import { UiButtonComponent } from '../../shared/ui/ui-button/ui-button.component';
 import { UiDataTableComponent } from '../../shared/ui/ui-data-table/ui-data-table.component';
@@ -30,6 +33,7 @@ type ScopeOption = { label: string; value: string };
     Panel,
     InputTextModule,
     DropdownModule,
+    Skeleton,
     PageShellComponent,
     UiButtonComponent,
     UiDataTableComponent,
@@ -76,30 +80,47 @@ type ScopeOption = { label: string; value: string };
         </div>
       </p-panel>
 
-      <app-ui-data-table [value]="items()" [emptyColspan]="6" [showPaginator]="false" [tableStyle]="{ 'min-width': '58rem' }">
-        <ng-template uiDataTableHeader>
-          <tr>
-            <th>Name</th>
-            <th>Scope</th>
-            <th>Organization</th>
-            <th>Status</th>
-            <th>Window</th>
-            <th></th>
-          </tr>
-        </ng-template>
-        <ng-template uiDataTableBody let-c>
-          <tr>
-            <td>{{ c.name }}</td>
-            <td>{{ c.scope }}</td>
-            <td class="font-mono text-sm">{{ c.organizationId ?? '—' }}</td>
-            <td>{{ c.status }}</td>
-            <td>{{ c.startUtc | date: 'mediumDate' }} → {{ c.endUtc ? (c.endUtc | date: 'mediumDate') : '—' }}</td>
-            <td class="text-right">
-              <a [routerLink]="['/campaigns', c.id]" class="text-primary font-medium">Manage</a>
-            </td>
-          </tr>
-        </ng-template>
-      </app-ui-data-table>
+      @if (loading()) {
+        <div class="flex flex-column gap-2">
+          @for (_ of skeletonRows; track $index) {
+            <p-skeleton height="2.75rem" width="100%" />
+          }
+        </div>
+      } @else if (page(); as page) {
+        <app-ui-data-table
+          [value]="page.items"
+          [emptyColspan]="6"
+          [rows]="page.pageSize"
+          [totalRecords]="page.totalCount"
+          [first]="(page.page - 1) * page.pageSize"
+          [tableStyle]="{ 'min-width': '58rem' }"
+          [virtualScroll]="page.items.length > 25"
+          (pageChange)="onPageChange($event)"
+        >
+          <ng-template uiDataTableHeader>
+            <tr>
+              <th>Name</th>
+              <th>Scope</th>
+              <th>Organization</th>
+              <th>Status</th>
+              <th>Window</th>
+              <th></th>
+            </tr>
+          </ng-template>
+          <ng-template uiDataTableBody let-c>
+            <tr>
+              <td>{{ c.name }}</td>
+              <td>{{ c.scope }}</td>
+              <td class="font-mono text-sm">{{ c.organizationId ?? '—' }}</td>
+              <td>{{ c.status }}</td>
+              <td>{{ c.startUtc | date: 'mediumDate' }} → {{ c.endUtc ? (c.endUtc | date: 'mediumDate') : '—' }}</td>
+              <td class="text-right">
+                <a [routerLink]="['/campaigns', c.id]" class="text-primary font-medium">Manage</a>
+              </td>
+            </tr>
+          </ng-template>
+        </app-ui-data-table>
+      }
     </app-page-shell>
   `,
 })
@@ -107,14 +128,18 @@ export class CampaignListComponent implements OnInit {
   private readonly api = inject(LmsApiService);
   private readonly errors = inject(GlobalErrorService);
 
-  readonly items = signal<CampaignListItemDto[]>([]);
+  readonly page = signal<PagedList<CampaignListItemDto> | null>(null);
+  readonly loading = signal(true);
   readonly creating = signal(false);
+  readonly skeletonRows = Array.from({ length: 6 });
 
   name = '';
   scope = 'Global';
   orgId = '';
   startLocal = '';
   endLocal = '';
+  readonly pageSize = 20;
+  private pageNum = 1;
 
   readonly scopeOptions: ScopeOption[] = [
     { label: 'Global', value: 'Global' },
@@ -129,9 +154,26 @@ export class CampaignListComponent implements OnInit {
 
   reload(): void {
     this.errors.clear();
-    this.api.listCampaigns({ organizationId: null, includeGlobal: true, take: 200 }).subscribe({
-      next: (rows) => this.items.set(rows),
+    this.loading.set(true);
+    this.api.listCampaigns({
+      organizationId: null,
+      includeGlobal: true,
+      page: this.pageNum,
+      pageSize: this.pageSize,
+    }).subscribe({
+      next: (page) => {
+        this.page.set(page);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
     });
+  }
+
+  onPageChange(event: PaginatorState): void {
+    const first = event.first ?? 0;
+    const rows = event.rows ?? this.pageSize;
+    this.pageNum = Math.floor(first / rows) + 1;
+    this.reload();
   }
 
   canCreate(): boolean {
