@@ -14,4 +14,14 @@ public sealed class CertificateRepository(ApplicationDbContext context)
 
     public async Task<bool> ExistsForCourseAsync(Guid userId, Guid courseId, CancellationToken ct = default)
         => await DbSet.AnyAsync(c => c.UserId == userId && c.CourseId == courseId, ct);
+
+    public async Task<bool> ExistsVerifiableForCourseAsync(Guid userId, Guid courseId, CancellationToken ct = default)
+    {
+        var now = DateTime.UtcNow;
+        return await DbSet.AnyAsync(c =>
+            c.UserId == userId
+            && c.CourseId == courseId
+            && c.Status == CertificateStatus.Issued
+            && (!c.ExpiresAt.HasValue || c.ExpiresAt.Value > now), ct);
+    }
 }

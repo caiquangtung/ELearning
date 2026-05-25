@@ -78,6 +78,12 @@ export interface ListNotificationsRequest {
   unreadOnly?: boolean;
 }
 
+export interface ListCourseReviewsRequest {
+  page?: number;
+  pageSize?: number;
+  includeRejected?: boolean;
+}
+
 export interface ContentAssetDto {
   id: string;
   assetType: number;
@@ -113,6 +119,31 @@ export interface CourseDetailDto {
   createdAt: string;
   updatedAt: string | null;
   sections: CourseSectionDetailDto[];
+}
+
+export interface ReviewDto {
+  id: string;
+  courseId: string;
+  userId: string;
+  rating: number;
+  comment: string;
+  status: string;
+  submittedAt: string;
+  moderatedAt: string | null;
+  moderatedByUserId: string | null;
+  moderationReason: string | null;
+}
+
+export interface CourseRatingSummaryDto {
+  courseId: string;
+  averageRating: number;
+  reviewCount: number;
+}
+
+export interface ReviewEligibilityDto {
+  courseId: string;
+  canReview: boolean;
+  reason: string | null;
 }
 
 export interface TrainingClassListItemDto {
@@ -671,6 +702,30 @@ export class LmsApiService {
 
   getCourse(id: string): Observable<CourseDetailDto> {
     return this.http.get<CourseDetailDto>(`${this.base}/courses/${id}`);
+  }
+
+  listCourseReviews(courseId: string, request: ListCourseReviewsRequest = {}): Observable<PagedList<ReviewDto>> {
+    const params = new HttpParams()
+      .set('page', request.page ?? 1)
+      .set('pageSize', request.pageSize ?? 20)
+      .set('includeRejected', String(request.includeRejected ?? false));
+    return this.http.get<PagedList<ReviewDto>>(`${this.base}/courses/${courseId}/reviews`, { params });
+  }
+
+  getCourseRatingSummary(courseId: string): Observable<CourseRatingSummaryDto> {
+    return this.http.get<CourseRatingSummaryDto>(`${this.base}/courses/${courseId}/reviews/summary`);
+  }
+
+  getCourseReviewEligibility(courseId: string): Observable<ReviewEligibilityDto> {
+    return this.http.get<ReviewEligibilityDto>(`${this.base}/courses/${courseId}/reviews/eligibility`);
+  }
+
+  submitCourseReview(courseId: string, body: { rating: number; comment: string }): Observable<ReviewDto> {
+    return this.http.post<ReviewDto>(`${this.base}/courses/${courseId}/reviews`, body);
+  }
+
+  moderateReview(id: string, body: { status: string; reason?: string | null }): Observable<ReviewDto> {
+    return this.http.post<ReviewDto>(`${this.base}/reviews/${id}/moderate`, body);
   }
 
   createCourse(body: { title: string; description: string | null }): Observable<CourseListItemDto> {
