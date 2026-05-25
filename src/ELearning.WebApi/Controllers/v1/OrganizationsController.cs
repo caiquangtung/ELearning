@@ -21,9 +21,9 @@ public class OrganizationsController(IMediator mediator) : ControllerBase
 {
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> List(CancellationToken ct)
+    public async Task<IActionResult> List([FromQuery] ListOrganizationsRequest query, CancellationToken ct)
     {
-        var result = await mediator.Send(new ListOrganizationsQuery(), ct);
+        var result = await mediator.Send(new ListOrganizationsQuery(query.Page, query.PageSize), ct);
         return FromResult(result);
     }
 

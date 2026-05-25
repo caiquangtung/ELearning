@@ -50,5 +50,7 @@ public sealed class CertificateConfiguration : IEntityTypeConfiguration<Certific
         builder.HasIndex(c => c.VerificationCode).IsUnique();
         builder.HasIndex(c => c.CertificateNumber).IsUnique();
         builder.HasIndex(c => new { c.UserId, c.CourseId }).IsUnique();
+        builder.HasIndex(c => new { c.CourseId, c.Status });
+        builder.HasIndex(c => new { c.UserId, c.Status });
     }
 }

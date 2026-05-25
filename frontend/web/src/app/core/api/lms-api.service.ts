@@ -50,15 +50,27 @@ export interface ListTrainingClassesRequest {
   search?: string | null;
 }
 
+export interface ListOrganizationsRequest {
+  page: number;
+  pageSize: number;
+}
+
+export interface ListLicensePoolsRequest {
+  page: number;
+  pageSize: number;
+}
+
 export interface ListMyOrdersRequest {
   buyerUserId: string;
-  take?: number;
+  page: number;
+  pageSize: number;
 }
 
 export interface ListCampaignsRequest {
   organizationId?: string | null;
   includeGlobal?: boolean;
-  take?: number;
+  page: number;
+  pageSize: number;
 }
 
 export interface ListQuizzesRequest {
@@ -657,8 +669,9 @@ export class LmsApiService {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/api/v1`;
 
-  listOrganizations(): Observable<OrganizationDto[]> {
-    return this.http.get<OrganizationDto[]>(`${this.base}/organizations`);
+  listOrganizations(request: ListOrganizationsRequest): Observable<PagedList<OrganizationDto>> {
+    const params = new HttpParams().set('page', request.page).set('pageSize', request.pageSize);
+    return this.http.get<PagedList<OrganizationDto>>(`${this.base}/organizations`, { params });
   }
 
   getOrganization(id: string): Observable<OrganizationDetailDto> {
@@ -777,8 +790,15 @@ export class LmsApiService {
     return this.http.post(`${this.base}/training-classes/${classId}/instructors`, { userId }, { responseType: 'text' });
   }
 
-  listLicensePools(organizationId: string): Observable<LicensePoolListItemDto[]> {
-    return this.http.get<LicensePoolListItemDto[]>(`${this.base}/organizations/${organizationId}/license-pools`);
+  listLicensePools(
+    organizationId: string,
+    request: ListLicensePoolsRequest,
+  ): Observable<PagedList<LicensePoolListItemDto>> {
+    const params = new HttpParams().set('page', request.page).set('pageSize', request.pageSize);
+    return this.http.get<PagedList<LicensePoolListItemDto>>(
+      `${this.base}/organizations/${organizationId}/license-pools`,
+      { params },
+    );
   }
 
   createLicensePool(
@@ -812,11 +832,12 @@ export class LmsApiService {
     return this.http.get<OrderDto>(`${this.base}/orders/${id}`);
   }
 
-  listMyOrders(request: ListMyOrdersRequest): Observable<OrderListItemDto[]> {
+  listMyOrders(request: ListMyOrdersRequest): Observable<PagedList<OrderListItemDto>> {
     const params = new HttpParams()
       .set('buyerUserId', request.buyerUserId)
-      .set('take', String(request.take ?? 50));
-    return this.http.get<OrderListItemDto[]>(`${this.base}/orders/my`, { params });
+      .set('page', request.page)
+      .set('pageSize', request.pageSize);
+    return this.http.get<PagedList<OrderListItemDto>>(`${this.base}/orders/my`, { params });
   }
 
   payOrder(id: string): Observable<OrderDto> {
@@ -831,12 +852,13 @@ export class LmsApiService {
     return this.http.post<PromotionQuoteDto>(`${this.base}/checkout/quote`, body);
   }
 
-  listCampaigns(request: ListCampaignsRequest): Observable<CampaignListItemDto[]> {
+  listCampaigns(request: ListCampaignsRequest): Observable<PagedList<CampaignListItemDto>> {
     let params = new HttpParams()
       .set('includeGlobal', String(request.includeGlobal ?? true))
-      .set('take', String(request.take ?? 50));
+      .set('page', request.page)
+      .set('pageSize', request.pageSize);
     if (request.organizationId) params = params.set('organizationId', request.organizationId);
-    return this.http.get<CampaignListItemDto[]>(`${this.base}/campaigns`, { params });
+    return this.http.get<PagedList<CampaignListItemDto>>(`${this.base}/campaigns`, { params });
   }
 
   getCampaign(id: string): Observable<CampaignDto> {

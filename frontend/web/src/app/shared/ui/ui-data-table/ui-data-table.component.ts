@@ -15,7 +15,16 @@ import {
   imports: [TableModule, Paginator, PrimeTemplate, NgTemplateOutlet],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <p-table [value]="value()" styleClass="p-datatable-sm" [tableStyle]="tableStyle()">
+    <p-table
+      [value]="value()"
+      [loading]="loading()"
+      styleClass="p-datatable-sm"
+      [tableStyle]="tableStyle()"
+      [scrollable]="scrollable() || virtualScroll()"
+      [scrollHeight]="scrollHeight()"
+      [virtualScroll]="virtualScroll()"
+      [virtualScrollItemSize]="virtualScrollItemSize()"
+    >
       <ng-template pTemplate="header">
         <ng-container *ngTemplateOutlet="headerTpl?.templateRef ?? null" />
       </ng-template>
@@ -51,7 +60,12 @@ import {
 })
 export class UiDataTableComponent<T extends object> {
   readonly value = input<T[]>([]);
+  readonly loading = input(false);
   readonly tableStyle = input<Record<string, string> | null>({ 'min-width': '40rem' });
+  readonly scrollable = input(false);
+  readonly scrollHeight = input('400px');
+  readonly virtualScroll = input(false);
+  readonly virtualScrollItemSize = input(46);
 
   readonly showPaginator = input(true);
   readonly rows = input(20);
@@ -66,4 +80,3 @@ export class UiDataTableComponent<T extends object> {
   @ContentChild(UiDataTableBodyTemplateDirective) bodyTpl?: UiDataTableBodyTemplateDirective;
   @ContentChild(UiDataTableEmptyTemplateDirective) emptyTpl?: UiDataTableEmptyTemplateDirective;
 }
-

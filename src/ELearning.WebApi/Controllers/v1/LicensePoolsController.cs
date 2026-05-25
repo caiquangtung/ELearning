@@ -23,9 +23,12 @@ public sealed class LicensePoolsController(IMediator mediator) : ControllerBase
     [HttpGet]
     [HasPermission(Permissions.Licenses.Read)]
     [Route("api/v{version:apiVersion}/organizations/{organizationId:guid}/license-pools")]
-    public async Task<IActionResult> List(Guid organizationId, CancellationToken ct)
+    public async Task<IActionResult> List(
+        Guid organizationId,
+        [FromQuery] ListLicensePoolsRequest query,
+        CancellationToken ct)
     {
-        var result = await mediator.Send(new ListLicensePoolsQuery(organizationId), ct);
+        var result = await mediator.Send(new ListLicensePoolsQuery(organizationId, query.Page, query.PageSize), ct);
         return FromResult(result);
     }
 
@@ -91,4 +94,3 @@ public sealed class LicensePoolsController(IMediator mediator) : ControllerBase
         return Problem(detail: error.Description, title: error.Code, statusCode: statusCode);
     }
 }
-

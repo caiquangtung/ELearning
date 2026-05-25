@@ -67,6 +67,7 @@ public sealed class CertificatesController(IMediator mediator) : ControllerBase
 
     [HttpGet("verify/{verificationCode}")]
     [AllowAnonymous]
+    [ResponseCache(Duration = 60, Location = ResponseCacheLocation.Any)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> Verify(string verificationCode, CancellationToken ct)
     {

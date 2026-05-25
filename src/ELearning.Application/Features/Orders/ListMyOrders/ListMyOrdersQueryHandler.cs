@@ -6,14 +6,15 @@ using MediatR;
 namespace ELearning.Application.Features.Orders.ListMyOrders;
 
 public sealed class ListMyOrdersQueryHandler(IOrderRepository orders)
-    : IRequestHandler<ListMyOrdersQuery, Result<IReadOnlyList<OrderListItemDto>>>
+    : IRequestHandler<ListMyOrdersQuery, Result<PagedList<OrderListItemDto>>>
 {
-    public async Task<Result<IReadOnlyList<OrderListItemDto>>> Handle(ListMyOrdersQuery request, CancellationToken ct)
+    public async Task<Result<PagedList<OrderListItemDto>>> Handle(ListMyOrdersQuery request, CancellationToken ct)
     {
-        var items = await orders.ListForBuyerAsync(request.BuyerUserId, request.Take, ct);
-        return items
+        var page = await orders.ListForBuyerAsync(request.BuyerUserId, request.Page, request.PageSize, ct);
+        var items = page.Items
             .Select(o => new OrderListItemDto(o.Id, o.Status.ToString(), o.Currency, o.TotalCents, o.CreatedAt))
             .ToList();
+
+        return PagedList<OrderListItemDto>.Create(items, page.Page, page.PageSize, page.TotalCount);
     }
 }
-

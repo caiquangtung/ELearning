@@ -25,7 +25,7 @@ public sealed class OrdersController(IMediator mediator) : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> ListMy([FromQuery] ListMyOrdersRequest query, CancellationToken ct = default)
     {
-        var result = await mediator.Send(new ListMyOrdersQuery(query.BuyerUserId, query.Take), ct);
+        var result = await mediator.Send(new ListMyOrdersQuery(query.BuyerUserId, query.Page, query.PageSize), ct);
         return result.IsSuccess ? Ok(result.Value) : Problem(result.Error);
     }
 

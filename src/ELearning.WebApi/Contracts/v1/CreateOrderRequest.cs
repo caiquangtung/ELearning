@@ -1,6 +1,6 @@
 namespace ELearning.WebApi.Contracts.v1;
 
-public sealed record ListMyOrdersRequest(Guid BuyerUserId, int Take = 50);
+public sealed record ListMyOrdersRequest(Guid BuyerUserId, int Page = 1, int PageSize = 20);
 
 public sealed record CreateOrderItemRequest(
     string ItemType,

@@ -39,10 +39,13 @@ public class CourseConfiguration : IEntityTypeConfiguration<Course>
 
         builder.HasQueryFilter(c => !c.IsDeleted);
 
+        builder.HasIndex(c => new { c.Status, c.CreatedAt });
+        builder.HasIndex(c => new { c.PriceCents, c.CreatedAt });
+        builder.HasIndex(c => c.Title);
+
         builder.HasMany(c => c.Sections)
             .WithOne()
             .HasForeignKey(s => s.CourseId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }
-

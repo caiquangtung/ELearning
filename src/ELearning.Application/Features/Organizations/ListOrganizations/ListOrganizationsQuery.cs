@@ -4,4 +4,5 @@ using MediatR;
 
 namespace ELearning.Application.Features.Organizations.ListOrganizations;
 
-public record ListOrganizationsQuery : IRequest<Result<IReadOnlyList<OrganizationDto>>>;
+public sealed record ListOrganizationsQuery(int Page = 1, int PageSize = 20)
+    : IRequest<Result<PagedList<OrganizationDto>>>;
