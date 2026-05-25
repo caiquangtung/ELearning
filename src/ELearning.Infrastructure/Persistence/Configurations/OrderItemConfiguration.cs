@@ -21,6 +21,6 @@ public sealed class OrderItemConfiguration : IEntityTypeConfiguration<OrderItem>
         builder.Property(i => i.Currency).HasColumnName("currency").HasMaxLength(3).IsRequired();
 
         builder.HasIndex(i => i.OrderId);
+        builder.HasIndex(i => new { i.ItemType, i.ReferenceId });
     }
 }
-

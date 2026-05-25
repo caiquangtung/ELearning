@@ -923,18 +923,18 @@ status: in-progress
 
 ---
 
-## Sprint 15: Performance Optimization & Caching (2 weeks)
+## Sprint 15: Performance Optimization & Caching (2 weeks) - Backend completed
 
 **Goal**: Optimize performance, add caching, and improve scalability.
 
 ### Backend Tasks
-- [ ] Implement Redis caching for frequent queries
-- [ ] Add response caching for public endpoints
-- [ ] Optimize database queries (indexes, query analysis)
-- [ ] Implement database query logging
+- [x] Implement Redis caching for frequent queries
+- [x] Add response caching for public endpoints
+- [x] Optimize database queries (indexes, query analysis)
+- [x] Implement database query logging
 - [ ] Add pagination to all list endpoints
-- [ ] Implement rate limiting
-- [ ] Add compression middleware
+- [x] Implement rate limiting
+- [x] Add compression middleware
 - [ ] Write performance tests
 
 ### Frontend Tasks

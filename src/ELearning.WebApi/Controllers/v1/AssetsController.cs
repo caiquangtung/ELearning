@@ -11,6 +11,7 @@ namespace ELearning.WebApi.Controllers.v1;
 public sealed class AssetsController(IConfiguration configuration) : ControllerBase
 {
     [HttpGet("{storageKey}")]
+    [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
     public IActionResult Get(string storageKey)
     {
         var root = configuration["Storage:Local:BasePath"]
@@ -24,4 +25,3 @@ public sealed class AssetsController(IConfiguration configuration) : ControllerB
         return PhysicalFile(fullPath, contentType, enableRangeProcessing: true);
     }
 }
-

@@ -4,9 +4,11 @@ using ELearning.Infrastructure.Caching;
 using ELearning.Infrastructure.Persistence;
 using ELearning.WebApi.Authorization;
 using ELearning.WebApi.Middlewares;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
+using System.IO.Compression;
 using Serilog;
 using Serilog.Context;
 using Serilog.Events;
@@ -33,6 +35,15 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddHealthChecks().AddCheck<RedisHealthCheck>("redis");
+builder.Services.AddResponseCaching();
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<BrotliCompressionProvider>();
+    options.Providers.Add<GzipCompressionProvider>();
+});
+builder.Services.Configure<BrotliCompressionProviderOptions>(options => options.Level = CompressionLevel.Fastest);
+builder.Services.Configure<GzipCompressionProviderOptions>(options => options.Level = CompressionLevel.Fastest);
 
 var jwtSecret = builder.Configuration["JwtSettings:Secret"]
     ?? throw new InvalidOperationException("JwtSettings:Secret must be configured.");
@@ -97,9 +108,12 @@ app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseHttpsRedirection();
+app.UseResponseCompression();
+app.UseResponseCaching();
 app.UseCors("AllowFrontend");
 
 app.UseAuthentication();
+app.UseMiddleware<RedisRateLimitingMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();

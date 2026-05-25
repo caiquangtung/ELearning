@@ -35,6 +35,8 @@ public sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
 
         builder.HasIndex(o => o.BuyerUserId);
         builder.HasIndex(o => o.OrganizationId);
+        builder.HasIndex(o => new { o.Status, o.CreatedAt });
+        builder.HasIndex(o => o.CheckoutExpiresAtUtc);
+        builder.HasIndex(o => o.AppliedCouponCode);
     }
 }
-

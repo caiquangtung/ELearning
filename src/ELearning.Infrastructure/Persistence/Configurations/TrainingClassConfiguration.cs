@@ -41,6 +41,8 @@ public class TrainingClassConfiguration : IEntityTypeConfiguration<TrainingClass
         builder.HasQueryFilter(x => !x.IsDeleted);
 
         builder.HasIndex(x => x.CourseId);
+        builder.HasIndex(x => new { x.Status, x.CreatedAt });
+        builder.HasIndex(x => new { x.CourseId, x.Status });
 
         builder.HasOne<Course>()
             .WithMany()
