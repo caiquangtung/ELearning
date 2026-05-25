@@ -6,7 +6,9 @@ namespace ELearning.Application.Features.Courses.DeleteCourse;
 
 public sealed class DeleteCourseCommandHandler(
     ICourseRepository courseRepository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    ICacheService cache,
+    ICacheKeyBuilder cacheKeyBuilder)
     : IRequestHandler<DeleteCourseCommand, Result>
 {
     public async Task<Result> Handle(DeleteCourseCommand request, CancellationToken ct)
@@ -17,8 +19,9 @@ public sealed class DeleteCourseCommandHandler(
 
         courseRepository.Remove(course);
         await unitOfWork.SaveChangesAsync(ct);
+        await cache.RemoveByPrefixAsync("courses:list", ct);
+        await cache.RemoveAsync(cacheKeyBuilder.Build("courses", "detail", course.Id.ToString("N")), ct);
 
         return Result.Success();
     }
 }
-

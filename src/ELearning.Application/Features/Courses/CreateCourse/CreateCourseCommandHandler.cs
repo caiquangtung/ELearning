@@ -8,7 +8,8 @@ namespace ELearning.Application.Features.Courses.CreateCourse;
 
 public sealed class CreateCourseCommandHandler(
     ICourseRepository courseRepository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    ICacheService cache)
     : IRequestHandler<CreateCourseCommand, Result<CourseDto>>
 {
     public async Task<Result<CourseDto>> Handle(CreateCourseCommand request, CancellationToken ct)
@@ -16,6 +17,7 @@ public sealed class CreateCourseCommandHandler(
         var course = Course.Create(request.Title, request.Description);
         courseRepository.Add(course);
         await unitOfWork.SaveChangesAsync(ct);
+        await cache.RemoveByPrefixAsync("courses:list", ct);
 
         return new CourseDto(
             course.Id,
@@ -26,4 +28,3 @@ public sealed class CreateCourseCommandHandler(
             course.UpdatedAt);
     }
 }
-

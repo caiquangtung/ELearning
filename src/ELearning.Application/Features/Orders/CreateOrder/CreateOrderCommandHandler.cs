@@ -19,7 +19,9 @@ public sealed class CreateOrderCommandHandler(
     ICampaignRepository campaignRepository,
     ICouponRedemptionRepository redemptionRepository,
     ICouponUsageReservationRepository couponUsageReservationRepository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IDistributedLockService distributedLock,
+    ICacheKeyBuilder cacheKeyBuilder)
     : IRequestHandler<CreateOrderCommand, Result<OrderDto>>
 {
     public async Task<Result<OrderDto>> Handle(CreateOrderCommand request, CancellationToken ct)
@@ -38,93 +40,139 @@ public sealed class CreateOrderCommandHandler(
                 return Result.Failure<OrderDto>(Error.Validation("Order.InvalidItemType", "Invalid ItemType."));
             }
 
+            var lockTtl = TimeSpan.FromSeconds(10);
+            var acquiredLocks = new List<IDistributedLockHandle>();
+            async Task<bool> TryAcquireLockAsync(string key)
+            {
+                var handle = await distributedLock.AcquireAsync(key, lockTtl, ct);
+                if (!handle.Acquired)
+                {
+                    await handle.DisposeAsync();
+                    return false;
+                }
+
+                acquiredLocks.Add(handle);
+                return true;
+            }
+
+            async Task<Result<OrderDto>> LockFailureAsync(string code, string message)
+            {
+                foreach (var acquired in acquiredLocks)
+                    await acquired.DisposeAsync();
+                return Result.Failure<OrderDto>(Error.Conflict(code, message));
+            }
+
+            if (!await TryAcquireLockAsync(cacheKeyBuilder.Build("lock", "checkout", request.BuyerUserId.ToString("N"))))
+                return await LockFailureAsync("Checkout.Locked", "Checkout is already in progress for this buyer.");
+
+            foreach (var classId in parsedItems.Where(i => i.Type == OrderItemType.TrainingClass).Select(i => i.ReferenceId).Distinct())
+            {
+                if (!await TryAcquireLockAsync(cacheKeyBuilder.Build("lock", "class-seat", classId.ToString("N"))))
+                    return await LockFailureAsync("ClassSeat.Locked", "Training class seat inventory is currently locked.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.CouponCode))
+            {
+                var couponLockCode = Domain.Aggregates.PromotionAggregate.Coupon.NormalizeCode(request.CouponCode);
+                if (!await TryAcquireLockAsync(cacheKeyBuilder.Build("lock", "coupon", couponLockCode)))
+                    return await LockFailureAsync("Coupon.Locked", "Coupon usage is currently locked.");
+            }
+
             var utcNow = DateTime.UtcNow;
-            foreach (var group in parsedItems.Where(i => i.Type == OrderItemType.TrainingClass).GroupBy(i => i.ReferenceId))
+            try
             {
-                var tc = await trainingClassRepository.GetByIdAsync(group.Key, ct);
-                if (tc is null)
-                    throw new DomainException("Training class not found.");
+                foreach (var group in parsedItems.Where(i => i.Type == OrderItemType.TrainingClass).GroupBy(i => i.ReferenceId))
+                {
+                    var tc = await trainingClassRepository.GetByIdAsync(group.Key, ct);
+                    if (tc is null)
+                        throw new DomainException("Training class not found.");
 
-                var qtyThisOrder = group.Sum(i => i.Quantity);
-                var reservedElsewhere = await reservationRepository.SumActiveReservedQuantityAsync(group.Key, utcNow, ct);
+                    var qtyThisOrder = group.Sum(i => i.Quantity);
+                    var reservedElsewhere = await reservationRepository.SumActiveReservedQuantityAsync(group.Key, utcNow, ct);
 
-                const int enrolledLearners = 0;
-                if (reservedElsewhere + qtyThisOrder > tc.MaxLearners - enrolledLearners)
-                    throw new DomainException("Training class seat capacity exceeded during checkout.");
-            }
+                    const int enrolledLearners = 0;
+                    if (reservedElsewhere + qtyThisOrder > tc.MaxLearners - enrolledLearners)
+                        throw new DomainException("Training class seat capacity exceeded during checkout.");
+                }
 
-            var order = Order.CreateDraft(request.BuyerUserId, request.OrganizationId, request.Currency);
+                var order = Order.CreateDraft(request.BuyerUserId, request.OrganizationId, request.Currency);
 
-            var quantityLines = new List<(OrderItemType ItemType, int Quantity, long UnitPriceCents)>();
-            var pricedLines = new List<(OrderItemType ItemType, long LineTotalCents)>();
+                var quantityLines = new List<(OrderItemType ItemType, int Quantity, long UnitPriceCents)>();
+                var pricedLines = new List<(OrderItemType ItemType, long LineTotalCents)>();
 
-            foreach (var i in parsedItems)
-            {
-                var priced = await GetUnitPriceAsync(i.Type, i.ReferenceId, ct);
-                if (!priced.Currency.Equals(order.Currency, StringComparison.OrdinalIgnoreCase))
-                    return Result.Failure<OrderDto>(
-                        Error.Conflict(
-                            "Order.CurrencyMismatch",
-                            $"Item currency {priced.Currency} does not match order currency {order.Currency}."));
+                foreach (var i in parsedItems)
+                {
+                    var priced = await GetUnitPriceAsync(i.Type, i.ReferenceId, ct);
+                    if (!priced.Currency.Equals(order.Currency, StringComparison.OrdinalIgnoreCase))
+                        return Result.Failure<OrderDto>(
+                            Error.Conflict(
+                                "Order.CurrencyMismatch",
+                                $"Item currency {priced.Currency} does not match order currency {order.Currency}."));
 
-                order.AddItem(i.Type, i.ReferenceId, i.Quantity, priced.UnitPriceCents);
-                quantityLines.Add((i.Type, i.Quantity, priced.UnitPriceCents));
-                pricedLines.Add((i.Type, priced.UnitPriceCents * i.Quantity));
-            }
+                    order.AddItem(i.Type, i.ReferenceId, i.Quantity, priced.UnitPriceCents);
+                    quantityLines.Add((i.Type, i.Quantity, priced.UnitPriceCents));
+                    pricedLines.Add((i.Type, priced.UnitPriceCents * i.Quantity));
+                }
 
-            // Apply promotions server-side (client-supplied DiscountCents is treated as informational only).
-            // Stacking + B2B volume discount rules live here to keep order totals authoritative.
-            var calculator = new PromotionDiscountCalculator(couponRepository, campaignRepository, redemptionRepository);
-            var (discount, appliedCouponCode) = await calculator.CalculateDiscountAsync(
-                request.BuyerUserId,
-                request.OrganizationId,
-                order.Currency,
-                pricedLines,
-                request.CouponCode,
-                isB2B: request.OrganizationId is not null,
-                quantityLines,
-                ct);
-
-            if (discount > 0)
-                order.ApplyManualDiscount(discount);
-            order.SetAppliedCouponCode(appliedCouponCode);
-
-            order.SubmitForPayment(CommerceConstants.CheckoutTimeout);
-
-            // Atomic per-buyer coupon reservation (expires with checkout window).
-            if (!string.IsNullOrWhiteSpace(appliedCouponCode))
-            {
-                var normalized = Domain.Aggregates.PromotionAggregate.Coupon.NormalizeCode(appliedCouponCode);
-                var coupon = await couponRepository.GetByCodeNormalizedAsync(normalized, ct);
-                if (coupon is null)
-                    return Result.Failure<OrderDto>(Error.Validation("CouponCode", "Invalid coupon code."));
-
-                var reserved = await couponUsageReservationRepository.TryReserveAsync(
-                    coupon.Id,
+                // Apply promotions server-side (client-supplied DiscountCents is treated as informational only).
+                // Stacking + B2B volume discount rules live here to keep order totals authoritative.
+                var calculator = new PromotionDiscountCalculator(couponRepository, campaignRepository, redemptionRepository);
+                var (discount, appliedCouponCode) = await calculator.CalculateDiscountAsync(
                     request.BuyerUserId,
-                    order.Id,
-                    order.CheckoutExpiresAtUtc!.Value,
-                    coupon.PerBuyerMaxRedemptions,
+                    request.OrganizationId,
+                    order.Currency,
+                    pricedLines,
+                    request.CouponCode,
+                    isB2B: request.OrganizationId is not null,
+                    quantityLines,
                     ct);
 
-                if (!reserved)
-                    return Result.Failure<OrderDto>(Error.Conflict("Coupon.UsageLimit", "Coupon usage limit reached."));
-            }
+                if (discount > 0)
+                    order.ApplyManualDiscount(discount);
+                order.SetAppliedCouponCode(appliedCouponCode);
 
-            foreach (var item in order.Items.Where(it => it.ItemType == OrderItemType.TrainingClass))
-            {
-                reservationRepository.Add(
-                    CheckoutReservation.Create(
+                order.SubmitForPayment(CommerceConstants.CheckoutTimeout);
+
+                // Atomic per-buyer coupon reservation (expires with checkout window).
+                if (!string.IsNullOrWhiteSpace(appliedCouponCode))
+                {
+                    var normalized = Domain.Aggregates.PromotionAggregate.Coupon.NormalizeCode(appliedCouponCode);
+                    var coupon = await couponRepository.GetByCodeNormalizedAsync(normalized, ct);
+                    if (coupon is null)
+                        return Result.Failure<OrderDto>(Error.Validation("CouponCode", "Invalid coupon code."));
+
+                    var reserved = await couponUsageReservationRepository.TryReserveAsync(
+                        coupon.Id,
+                        request.BuyerUserId,
                         order.Id,
-                        item.ReferenceId,
-                        item.Quantity,
-                        order.CheckoutExpiresAtUtc!.Value));
+                        order.CheckoutExpiresAtUtc!.Value,
+                        coupon.PerBuyerMaxRedemptions,
+                        ct);
+
+                    if (!reserved)
+                        return Result.Failure<OrderDto>(Error.Conflict("Coupon.UsageLimit", "Coupon usage limit reached."));
+                }
+
+                foreach (var item in order.Items.Where(it => it.ItemType == OrderItemType.TrainingClass))
+                {
+                    reservationRepository.Add(
+                        CheckoutReservation.Create(
+                            order.Id,
+                            item.ReferenceId,
+                            item.Quantity,
+                            order.CheckoutExpiresAtUtc!.Value));
+                }
+
+                orderRepository.Add(order);
+                await unitOfWork.SaveChangesAsync(ct);
+
+                return OrderDtoMapper.ToDto(order);
             }
-
-            orderRepository.Add(order);
-            await unitOfWork.SaveChangesAsync(ct);
-
-            return OrderDtoMapper.ToDto(order);
+            finally
+            {
+                foreach (var acquired in acquiredLocks)
+                    await acquired.DisposeAsync();
+            }
         }
         catch (DomainException ex)
         {

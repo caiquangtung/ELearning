@@ -5,52 +5,65 @@ using MediatR;
 
 namespace ELearning.Application.Features.Courses.GetCourse;
 
-public sealed class GetCourseQueryHandler(ICourseRepository courseRepository)
+public sealed class GetCourseQueryHandler(
+    ICourseRepository courseRepository,
+    ICacheService cache,
+    ICacheKeyBuilder cacheKeyBuilder)
     : IRequestHandler<GetCourseQuery, Result<CourseDetailDto>>
 {
     public async Task<Result<CourseDetailDto>> Handle(GetCourseQuery request, CancellationToken ct)
     {
-        var course = await courseRepository.GetByIdWithDetailsAsync(request.Id, ct);
-        if (course is null)
-            return Result.Failure<CourseDetailDto>(Error.NotFound("Course", request.Id));
+        var key = cacheKeyBuilder.Build("courses", "detail", request.Id.ToString("N"));
+        var dto = await cache.GetOrCreateAsync<CourseDetailDto?>(
+            key,
+            async token =>
+            {
+                var course = await courseRepository.GetByIdWithDetailsAsync(request.Id, token);
+                if (course is null)
+                    return null;
 
-        var dto = new CourseDetailDto(
-            course.Id,
-            course.Title,
-            course.Description,
-            course.Status.ToString(),
-            course.PriceCents,
-            course.Currency,
-            course.CreatedAt,
-            course.UpdatedAt,
-            course.Sections
-                .OrderBy(s => s.SortOrder)
-                .Select(s => new CourseSectionDetailDto(
-                    s.Id,
-                    s.Title,
-                    s.SortOrder,
-                    s.Lessons
-                        .OrderBy(l => l.SortOrder)
-                        .Select(l => new CourseLessonDetailDto(
-                            l.Id,
-                            l.Title,
-                            l.SortOrder,
-                            l.Content,
-                            l.Assets
-                                .OrderByDescending(a => a.UploadedAt)
-                                .Select(a => new ContentAssetDto(
-                                    a.Id,
-                                    a.AssetType,
-                                    a.FileName,
-                                    a.ContentType,
-                                    a.SizeBytes,
-                                    a.Url,
-                                    a.UploadedAt))
+                return new CourseDetailDto(
+                    course.Id,
+                    course.Title,
+                    course.Description,
+                    course.Status.ToString(),
+                    course.PriceCents,
+                    course.Currency,
+                    course.CreatedAt,
+                    course.UpdatedAt,
+                    course.Sections
+                        .OrderBy(s => s.SortOrder)
+                        .Select(s => new CourseSectionDetailDto(
+                            s.Id,
+                            s.Title,
+                            s.SortOrder,
+                            s.Lessons
+                                .OrderBy(l => l.SortOrder)
+                                .Select(l => new CourseLessonDetailDto(
+                                    l.Id,
+                                    l.Title,
+                                    l.SortOrder,
+                                    l.Content,
+                                    l.Assets
+                                        .OrderByDescending(a => a.UploadedAt)
+                                        .Select(a => new ContentAssetDto(
+                                            a.Id,
+                                            a.AssetType,
+                                            a.FileName,
+                                            a.ContentType,
+                                            a.SizeBytes,
+                                            a.Url,
+                                            a.UploadedAt))
+                                        .ToList()))
                                 .ToList()))
-                        .ToList()))
-                .ToList());
+                        .ToList());
+            },
+            TimeSpan.FromMinutes(10),
+            ct);
+
+        if (dto is null)
+            return Result.Failure<CourseDetailDto>(Error.NotFound("Course", request.Id));
 
         return dto;
     }
 }
-

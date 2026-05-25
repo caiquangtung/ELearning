@@ -7,7 +7,9 @@ namespace ELearning.Application.Features.Courses.PublishCourse;
 
 public sealed class PublishCourseCommandHandler(
     ICourseRepository courseRepository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    ICacheService cache,
+    ICacheKeyBuilder cacheKeyBuilder)
     : IRequestHandler<PublishCourseCommand, Result>
 {
     public async Task<Result> Handle(PublishCourseCommand request, CancellationToken ct)
@@ -27,7 +29,8 @@ public sealed class PublishCourseCommandHandler(
 
         courseRepository.Update(course);
         await unitOfWork.SaveChangesAsync(ct);
+        await cache.RemoveByPrefixAsync("courses:list", ct);
+        await cache.RemoveAsync(cacheKeyBuilder.Build("courses", "detail", course.Id.ToString("N")), ct);
         return Result.Success();
     }
 }
-

@@ -70,7 +70,7 @@ status: in-progress
 
 ### Remaining Immediate Priorities
 - [ ] **Frontend (recommended before Sprint 5)**: Sprint 4b polish — `UiButton` / `PageShell` / `UiDataTable`, pilot list screen, global loading indicator, minimal E2E, doc refresh (`docs/sprint4-completion.md`)
-- [ ] **Redis performance layer**: add cache, distributed lock, idempotency, and rate-limit abstractions before broad analytics/search/AI rollout (see **Sprint 15a**)
+- [x] **Redis performance layer**: add cache, distributed lock, idempotency, and rate-limit abstractions before broad analytics/search/AI rollout (see **Sprint 15a**)
 - [ ] **Sprint 10 follow-up**: notification templates, background delivery, Redis unread-count cache, realtime notifications, email preference settings
 - [ ] **Sprint 11 follow-up**: CSV/Excel export, Redis analytics cache, dedicated course/org analytics pages, chart library visualizations, reporting integration tests
 - [ ] **Sprint 12 follow-up**: S3/Azure/Mux storage, CDN delivery, transcoding, richer player UX, reporting integration with completion rules
@@ -99,7 +99,7 @@ status: in-progress
 | AI-3 — Essay grading assistant | AI Sprint Track | Backend + Frontend | 2 weeks | Planned |
 | AI-4 — Learner risk prediction | AI Sprint Track | Backend + Data | 2 weeks | Planned |
 | AI-5 — Semantic search + learning path generator | AI Sprint Track | Backend + Frontend | 2 weeks | Planned |
-| Sprint 15a — Redis performance & consistency layer | Pre–Sprint 15 | Backend + DevOps | 1 week | Planned |
+| Sprint 15a — Redis performance & consistency layer | Pre–Sprint 15 | Backend + DevOps | 1 week | Done |
 | API integration tests | Sprint 1–2 | Backend + QA | 2-3 days | Planned |
 | API rate limiting + lockout + auth audit log | Sprint 1 | Backend + DevOps | 3-5 days | Planned |
 | CI/CD + code quality pipeline | Sprint 0 (carry-over) | DevOps | 3-4 days | Planned |
@@ -884,35 +884,35 @@ status: in-progress
 
 ---
 
-## Sprint 15a: Redis Performance & Consistency Layer (1 week)
+## Sprint 15a: Redis Performance & Consistency Layer (1 week) - Completed
 
 **Goal**: Add reusable Redis-backed infrastructure for high-read paths, concurrency control, idempotency, and rate limiting before broad optimization work.
 
 ### Backend Tasks
-- [ ] Add `ICacheService` abstraction with get/set/remove/get-or-create helpers and JSON serialization.
-- [ ] Add cache key conventions and tenant-safe key builder.
-- [ ] Add `IDistributedLockService` for short-lived locks around checkout, seat reservation, coupon usage, license assignment, and background jobs.
-- [ ] Add `IIdempotencyStore` for payment webhook event IDs and payment completion attempts.
-- [ ] Add Redis-backed rate limit primitives for auth, checkout, upload, and AI endpoints.
-- [ ] Add cache invalidation hooks for course create/update/publish/delete.
-- [ ] Add Redis health check and startup configuration validation.
-- [ ] Add structured logs/metrics for cache hit/miss, lock acquisition failure, idempotency duplicate, and rate-limit rejection.
-- [ ] Unit tests for key generation, TTL behavior, idempotency duplicate detection, and lock failure behavior.
+- [x] Add `ICacheService` abstraction with get/set/remove/get-or-create helpers and JSON serialization.
+- [x] Add cache key conventions and tenant-safe key builder.
+- [x] Add `IDistributedLockService` for short-lived locks around checkout, seat reservation, coupon usage, license assignment, and background jobs.
+- [x] Add `IIdempotencyStore` for payment webhook event IDs and payment completion attempts.
+- [x] Add Redis-backed rate limit primitives for auth, checkout, upload, and AI endpoints.
+- [x] Add cache invalidation hooks for course create/update/publish/delete.
+- [x] Add Redis health check and startup configuration validation.
+- [x] Add structured logs/metrics for cache hit/miss, lock acquisition failure, idempotency duplicate, and rate-limit rejection.
+- [x] Unit tests for key generation, TTL behavior, idempotency duplicate detection, and lock failure behavior.
 
 ### Application Integration Targets
-- [ ] Course catalog/detail cache: `courses:list:{hash}`, `courses:detail:{courseId}`.
-- [ ] Dashboard analytics cache: `analytics:{scope}:{id}:{hash}`.
-- [ ] Payment webhook idempotency: `payment:webhook:{gateway}:{eventId}`.
-- [ ] Checkout and seat lock: `lock:checkout:{userId}`, `lock:class-seat:{classId}`.
-- [ ] Coupon/campaign lock: `lock:coupon:{couponCode}`, `lock:campaign:{campaignId}`.
-- [ ] License pool lock: `lock:license-pool:{poolId}`.
+- [x] Course catalog/detail cache: `courses:list:{hash}`, `courses:detail:{courseId}`.
+- [x] Dashboard analytics cache: `analytics:{scope}:{id}:{hash}`.
+- [x] Payment webhook idempotency: `payment:webhook:{gateway}:{eventId}`.
+- [x] Checkout and seat lock: `lock:checkout:{userId}`, `lock:class-seat:{classId}`.
+- [x] Coupon lock: `lock:coupon:{couponCode}`.
+- [x] License pool lock: `lock:license-pool:{poolId}`.
 - [ ] Permission cache: `permissions:user:{userId}` with invalidation on role assignment.
 - [ ] AI cost/rate cache: `rate:ai:{userId}`, `ai:recommendations:{userId}`, `ai:semantic-search:{queryHash}`.
 
 ### Infrastructure Tasks
-- [ ] Verify local Redis in `docker-compose.yml` is production-like enough for development.
-- [ ] Add environment variables for Redis connection, default TTLs, lock TTLs, and rate-limit windows.
-- [ ] Document Redis key naming, TTL policy, and invalidation strategy.
+- [x] Verify local Redis in `docker-compose.yml` is production-like enough for development.
+- [x] Add environment variables for Redis connection, default TTLs, lock TTLs, and rate-limit windows.
+- [x] Document Redis key naming, TTL policy, and invalidation strategy.
 
 **Definition of Done**:
 - Shared Redis abstractions are available to Application/Infrastructure without leaking provider-specific APIs into feature handlers.

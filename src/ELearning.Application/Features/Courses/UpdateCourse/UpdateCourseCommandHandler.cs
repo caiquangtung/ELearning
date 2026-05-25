@@ -8,7 +8,9 @@ namespace ELearning.Application.Features.Courses.UpdateCourse;
 
 public sealed class UpdateCourseCommandHandler(
     ICourseRepository courseRepository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    ICacheService cache,
+    ICacheKeyBuilder cacheKeyBuilder)
     : IRequestHandler<UpdateCourseCommand, Result<CourseDto>>
 {
     public async Task<Result<CourseDto>> Handle(UpdateCourseCommand request, CancellationToken ct)
@@ -28,6 +30,8 @@ public sealed class UpdateCourseCommandHandler(
 
         courseRepository.Update(course);
         await unitOfWork.SaveChangesAsync(ct);
+        await cache.RemoveByPrefixAsync("courses:list", ct);
+        await cache.RemoveAsync(cacheKeyBuilder.Build("courses", "detail", course.Id.ToString("N")), ct);
 
         return new CourseDto(
             course.Id,
@@ -38,4 +42,3 @@ public sealed class UpdateCourseCommandHandler(
             course.UpdatedAt);
     }
 }
-
