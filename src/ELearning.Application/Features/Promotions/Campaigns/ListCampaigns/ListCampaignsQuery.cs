@@ -7,6 +7,6 @@ namespace ELearning.Application.Features.Promotions.Campaigns.ListCampaigns;
 public sealed record ListCampaignsQuery(
     Guid? OrganizationId,
     bool IncludeGlobal,
-    int Take = 50)
-    : IRequest<Result<IReadOnlyList<CampaignListItemDto>>>;
-
+    int Page = 1,
+    int PageSize = 20)
+    : IRequest<Result<PagedList<CampaignListItemDto>>>;

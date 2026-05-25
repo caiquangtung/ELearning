@@ -6,22 +6,21 @@ using MediatR;
 namespace ELearning.Application.Features.Promotions.Campaigns.ListCampaigns;
 
 public sealed class ListCampaignsQueryHandler(ICampaignRepository campaigns)
-    : IRequestHandler<ListCampaignsQuery, Result<IReadOnlyList<CampaignListItemDto>>>
+    : IRequestHandler<ListCampaignsQuery, Result<PagedList<CampaignListItemDto>>>
 {
-    public async Task<Result<IReadOnlyList<CampaignListItemDto>>> Handle(ListCampaignsQuery request, CancellationToken ct)
+    public async Task<Result<PagedList<CampaignListItemDto>>> Handle(ListCampaignsQuery request, CancellationToken ct)
     {
-        var take = request.Take is <= 0 or > 200 ? 50 : request.Take;
-        var rows = await campaigns.FindAsync(
-            c =>
-                (request.OrganizationId != null && c.OrganizationId == request.OrganizationId)
-                || (request.IncludeGlobal && c.OrganizationId == null),
+        var rows = await campaigns.ListAsync(
+            request.OrganizationId,
+            request.IncludeGlobal,
+            request.Page,
+            request.PageSize,
             ct);
 
-        return rows
-            .OrderByDescending(c => c.CreatedAt)
-            .Take(take)
+        var items = rows.Items
             .Select(CampaignDtoMapper.ToListItem)
             .ToList();
+
+        return PagedList<CampaignListItemDto>.Create(items, rows.Page, rows.PageSize, rows.TotalCount);
     }
 }
-

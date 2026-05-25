@@ -27,7 +27,11 @@ public sealed class CampaignsController(IMediator mediator) : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> List([FromQuery] ListCampaignsRequest query, CancellationToken ct = default)
     {
-        var result = await mediator.Send(new ListCampaignsQuery(query.OrganizationId, query.IncludeGlobal, query.Take), ct);
+        var result = await mediator.Send(new ListCampaignsQuery(
+            query.OrganizationId,
+            query.IncludeGlobal,
+            query.Page,
+            query.PageSize), ct);
         return result.IsSuccess ? Ok(result.Value) : ProblemFrom(result.Error);
     }
 

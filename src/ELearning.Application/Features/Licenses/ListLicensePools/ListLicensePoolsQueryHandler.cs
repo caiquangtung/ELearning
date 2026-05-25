@@ -6,13 +6,17 @@ using MediatR;
 namespace ELearning.Application.Features.Licenses.ListLicensePools;
 
 public sealed class ListLicensePoolsQueryHandler(ILicensePoolRepository licensePoolRepository)
-    : IRequestHandler<ListLicensePoolsQuery, Result<IReadOnlyList<LicensePoolListItemDto>>>
+    : IRequestHandler<ListLicensePoolsQuery, Result<PagedList<LicensePoolListItemDto>>>
 {
-    public async Task<Result<IReadOnlyList<LicensePoolListItemDto>>> Handle(ListLicensePoolsQuery request, CancellationToken ct)
+    public async Task<Result<PagedList<LicensePoolListItemDto>>> Handle(ListLicensePoolsQuery request, CancellationToken ct)
     {
-        var pools = await licensePoolRepository.ListByOrganizationAsync(request.OrganizationId, ct);
+        var pools = await licensePoolRepository.ListByOrganizationAsync(
+            request.OrganizationId,
+            request.Page,
+            request.PageSize,
+            ct);
 
-        var items = pools
+        var items = pools.Items
             .Select(p => new LicensePoolListItemDto(
                 p.Id,
                 p.OrganizationId,
@@ -26,7 +30,6 @@ public sealed class ListLicensePoolsQueryHandler(ILicensePoolRepository licenseP
                 p.CreatedAt))
             .ToList();
 
-        return items;
+        return PagedList<LicensePoolListItemDto>.Create(items, pools.Page, pools.PageSize, pools.TotalCount);
     }
 }
-
