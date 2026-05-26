@@ -120,6 +120,7 @@ public sealed class CoursesController(IMediator mediator) : ControllerBase
     [HasPermission(Permissions.Courses.Update)]
     [Consumes("multipart/form-data")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [RequestSizeLimit(25_165_824)]
     public async Task<IActionResult> UploadAsset(
         Guid courseId,
         Guid sectionId,

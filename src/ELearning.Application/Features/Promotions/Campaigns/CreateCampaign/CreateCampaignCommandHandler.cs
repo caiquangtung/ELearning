@@ -9,7 +9,8 @@ namespace ELearning.Application.Features.Promotions.Campaigns.CreateCampaign;
 
 public sealed class CreateCampaignCommandHandler(
     ICampaignRepository campaigns,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IAuditLogService auditLogs)
     : IRequestHandler<CreateCampaignCommand, Result<CampaignDto>>
 {
     public async Task<Result<CampaignDto>> Handle(CreateCampaignCommand request, CancellationToken ct)
@@ -28,6 +29,12 @@ public sealed class CreateCampaignCommandHandler(
 
             campaigns.Add(campaign);
             await unitOfWork.SaveChangesAsync(ct);
+            await auditLogs.WriteAsync(new AuditLogEntry(
+                "Campaign.Create",
+                "Campaign",
+                campaign.Id.ToString(),
+                "Success",
+                new Dictionary<string, string> { ["scope"] = campaign.Scope.ToString() }), ct);
 
             return CampaignDtoMapper.ToDto(campaign);
         }
@@ -37,4 +44,3 @@ public sealed class CreateCampaignCommandHandler(
         }
     }
 }
-

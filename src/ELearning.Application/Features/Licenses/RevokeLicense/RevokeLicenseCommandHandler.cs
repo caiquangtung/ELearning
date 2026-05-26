@@ -8,7 +8,8 @@ namespace ELearning.Application.Features.Licenses.RevokeLicense;
 
 public sealed class RevokeLicenseCommandHandler(
     ILicensePoolRepository licensePoolRepository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IAuditLogService auditLogs)
     : IRequestHandler<RevokeLicenseCommand, Result<LicenseUsageReportDto>>
 {
     public async Task<Result<LicenseUsageReportDto>> Handle(RevokeLicenseCommand request, CancellationToken ct)
@@ -22,6 +23,12 @@ public sealed class RevokeLicenseCommandHandler(
             pool.RevokeSeat(request.UserId);
             licensePoolRepository.Update(pool);
             await unitOfWork.SaveChangesAsync(ct);
+            await auditLogs.WriteAsync(new AuditLogEntry(
+                "License.Revoke",
+                "LicensePool",
+                pool.Id.ToString(),
+                "Success",
+                new Dictionary<string, string> { ["revokedUserId"] = request.UserId.ToString() }), ct);
 
             return new LicenseUsageReportDto(pool.Id, pool.TotalSeats, pool.ActiveSeatCount, pool.AvailableSeats);
         }
@@ -31,4 +38,3 @@ public sealed class RevokeLicenseCommandHandler(
         }
     }
 }
-

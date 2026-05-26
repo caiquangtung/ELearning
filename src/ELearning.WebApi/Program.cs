@@ -4,6 +4,7 @@ using ELearning.Infrastructure.Caching;
 using ELearning.Infrastructure.Persistence;
 using ELearning.WebApi.Authorization;
 using ELearning.WebApi.Middlewares;
+using ELearning.WebApi.Security;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -44,6 +45,9 @@ builder.Services.AddResponseCompression(options =>
 });
 builder.Services.Configure<BrotliCompressionProviderOptions>(options => options.Level = CompressionLevel.Fastest);
 builder.Services.Configure<GzipCompressionProviderOptions>(options => options.Level = CompressionLevel.Fastest);
+builder.Services.Configure<SecurityOptions>(builder.Configuration.GetSection(SecurityOptions.SectionName));
+SecurityConfiguration.ValidateProductionSecrets(builder.Configuration, builder.Environment);
+var allowedOrigins = SecurityConfiguration.GetAllowedOrigins(builder.Configuration, builder.Environment);
 
 var jwtSecret = builder.Configuration["JwtSettings:Secret"]
     ?? throw new InvalidOperationException("JwtSettings:Secret must be configured.");
@@ -78,12 +82,9 @@ builder.Services.AddApiVersioning(options =>
 
 builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
-        policy.WithOrigins(
-                  builder.Configuration["Cors:AllowedOrigins"]?.Split(',')
-                  ?? ["http://localhost:4200"])
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials()));
+        policy.WithOrigins(allowedOrigins)
+              .WithMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
+              .WithHeaders("Authorization", "Content-Type", "X-Correlation-Id")));
 
 var app = builder.Build();
 
@@ -105,12 +106,14 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseMiddleware<CorrelationIdMiddleware>();
+app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseHttpsRedirection();
 app.UseResponseCompression();
 app.UseResponseCaching();
 app.UseCors("AllowFrontend");
+app.UseMiddleware<UnsafeRequestOriginMiddleware>();
 
 app.UseAuthentication();
 app.UseMiddleware<RedisRateLimitingMiddleware>();

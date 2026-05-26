@@ -24,6 +24,7 @@ public sealed class VideosController(IMediator mediator) : ControllerBase
     [HasPermission(Permissions.Courses.Update)]
     [Consumes("multipart/form-data")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [RequestSizeLimit(104_857_600)]
     public async Task<IActionResult> Upload(
         Guid courseId,
         Guid sectionId,

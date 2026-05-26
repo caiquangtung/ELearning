@@ -4,15 +4,13 @@ import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AuthResponseDto, UserDto } from '../models/auth.models';
-
-const STORAGE_ACCESS = 'elearning_access';
-const STORAGE_REFRESH = 'elearning_refresh';
-const STORAGE_USER = 'elearning_user';
+import { AuthStorageService } from './auth-storage.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
+  private readonly storage = inject(AuthStorageService);
   private readonly apiV1 = `${environment.apiUrl}/api/v1`;
 
   readonly user = signal<UserDto | null>(null);
@@ -24,19 +22,11 @@ export class AuthService {
   }
 
   accessToken(): string | null {
-    return sessionStorage.getItem(STORAGE_ACCESS);
+    return this.storage.accessToken();
   }
 
   hydrateFromStorage(): void {
-    const token = sessionStorage.getItem(STORAGE_ACCESS);
-    const raw = sessionStorage.getItem(STORAGE_USER);
-    if (token && raw) {
-      try {
-        this.user.set(JSON.parse(raw) as UserDto);
-      } catch {
-        this.clearStorage();
-      }
-    }
+    if (this.storage.accessToken()) this.user.set(this.storage.user());
   }
 
   login(email: string, password: string): Observable<AuthResponseDto> {
@@ -59,7 +49,7 @@ export class AuthService {
   refreshMe(): Observable<UserDto> {
     return this.http.get<UserDto>(`${this.apiV1}/identity/me`).pipe(
       tap((u) => {
-        sessionStorage.setItem(STORAGE_USER, JSON.stringify(u));
+        this.storage.setUser(u);
         this.user.set(u);
       }),
     );
@@ -68,7 +58,7 @@ export class AuthService {
   updateProfile(firstName: string, lastName: string): Observable<UserDto> {
     return this.http.put<UserDto>(`${this.apiV1}/identity/me`, { firstName, lastName }).pipe(
       tap((u) => {
-        sessionStorage.setItem(STORAGE_USER, JSON.stringify(u));
+        this.storage.setUser(u);
         this.user.set(u);
       }),
     );
@@ -80,16 +70,14 @@ export class AuthService {
   }
 
   persistAuth(res: AuthResponseDto): void {
-    sessionStorage.setItem(STORAGE_ACCESS, res.accessToken);
-    sessionStorage.setItem(STORAGE_REFRESH, res.refreshToken);
-    sessionStorage.setItem(STORAGE_USER, JSON.stringify(res.user));
+    this.storage.setAccessToken(res.accessToken);
+    this.storage.setRefreshToken(res.refreshToken);
+    this.storage.setUser(res.user);
     this.user.set(res.user);
   }
 
   private clearStorage(): void {
-    sessionStorage.removeItem(STORAGE_ACCESS);
-    sessionStorage.removeItem(STORAGE_REFRESH);
-    sessionStorage.removeItem(STORAGE_USER);
+    this.storage.clear();
     this.user.set(null);
   }
 }
