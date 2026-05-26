@@ -10,7 +10,8 @@ public class LoginCommandHandler(
     IUserRepository userRepository,
     IPasswordHasher passwordHasher,
     IJwtTokenService jwtTokenService,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IAuditLogService auditLogs)
     : IRequestHandler<LoginCommand, Result<AuthResponseDto>>
 {
     private static readonly Error InvalidCredentials =
@@ -25,10 +26,27 @@ public class LoginCommandHandler(
         var user = await userRepository.GetByEmailAsync(email, ct);
 
         if (user is null || !passwordHasher.Verify(request.Password, user.PasswordHash))
+        {
+            await auditLogs.WriteAsync(new AuditLogEntry(
+                "Auth.Login",
+                "User",
+                user?.Id.ToString(),
+                "Failure",
+                new Dictionary<string, string> { ["reason"] = "invalid_credentials" }), ct);
             return Result.Failure<AuthResponseDto>(InvalidCredentials);
+        }
 
         if (user.Status == UserStatus.Suspended)
+        {
+            await auditLogs.WriteAsync(new AuditLogEntry(
+                "Auth.Login",
+                "User",
+                user.Id.ToString(),
+                "Failure",
+                new Dictionary<string, string> { ["reason"] = "account_suspended" },
+                user.Id), ct);
             return Result.Failure<AuthResponseDto>(AccountSuspended);
+        }
 
         var tokens = jwtTokenService.CreateTokenPair(
             user.Id,
@@ -41,6 +59,12 @@ public class LoginCommandHandler(
         user.SetRefreshToken(refreshHash, tokens.RefreshTokenExpiresAtUtc);
 
         await unitOfWork.SaveChangesAsync(ct);
+        await auditLogs.WriteAsync(new AuditLogEntry(
+            "Auth.Login",
+            "User",
+            user.Id.ToString(),
+            "Success",
+            ActorUserId: user.Id), ct);
 
         var dto = new UserDto(
             user.Id,

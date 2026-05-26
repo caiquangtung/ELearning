@@ -1,4 +1,5 @@
 using ELearning.Core.Abstractions;
+using ELearning.Domain.Aggregates.AuditLogAggregate;
 using ELearning.Domain.Aggregates.CommerceAggregate;
 using ELearning.Domain.Aggregates.CertificateAggregate;
 using ELearning.Domain.Aggregates.CourseAggregate;
@@ -45,6 +46,8 @@ public class ApplicationDbContext(
     public DbSet<VideoAsset> VideoAssets => Set<VideoAsset>();
     public DbSet<WatchEvent> WatchEvents => Set<WatchEvent>();
     public DbSet<Review> Reviews => Set<Review>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+
     public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
     {
         ApplyAuditInfo();

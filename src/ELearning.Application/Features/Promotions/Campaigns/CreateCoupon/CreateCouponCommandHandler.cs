@@ -9,7 +9,8 @@ namespace ELearning.Application.Features.Promotions.Campaigns.CreateCoupon;
 public sealed class CreateCouponCommandHandler(
     ICampaignRepository campaigns,
     ICouponRepository coupons,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IAuditLogService auditLogs)
     : IRequestHandler<CreateCouponCommand, Result<CampaignDto>>
 {
     public async Task<Result<CampaignDto>> Handle(CreateCouponCommand request, CancellationToken ct)
@@ -28,6 +29,12 @@ public sealed class CreateCouponCommandHandler(
             campaign.AddCoupon(request.Code, request.ExpiresUtc, request.PerBuyerMaxRedemptions, DateTime.UtcNow);
             campaigns.Update(campaign);
             await unitOfWork.SaveChangesAsync(ct);
+            await auditLogs.WriteAsync(new AuditLogEntry(
+                "Campaign.CreateCoupon",
+                "Campaign",
+                campaign.Id.ToString(),
+                "Success",
+                new Dictionary<string, string> { ["couponCodeNormalized"] = normalized }), ct);
 
             return CampaignDtoMapper.ToDto(campaign);
         }
@@ -37,4 +44,3 @@ public sealed class CreateCouponCommandHandler(
         }
     }
 }
-

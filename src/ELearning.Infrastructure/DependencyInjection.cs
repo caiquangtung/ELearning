@@ -18,6 +18,7 @@ using ELearning.Infrastructure.Payments;
 using ELearning.Infrastructure.Quizzes;
 using ELearning.Infrastructure.Reports;
 using ELearning.Infrastructure.Reviews;
+using ELearning.Infrastructure.Security;
 using ELearning.Infrastructure.Storage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -60,6 +61,7 @@ public static class DependencyInjection
         services.AddScoped<IVideoAssetRepository, VideoAssetRepository>();
         services.AddScoped<IWatchEventRepository, WatchEventRepository>();
         services.AddScoped<IReviewRepository, ReviewRepository>();
+        services.AddScoped<IAuditLogService, AuditLogService>();
 
         services.Configure<RedisOptions>(configuration.GetSection(RedisOptions.SectionName));
         services.AddSingleton<IRedisConnectionProvider, RedisConnectionProvider>();

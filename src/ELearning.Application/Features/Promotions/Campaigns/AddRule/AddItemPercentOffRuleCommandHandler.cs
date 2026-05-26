@@ -8,7 +8,8 @@ namespace ELearning.Application.Features.Promotions.Campaigns.AddRule;
 
 public sealed class AddItemPercentOffRuleCommandHandler(
     ICampaignRepository campaigns,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IAuditLogService auditLogs)
     : IRequestHandler<AddItemPercentOffRuleCommand, Result<CampaignDto>>
 {
     public async Task<Result<CampaignDto>> Handle(AddItemPercentOffRuleCommand request, CancellationToken ct)
@@ -22,6 +23,16 @@ public sealed class AddItemPercentOffRuleCommandHandler(
             campaign.AddItemPercentOffRule(request.PercentOff, request.AppliesToItemTypes, DateTime.UtcNow);
             campaigns.Update(campaign);
             await unitOfWork.SaveChangesAsync(ct);
+            await auditLogs.WriteAsync(new AuditLogEntry(
+                "Campaign.AddRule",
+                "Campaign",
+                campaign.Id.ToString(),
+                "Success",
+                new Dictionary<string, string>
+                {
+                    ["percentOff"] = request.PercentOff.ToString("0.##"),
+                    ["itemTypes"] = string.Join(',', request.AppliesToItemTypes)
+                }), ct);
 
             return CampaignDtoMapper.ToDto(campaign);
         }
@@ -31,4 +42,3 @@ public sealed class AddItemPercentOffRuleCommandHandler(
         }
     }
 }
-

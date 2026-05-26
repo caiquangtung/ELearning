@@ -17,7 +17,8 @@ public sealed class CompleteOrderPaymentCommandHandler(
     ICouponRedemptionRepository couponRedemptionRepository,
     ICouponUsageReservationRepository couponUsageReservationRepository,
     IPaymentService paymentService,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IAuditLogService auditLogs)
     : IRequestHandler<CompleteOrderPaymentCommand, Result>
 {
     public async Task<Result> Handle(CompleteOrderPaymentCommand request, CancellationToken ct)
@@ -29,7 +30,19 @@ public sealed class CompleteOrderPaymentCommandHandler(
                 return Result.Failure(Error.NotFound(nameof(OrderPayment), request.ExternalTransactionId));
 
             if (payment.Status == OrderPaymentStatus.Succeeded)
+            {
+                await auditLogs.WriteAsync(new AuditLogEntry(
+                    "Payment.Complete",
+                    "OrderPayment",
+                    payment.Id.ToString(),
+                    "Skipped",
+                    new Dictionary<string, string>
+                    {
+                        ["reason"] = "already_succeeded",
+                        ["orderId"] = payment.OrderId.ToString()
+                    }), ct);
                 return Result.Success();
+            }
 
             if (!await paymentService.VerifyPaymentAsync(request.ExternalTransactionId, ct))
                 return Result.Failure(Error.Conflict("Payment.VerificationFailed", "Payment could not be verified."));
@@ -79,6 +92,16 @@ public sealed class CompleteOrderPaymentCommandHandler(
             }
 
             await unitOfWork.SaveChangesAsync(ct);
+            await auditLogs.WriteAsync(new AuditLogEntry(
+                "Payment.Complete",
+                "Order",
+                order.Id.ToString(),
+                "Success",
+                new Dictionary<string, string>
+                {
+                    ["paymentId"] = payment.Id.ToString(),
+                    ["provider"] = payment.Provider
+                }), ct);
 
             return Result.Success();
         }

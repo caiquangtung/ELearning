@@ -9,7 +9,8 @@ namespace ELearning.Application.Features.Users.AssignRoles;
 public class AssignRolesToUserCommandHandler(
     IUserRepository userRepository,
     ICurrentUserService currentUser,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IAuditLogService auditLogs)
     : IRequestHandler<AssignRolesToUserCommand, Result>
 {
     public async Task<Result> Handle(AssignRolesToUserCommand request, CancellationToken ct)
@@ -25,6 +26,12 @@ public class AssignRolesToUserCommandHandler(
         {
             user.SetPlatformRoles(request.Roles);
             await unitOfWork.SaveChangesAsync(ct);
+            await auditLogs.WriteAsync(new AuditLogEntry(
+                "User.AssignRoles",
+                "User",
+                user.Id.ToString(),
+                "Success",
+                new Dictionary<string, string> { ["roles"] = string.Join(',', request.Roles) }), ct);
             return Result.Success();
         }
         catch (DomainException ex)

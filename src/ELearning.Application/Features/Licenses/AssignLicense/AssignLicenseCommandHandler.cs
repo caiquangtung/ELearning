@@ -10,7 +10,8 @@ public sealed class AssignLicenseCommandHandler(
     ILicensePoolRepository licensePoolRepository,
     IUnitOfWork unitOfWork,
     IDistributedLockService distributedLock,
-    ICacheKeyBuilder cacheKeyBuilder)
+    ICacheKeyBuilder cacheKeyBuilder,
+    IAuditLogService auditLogs)
     : IRequestHandler<AssignLicenseCommand, Result<LicenseUsageReportDto>>
 {
     public async Task<Result<LicenseUsageReportDto>> Handle(AssignLicenseCommand request, CancellationToken ct)
@@ -33,6 +34,12 @@ public sealed class AssignLicenseCommandHandler(
             pool.AssignSeat(request.UserId);
             licensePoolRepository.Update(pool);
             await unitOfWork.SaveChangesAsync(ct);
+            await auditLogs.WriteAsync(new AuditLogEntry(
+                "License.Assign",
+                "LicensePool",
+                pool.Id.ToString(),
+                "Success",
+                new Dictionary<string, string> { ["assignedUserId"] = request.UserId.ToString() }), ct);
 
             return new LicenseUsageReportDto(pool.Id, pool.TotalSeats, pool.ActiveSeatCount, pool.AvailableSeats);
         }

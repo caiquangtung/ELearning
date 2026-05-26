@@ -3,6 +3,7 @@ using ELearning.Application.Common.Options;
 using ELearning.Application.Features.Orders.CompletePayment;
 using ELearning.Core.Abstractions;
 using ELearning.Core.Common;
+using ELearning.WebApi.Authorization;
 using ELearning.WebApi.Contracts.v1;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -19,23 +20,25 @@ public sealed class PaymentsWebhookController(
     IMediator mediator,
     IOptions<PaymentOptions> paymentOptions,
     IIdempotencyStore idempotencyStore,
-    ICacheKeyBuilder cacheKeyBuilder)
+    ICacheKeyBuilder cacheKeyBuilder,
+    IAuditLogService auditLogs)
     : ControllerBase
 {
     [HttpPost("webhook")]
+    [WebhookSecret("Payments:WebhookSecret", "X-Payments-Webhook-Secret")]
+    [RequestSizeLimit(65_536)]
     public async Task<IActionResult> Webhook([FromBody] PaymentWebhookRequest body, CancellationToken ct)
     {
-        var secret = paymentOptions.Value.WebhookSecret;
-        if (!string.IsNullOrEmpty(secret))
-        {
-            if (!Request.Headers.TryGetValue("X-Payments-Webhook-Secret", out var hdr)
-                || hdr.Count == 0
-                || hdr.ToString() != secret)
-                return Unauthorized();
-        }
-
         if (string.IsNullOrWhiteSpace(body.TransactionId))
+        {
+            await auditLogs.WriteAsync(new AuditLogEntry(
+                "Payment.Webhook",
+                "PaymentTransaction",
+                null,
+                "Failure",
+                new Dictionary<string, string> { ["reason"] = "missing_transaction_id" }), ct);
             return BadRequest();
+        }
 
         var transactionId = body.TransactionId.Trim();
         var provider = paymentOptions.Value.Provider ?? "unknown";
@@ -44,20 +47,72 @@ public sealed class PaymentsWebhookController(
 
         var begin = await idempotencyStore.TryBeginAsync(key, ttl, ct);
         if (begin.Status == IdempotencyBeginStatus.Completed)
+        {
+            await auditLogs.WriteAsync(new AuditLogEntry(
+                "Payment.Webhook",
+                "PaymentTransaction",
+                transactionId,
+                "Skipped",
+                new Dictionary<string, string>
+                {
+                    ["reason"] = "already_completed",
+                    ["provider"] = provider
+                }), ct);
             return Ok();
+        }
         if (begin.Status == IdempotencyBeginStatus.InProgress)
+        {
+            await auditLogs.WriteAsync(new AuditLogEntry(
+                "Payment.Webhook",
+                "PaymentTransaction",
+                transactionId,
+                "Conflict",
+                new Dictionary<string, string>
+                {
+                    ["reason"] = "in_progress",
+                    ["provider"] = provider
+                }), ct);
             return Conflict(new { message = "Payment webhook is already being processed." });
+        }
         if (begin.Status == IdempotencyBeginStatus.Unavailable)
+        {
+            await auditLogs.WriteAsync(new AuditLogEntry(
+                "Payment.Webhook",
+                "PaymentTransaction",
+                transactionId,
+                "Failure",
+                new Dictionary<string, string>
+                {
+                    ["reason"] = "idempotency_unavailable",
+                    ["provider"] = provider
+                }), ct);
             return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = begin.FailureReason ?? "Idempotency store is unavailable." });
+        }
 
         var result = await mediator.Send(new CompleteOrderPaymentCommand(transactionId), ct);
         if (result.IsSuccess)
         {
             await idempotencyStore.CompleteAsync(key, ttl, ct);
+            await auditLogs.WriteAsync(new AuditLogEntry(
+                "Payment.Webhook",
+                "PaymentTransaction",
+                transactionId,
+                "Success",
+                new Dictionary<string, string> { ["provider"] = provider }), ct);
             return Ok();
         }
 
         await idempotencyStore.FailAsync(key, TimeSpan.FromMinutes(10), ct);
+        await auditLogs.WriteAsync(new AuditLogEntry(
+            "Payment.Webhook",
+            "PaymentTransaction",
+            transactionId,
+            "Failure",
+            new Dictionary<string, string>
+            {
+                ["provider"] = provider,
+                ["errorCode"] = result.Error.Code
+            }), ct);
         return ProblemFrom(result.Error);
     }
 
