@@ -1,0 +1,49 @@
+:host {
+  display: block;
+}
+
+.page-shell-header {
+  margin-bottom: 1rem;
+}
+
+.page-shell-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.page-shell-title {
+  margin: 0;
+  color: var(--text-color);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.page-shell-subtitle {
+  margin: 0.35rem 0 0;
+  color: var(--text-color-secondary);
+  overflow-wrap: anywhere;
+}
+
+.page-shell-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.page-shell-content {
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .page-shell-title-row,
+  .page-shell-actions {
+    display: grid;
+    width: 100%;
+  }
+}

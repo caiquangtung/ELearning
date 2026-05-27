@@ -55,13 +55,21 @@ import {
 
       @if (canCreate()) {
         <p-panel header="New course" [toggleable]="true" styleClass="mb-4">
-          <div class="flex flex-column gap-3" style="max-width: 36rem">
-            <input pInputText [(ngModel)]="newTitle" placeholder="Title" class="w-full" name="ctitle" />
+          <div class="course-form-grid">
+            <input
+              pInputText
+              [(ngModel)]="newTitle"
+              placeholder="Title"
+              aria-label="Course title"
+              class="w-full"
+              name="ctitle"
+            />
             <textarea
               pInputTextarea
               [(ngModel)]="newDescription"
               rows="3"
               placeholder="Description"
+              aria-label="Course description"
               class="w-full"
               name="cdesc"
             ></textarea>
@@ -76,17 +84,25 @@ import {
         </p-panel>
       }
 
-      <p-toolbar styleClass="mb-3">
+      <p-toolbar styleClass="mb-3 course-filter-toolbar">
         <ng-template pTemplate="start">
-          <input pInputText [(ngModel)]="search" placeholder="Search" class="mr-2" name="csearch" />
+          <input
+            pInputText
+            [(ngModel)]="search"
+            placeholder="Search"
+            aria-label="Search courses"
+            class="course-filter-input"
+            name="csearch"
+          />
           <p-dropdown
             [options]="statusOptions"
             [(ngModel)]="status"
             optionLabel="label"
             optionValue="value"
             placeholder="Status"
+            ariaLabel="Course status"
             [showClear]="true"
-            styleClass="w-12rem"
+            styleClass="course-filter-select"
             name="cstatus"
           />
           <input
@@ -95,7 +111,8 @@ import {
             min="0"
             [(ngModel)]="minPrice"
             placeholder="Min price"
-            class="ml-2 w-8rem"
+            aria-label="Minimum price"
+            class="course-filter-number"
             name="minPrice"
           />
           <input
@@ -104,7 +121,8 @@ import {
             min="0"
             [(ngModel)]="maxPrice"
             placeholder="Max price"
-            class="ml-2 w-8rem"
+            aria-label="Maximum price"
+            class="course-filter-number"
             name="maxPrice"
           />
           <p-dropdown
@@ -112,10 +130,11 @@ import {
             [(ngModel)]="sort"
             optionLabel="label"
             optionValue="value"
-            styleClass="ml-2 w-12rem"
+            ariaLabel="Sort courses"
+            styleClass="course-filter-select"
             name="csort"
           />
-          <app-ui-button label="Apply" icon="pi pi-filter" class="ml-2" (clicked)="applyFilters()" />
+          <app-ui-button label="Apply" icon="pi pi-filter" (clicked)="applyFilters()" />
         </ng-template>
       </p-toolbar>
 
@@ -126,6 +145,8 @@ import {
           [totalRecords]="p.totalCount"
           [first]="(p.page - 1) * pageSize"
           [emptyColspan]="4"
+          [loading]="loading()"
+          ariaLabel="Courses"
           (pageChange)="onPageChange($event)"
         >
           <ng-template uiDataTableHeader>
@@ -151,6 +172,7 @@ import {
       }
     </app-page-shell>
   `,
+  styleUrl: './course-list.component.scss',
 })
 export class CourseListComponent implements OnInit {
   private readonly api = inject(LmsApiService);

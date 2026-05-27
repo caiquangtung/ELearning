@@ -32,10 +32,11 @@ import { PagedList } from '../../core/models/paged-list.model';
     Skeleton,
   ],
   template: `
-    <h1 class="text-2xl font-semibold mt-0">Organizations</h1>
+    <section class="organization-page" aria-labelledby="organization-title">
+    <h1 id="organization-title" class="text-2xl font-semibold mt-0">Organizations</h1>
     @if (isAdmin()) {
       <p-panel header="Create organization" [toggleable]="true" [collapsed]="false" styleClass="mb-4">
-        <div class="flex flex-wrap gap-3 align-items-end">
+        <div class="organization-form-grid">
           <p-floatlabel>
             <input pInputText id="org-name" [(ngModel)]="newName" name="orgName" class="w-full md:w-20rem" />
             <label for="org-name">Name</label>
@@ -60,10 +61,12 @@ import { PagedList } from '../../core/models/paged-list.model';
           [value]="p.items"
           styleClass="p-datatable-sm"
           [tableStyle]="{ 'min-width': '50rem' }"
+          [responsiveLayout]="'scroll'"
           [scrollable]="p.items.length > 25"
           [virtualScroll]="p.items.length > 25"
           [virtualScrollItemSize]="46"
           scrollHeight="420px"
+          aria-label="Organizations"
         >
           <ng-template pTemplate="header">
             <tr>
@@ -98,7 +101,9 @@ import { PagedList } from '../../core/models/paged-list.model';
         />
       }
     }
+    </section>
   `,
+  styleUrl: './organization-list.component.scss',
 })
 export class OrganizationListComponent implements OnInit {
   private readonly api = inject(LmsApiService);

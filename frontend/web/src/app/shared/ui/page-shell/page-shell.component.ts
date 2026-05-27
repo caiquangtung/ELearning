@@ -5,27 +5,27 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <header class="flex flex-column gap-2 mb-3">
-      <div class="flex align-items-start justify-content-between gap-3 flex-wrap">
+    <header class="page-shell-header">
+      <div class="page-shell-title-row">
         <div class="min-w-0">
-          <h1 class="text-2xl font-semibold m-0">{{ title() }}</h1>
+          <h1 id="page-shell-title" class="page-shell-title">{{ title() }}</h1>
           @if (subtitle()) {
-            <p class="text-600 mt-1 mb-0">{{ subtitle() }}</p>
+            <p class="page-shell-subtitle">{{ subtitle() }}</p>
           }
         </div>
-        <div class="flex align-items-center gap-2">
+        <div class="page-shell-actions">
           <ng-content select="[pageActions]" />
         </div>
       </div>
     </header>
 
-    <section>
+    <section class="page-shell-content" aria-labelledby="page-shell-title">
       <ng-content />
     </section>
   `,
+  styleUrl: './page-shell.component.scss',
 })
 export class PageShellComponent {
   readonly title = input.required<string>();
   readonly subtitle = input<string | null>(null);
 }
-

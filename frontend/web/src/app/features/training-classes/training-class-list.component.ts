@@ -34,7 +34,8 @@ import { PagedList } from '../../core/models/paged-list.model';
     PrimeTemplate,
   ],
   template: `
-    <h1 class="text-2xl font-semibold mt-0">Training classes</h1>
+    <section class="training-class-page" aria-labelledby="training-class-title">
+    <h1 id="training-class-title" class="text-2xl font-semibold mt-0">Training classes</h1>
     @if (canCreate()) {
       <p-panel header="Create class" [toggleable]="true" styleClass="mb-4">
         <p class="text-sm text-color-secondary mt-0">Course must be <strong>Published</strong>.</p>
@@ -47,11 +48,25 @@ import { PagedList } from '../../core/models/paged-list.model';
             placeholder="Select course"
             [filter]="true"
             filterPlaceholder="Search"
+            ariaLabel="Published course"
             styleClass="w-full md:w-20rem"
             name="ccourse"
           />
-          <input pInputText [(ngModel)]="createTitle" placeholder="Title" class="w-full md:w-20rem" name="ctitle" />
-          <p-inputNumber [(ngModel)]="createMax" [min]="1" placeholder="Max learners" name="cmax" />
+          <input
+            pInputText
+            [(ngModel)]="createTitle"
+            placeholder="Title"
+            aria-label="Class title"
+            class="w-full md:w-20rem"
+            name="ctitle"
+          />
+          <p-inputNumber
+            [(ngModel)]="createMax"
+            [min]="1"
+            placeholder="Max learners"
+            ariaLabel="Maximum learners"
+            name="cmax"
+          />
           <p-button
             label="Create"
             icon="pi pi-plus"
@@ -62,9 +77,16 @@ import { PagedList } from '../../core/models/paged-list.model';
         </div>
       </p-panel>
     }
-    <p-toolbar styleClass="mb-3">
+    <p-toolbar styleClass="mb-3 training-filter-toolbar">
       <ng-template pTemplate="start">
-        <input pInputText [(ngModel)]="search" placeholder="Search" class="mr-2" name="tsearch" />
+        <input
+          pInputText
+          [(ngModel)]="search"
+          placeholder="Search"
+          aria-label="Search training classes"
+          class="training-filter-input"
+          name="tsearch"
+        />
         <p-button label="Apply" icon="pi pi-filter" (onClick)="applyFilters()" />
       </ng-template>
     </p-toolbar>
@@ -72,7 +94,13 @@ import { PagedList } from '../../core/models/paged-list.model';
       <p>Loading…</p>
     } @else {
       @if (page(); as p) {
-        <p-table [value]="p.items" styleClass="p-datatable-sm" [tableStyle]="{ 'min-width': '40rem' }">
+        <p-table
+          [value]="p.items"
+          styleClass="p-datatable-sm"
+          [tableStyle]="{ 'min-width': '40rem' }"
+          [responsiveLayout]="'scroll'"
+          aria-label="Training classes"
+        >
           <ng-template pTemplate="header">
             <tr>
               <th>Title</th>
@@ -105,7 +133,9 @@ import { PagedList } from '../../core/models/paged-list.model';
         />
       }
     }
+    </section>
   `,
+  styleUrl: './training-class-list.component.scss',
 })
 export class TrainingClassListComponent implements OnInit {
   private readonly api = inject(LmsApiService);

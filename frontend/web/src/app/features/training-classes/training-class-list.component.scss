@@ -1,0 +1,22 @@
+.training-class-page {
+  min-width: 0;
+}
+
+:host ::ng-deep .training-filter-toolbar .p-toolbar-group-start {
+  width: 100%;
+}
+
+.training-filter-input {
+  width: min(100%, 22rem);
+}
+
+@media (max-width: 768px) {
+  .training-filter-input {
+    width: 100%;
+  }
+
+  :host ::ng-deep .p-inputnumber,
+  :host ::ng-deep .p-inputnumber-input {
+    width: 100%;
+  }
+}

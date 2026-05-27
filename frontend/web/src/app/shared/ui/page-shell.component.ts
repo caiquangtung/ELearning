@@ -10,19 +10,20 @@ import { Toolbar } from 'primeng/toolbar';
   standalone: true,
   imports: [Toolbar],
   template: `
-    <div class="flex flex-column min-h-screen">
-      <p-toolbar class="border-bottom-1 border-200 bg-white">
+    <div class="legacy-page-shell">
+      <p-toolbar styleClass="legacy-page-toolbar">
         <ng-template pTemplate="left">
-          <h1 class="text-2xl font-semibold text-900 m-0">{{ title() }}</h1>
+          <h1 id="legacy-page-title">{{ title() }}</h1>
         </ng-template>
         <ng-template pTemplate="right">
           <ng-content select="[actions]" />
+          <ng-content select="[pageActions]" />
         </ng-template>
       </p-toolbar>
 
-      <div class="flex-1 p-4 bg-gray-50">
+      <section class="legacy-page-content" aria-labelledby="legacy-page-title">
         <ng-content />
-      </div>
+      </section>
     </div>
   `,
   styleUrl: './page-shell.component.scss',

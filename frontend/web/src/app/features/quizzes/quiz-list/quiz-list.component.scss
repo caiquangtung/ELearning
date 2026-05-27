@@ -1,0 +1,36 @@
+.quiz-filter-panel {
+  margin-bottom: 1rem;
+}
+
+.quiz-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.quiz-filter-search {
+  flex: 1 1 18rem;
+  min-width: 0;
+}
+
+.quiz-filter-status {
+  width: 12rem;
+}
+
+:host ::ng-deep .quiz-filter-status .p-dropdown {
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .quiz-filter-row {
+    display: grid;
+  }
+
+  .quiz-filter-status {
+    width: 100%;
+  }
+
+  :host ::ng-deep .quiz-filter-row .p-button {
+    width: 100%;
+  }
+}

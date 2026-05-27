@@ -1,0 +1,21 @@
+.organization-page {
+  min-width: 0;
+}
+
+.organization-form-grid {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .organization-form-grid {
+    display: grid;
+    align-items: stretch;
+  }
+
+  :host ::ng-deep .organization-form-grid .p-button {
+    width: 100%;
+  }
+}

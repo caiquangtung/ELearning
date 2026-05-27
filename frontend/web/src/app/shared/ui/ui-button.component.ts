@@ -13,6 +13,7 @@ import { Button } from 'primeng/button';
     <p-button
       [label]="label()"
       [icon]="icon()"
+      [ariaLabel]="ariaLabel() ?? label()"
       [loading]="loading() || pending()"
       [disabled]="disabled() || loading() || pending()"
       [severity]="severity()"
@@ -23,7 +24,7 @@ import { Button } from 'primeng/button';
       [rounded]="rounded()"
       [type]="type()"
       [attr.aria-busy]="loading() || pending() ? 'true' : null"
-      (onClick)="onClick.emit($event)"
+      (onClick)="handleClick($event)"
     />
   `,
 })
@@ -33,6 +34,7 @@ export class UiButtonComponent {
 
   // Optional
   icon = input<string>();
+  ariaLabel = input<string>();
   loading = input(false);
   pending = input(false);
   disabled = input(false);
@@ -46,4 +48,10 @@ export class UiButtonComponent {
 
   // Events
   onClick = output<MouseEvent>();
+  clicked = output<void>();
+
+  handleClick(event: MouseEvent): void {
+    this.clicked.emit();
+    this.onClick.emit(event);
+  }
 }

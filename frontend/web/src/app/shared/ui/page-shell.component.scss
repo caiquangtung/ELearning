@@ -1,3 +1,36 @@
 :host {
   display: block;
 }
+
+.legacy-page-shell {
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+}
+
+:host ::ng-deep .legacy-page-toolbar {
+  border-bottom: 1px solid var(--surface-border);
+  background: var(--surface-card);
+}
+
+#legacy-page-title {
+  margin: 0;
+  color: var(--text-color);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.legacy-page-content {
+  min-width: 0;
+  flex: 1;
+  padding: 1rem 0;
+}
+
+@media (max-width: 640px) {
+  :host ::ng-deep .legacy-page-toolbar .p-toolbar-group-start,
+  :host ::ng-deep .legacy-page-toolbar .p-toolbar-group-end {
+    width: 100%;
+  }
+}

@@ -42,27 +42,29 @@ import { ConfirmationService, MessageService } from 'primeng/api';
         />
       </div>
 
-      <div class="mb-4">
-        <div class="flex gap-3 align-items-center">
-          <div class="flex-1">
+      <div class="quiz-filter-panel">
+        <div class="quiz-filter-row">
+          <div class="quiz-filter-search">
             <span class="p-float-label">
               <input
                 pInputText
                 id="search"
                 [(ngModel)]="searchTerm"
                 placeholder="Search quizzes..."
+                aria-label="Search quizzes"
                 class="w-full"
               />
               <label for="search">Search</label>
             </span>
           </div>
-          <div class="w-12rem">
+          <div class="quiz-filter-status">
             <p-dropdown
               [options]="statusOptions"
               [(ngModel)]="statusFilter"
               optionLabel="label"
               optionValue="value"
               placeholder="Status"
+              ariaLabel="Quiz status"
               [showClear]="true"
             />
           </div>
@@ -85,6 +87,8 @@ import { ConfirmationService, MessageService } from 'primeng/api';
         [showCurrentPageReport]="true"
         currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
         [rowsPerPageOptions]="[10, 25, 50]"
+        aria-label="Quizzes"
+        [attr.aria-busy]="isLoading()"
         (onPage)="onPageChange($event)"
       >
         <ng-template pTemplate="header">
@@ -120,6 +124,7 @@ import { ConfirmationService, MessageService } from 'primeng/api';
                 <button
                   type="button"
                   class="p-link text-red-500"
+                  [attr.aria-label]="'Delete quiz ' + quiz.title"
                   (click)="confirmDelete(quiz.id)"
                 >
                   <i class="pi pi-trash"></i> Delete
@@ -149,7 +154,8 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 
     <p-confirmDialog />
     <p-toast />
-  `
+  `,
+  styleUrl: './quiz-list.component.scss',
 })
 export class QuizListComponent implements OnInit {
   private readonly api = inject(LmsApiService);

@@ -1,0 +1,29 @@
+.course-form-grid {
+  display: grid;
+  gap: 1rem;
+  max-width: 36rem;
+}
+
+:host ::ng-deep .course-filter-toolbar .p-toolbar-group-start {
+  width: 100%;
+}
+
+.course-filter-input {
+  width: min(100%, 18rem);
+}
+
+.course-filter-number {
+  width: 8rem;
+}
+
+:host ::ng-deep .course-filter-select {
+  width: 12rem;
+}
+
+@media (max-width: 768px) {
+  .course-filter-input,
+  .course-filter-number,
+  :host ::ng-deep .course-filter-select {
+    width: 100%;
+  }
+}

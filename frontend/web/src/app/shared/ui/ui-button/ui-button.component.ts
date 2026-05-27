@@ -10,6 +10,7 @@ import { Button } from 'primeng/button';
     <p-button
       [label]="label()"
       [icon]="icon()"
+      [ariaLabel]="ariaLabel() ?? label()"
       [severity]="severity()"
       [text]="text()"
       [outlined]="outlined()"
@@ -19,7 +20,7 @@ import { Button } from 'primeng/button';
       [type]="type()"
       [styleClass]="styleClass()"
       [attr.aria-busy]="loading()"
-      (onClick)="clicked.emit()"
+      (onClick)="handleClick($event)"
     >
       <ng-content />
     </p-button>
@@ -28,6 +29,7 @@ import { Button } from 'primeng/button';
 export class UiButtonComponent {
   readonly label = input<string | undefined>(undefined);
   readonly icon = input<string | undefined>(undefined);
+  readonly ariaLabel = input<string | undefined>(undefined);
   readonly severity = input<'secondary' | 'success' | 'info' | 'warn' | 'danger' | 'help' | 'contrast' | undefined>(
     undefined,
   );
@@ -40,5 +42,10 @@ export class UiButtonComponent {
   readonly styleClass = input<string | undefined>(undefined);
 
   readonly clicked = output<void>();
-}
+  readonly onClick = output<MouseEvent>();
 
+  handleClick(event: MouseEvent): void {
+    this.clicked.emit();
+    this.onClick.emit(event);
+  }
+}
