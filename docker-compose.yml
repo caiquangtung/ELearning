@@ -52,6 +52,17 @@ services:
     depends_on:
       - api
 
+  seeder:
+    profiles: ["tools"]
+    build:
+      context: ./src
+      dockerfile: ELearning.Seeder/Dockerfile
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=elearning_dev;Username=postgres;Password=postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   postgres_data:
   redis_data:

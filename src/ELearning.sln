@@ -19,6 +19,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ELearning.Application.UnitT
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ELearning.Architecture.Tests", "..\tests\ELearning.Architecture.Tests\ELearning.Architecture.Tests.csproj", "{7E4FF7A7-2FFE-4CFF-B9C4-18CF370FF0DD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ELearning.Seeder", "ELearning.Seeder\ELearning.Seeder.csproj", "{B2599854-6D1D-4759-858F-7B81E083D04F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -125,6 +127,18 @@ Global
 		{7E4FF7A7-2FFE-4CFF-B9C4-18CF370FF0DD}.Release|x64.Build.0 = Release|Any CPU
 		{7E4FF7A7-2FFE-4CFF-B9C4-18CF370FF0DD}.Release|x86.ActiveCfg = Release|Any CPU
 		{7E4FF7A7-2FFE-4CFF-B9C4-18CF370FF0DD}.Release|x86.Build.0 = Release|Any CPU
+		{B2599854-6D1D-4759-858F-7B81E083D04F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B2599854-6D1D-4759-858F-7B81E083D04F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B2599854-6D1D-4759-858F-7B81E083D04F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B2599854-6D1D-4759-858F-7B81E083D04F}.Debug|x64.Build.0 = Debug|Any CPU
+		{B2599854-6D1D-4759-858F-7B81E083D04F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B2599854-6D1D-4759-858F-7B81E083D04F}.Debug|x86.Build.0 = Debug|Any CPU
+		{B2599854-6D1D-4759-858F-7B81E083D04F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B2599854-6D1D-4759-858F-7B81E083D04F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B2599854-6D1D-4759-858F-7B81E083D04F}.Release|x64.ActiveCfg = Release|Any CPU
+		{B2599854-6D1D-4759-858F-7B81E083D04F}.Release|x64.Build.0 = Release|Any CPU
+		{B2599854-6D1D-4759-858F-7B81E083D04F}.Release|x86.ActiveCfg = Release|Any CPU
+		{B2599854-6D1D-4759-858F-7B81E083D04F}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
