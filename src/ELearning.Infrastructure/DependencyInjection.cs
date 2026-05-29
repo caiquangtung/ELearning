@@ -1,5 +1,6 @@
 using ELearning.Application.Common.Interfaces;
 using ELearning.Application.Common.Options;
+using ELearning.Infrastructure.Ai;
 using ELearning.Infrastructure.Caching;
 using ELearning.Core.Abstractions;
 using ELearning.Infrastructure.Commerce;
@@ -62,8 +63,10 @@ public static class DependencyInjection
         services.AddScoped<IWatchEventRepository, WatchEventRepository>();
         services.AddScoped<IReviewRepository, ReviewRepository>();
         services.AddScoped<IAuditLogService, AuditLogService>();
+        services.AddScoped<IAiRequestLogRepository, AiRequestLogRepository>();
 
         services.Configure<RedisOptions>(configuration.GetSection(RedisOptions.SectionName));
+        services.Configure<AiOptions>(configuration.GetSection(AiOptions.SectionName));
         services.AddSingleton<IRedisConnectionProvider, RedisConnectionProvider>();
         services.AddSingleton<ICacheKeyBuilder, CacheKeyBuilder>();
         services.AddSingleton<ICacheService, RedisCacheService>();
@@ -75,6 +78,7 @@ public static class DependencyInjection
         services.AddSingleton<IPaymentService, NoOpPaymentService>();
         services.AddSingleton<ICertificatePdfService, SimpleCertificatePdfService>();
         services.AddSingleton<IEmailService, NoOpEmailService>();
+        services.AddSingleton<IAiQuizQuestionGenerator, LocalQuizQuestionGenerator>();
 
         services.AddSingleton<IFileStorage, LocalFileStorage>();
         services.AddSingleton<IZoomMeetingService, NoOpZoomMeetingService>();

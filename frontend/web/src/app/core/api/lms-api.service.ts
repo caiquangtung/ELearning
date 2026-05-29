@@ -567,6 +567,40 @@ export interface GradeAttemptRequest {
    isCorrect: boolean | null;
  }
 
+export interface GenerateQuizQuestionsRequest {
+  courseId: string;
+  lessonId: string | null;
+  questionCount: number;
+  difficulty: string;
+  questionTypes: string[];
+}
+
+export interface GeneratedQuizQuestionsDto {
+  courseId: string;
+  lessonId: string | null;
+  provider: string;
+  model: string;
+  promptVersion: string;
+  inputHash: string;
+  questions: GeneratedQuizQuestionDto[];
+}
+
+export interface GeneratedQuizQuestionDto {
+  text: string;
+  type: string;
+  points: number;
+  sortOrder: number;
+  difficulty: string;
+  explanation: string;
+  options: GeneratedQuizQuestionOptionDto[];
+}
+
+export interface GeneratedQuizQuestionOptionDto {
+  text: string;
+  isCorrect: boolean;
+  sortOrder: number;
+}
+
 export interface NotificationDto {
   id: string;
   userId: string;
@@ -948,6 +982,10 @@ export class LmsApiService {
 
    getQuizAnalytics(id: string): Observable<QuizAnalyticsDto> {
      return this.http.get<QuizAnalyticsDto>(`${this.base}/quizzes/${id}/analytics`);
+   }
+
+   generateQuizQuestions(body: GenerateQuizQuestionsRequest): Observable<GeneratedQuizQuestionsDto> {
+     return this.http.post<GeneratedQuizQuestionsDto>(`${this.base}/ai/quizzes/generate-questions`, body);
    }
 
   listNotifications(request: ListNotificationsRequest = {}): Observable<PagedList<NotificationDto>> {

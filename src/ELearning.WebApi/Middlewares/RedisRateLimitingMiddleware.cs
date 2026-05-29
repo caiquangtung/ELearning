@@ -66,6 +66,9 @@ public sealed class RedisRateLimitingMiddleware(
         if (path.Contains("/videos/") || path.Contains("/assets"))
             return new RateLimitPolicy("upload", 20, TimeSpan.FromMinutes(5));
 
+        if (path.Contains("/ai/"))
+            return new RateLimitPolicy("ai", 20, TimeSpan.FromMinutes(1));
+
         return null;
     }
 

@@ -82,6 +82,12 @@ public static class Permissions
         public const string Manage = "Notifications.Manage";
     }
 
+    public static class Ai
+    {
+        public const string Use = "AI.Use";
+        public const string Manage = "AI.Manage";
+    }
+
     public static class Admin
     {
         public const string Access = "Admin.Access";
@@ -100,6 +106,7 @@ public static class Permissions
         Quizzes.Read, Quizzes.Create, Quizzes.Update, Quizzes.Delete, Quizzes.Publish, Quizzes.Grade,
         Certificates.Read, Certificates.Issue,
         Notifications.Read, Notifications.Send, Notifications.Manage,
+        Ai.Use, Ai.Manage,
         Admin.Access
     ];
 }

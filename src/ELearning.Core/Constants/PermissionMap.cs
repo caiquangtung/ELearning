@@ -38,6 +38,7 @@ public static class PermissionMap
                 set.Add(Permissions.Commerce.Pay);
                 set.Add(Permissions.Notifications.Read);
                 set.Add(Permissions.Notifications.Send);
+                set.Add(Permissions.Ai.Use);
                 continue;
             }
 
@@ -57,6 +58,7 @@ public static class PermissionMap
                 set.Add(Permissions.Commerce.Pay);
                 set.Add(Permissions.Notifications.Read);
                 set.Add(Permissions.Notifications.Send);
+                set.Add(Permissions.Ai.Use);
                 continue;
             }
 

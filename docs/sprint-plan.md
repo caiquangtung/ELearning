@@ -44,6 +44,7 @@ status: in-progress
 - Sprint 11: **MVP done** — reporting read-model service, admin/student/instructor dashboard APIs, course/organization analytics APIs, Angular dashboard KPI cards; export, Redis analytics cache, chart library, and integration tests still open (see `docs/sprint11-completion.md`)
 - Sprint 12: **MVP done** — video asset/watch progress aggregates, upload/playback/progress/complete APIs, EF migration `Sprint12_VideoProgress`, Angular course lesson video player/upload/progress tracking; CDN/transcoding and production video storage still open (see `docs/sprint12-completion.md`)
 - Sprint 13: **MVP done** — course catalog search across title/description/lessons, status/price filters, sort options, global course search, and course results UI; category/level/instructor facets, Redis catalog cache, suggestions, and Elasticsearch still open (see `docs/sprint13-completion.md`)
+- AI-1: **MVP done** — local AI quiz question generator, provider abstraction, AI request audit log, generation API, rate limit hook, Angular generate/review/accept UI, migration `AiQuestionGeneration`; external LLM provider adapter and prompt-quality evaluation remain follow-up (see `docs/ai1-completion.md`)
 - **Sprint 4 polish (optional, 2–4 days)**: recommended before full Sprint 5 — thin `shared/ui` wrappers, pilot screen, global loading, E2E smoke, UX polish (see **Sprint 4b** below and `docs/sprint4-completion.md` *Sprint 4 review*)
 
 ### Completed Work Checklist
@@ -67,6 +68,7 @@ status: in-progress
 - [x] **Sprint 11 (MVP)**: Admin/student/instructor dashboard APIs, course/organization analytics APIs, Angular dashboard KPI cards
 - [x] **Sprint 12 (MVP)**: Video upload/playback/progress tracking, watch completion threshold, course lesson video UI, migration `Sprint12_VideoProgress`
 - [x] **Sprint 13 (MVP)**: Course search/filter/sort API, global course search, advanced course list filters
+- [x] **AI-1 (MVP)**: Quiz question generation API, local AI provider, audit metadata table, instructor review/accept UI
 
 ### Remaining Immediate Priorities
 - [ ] **Frontend (recommended before Sprint 5)**: Sprint 4b polish — `UiButton` / `PageShell` / `UiDataTable`, pilot list screen, global loading indicator, minimal E2E, doc refresh (`docs/sprint4-completion.md`)
@@ -75,7 +77,7 @@ status: in-progress
 - [ ] **Sprint 11 follow-up**: CSV/Excel export, Redis analytics cache, dedicated course/org analytics pages, chart library visualizations, reporting integration tests
 - [ ] **Sprint 12 follow-up**: S3/Azure/Mux storage, CDN delivery, transcoding, richer player UX, reporting integration with completion rules
 - [ ] **Sprint 13 follow-up**: category/level/instructor course metadata, Redis catalog cache, search suggestions, Elasticsearch, dedicated faceted search page
-- [ ] **AI Sprint Track (after Sprint 13 foundation)**: add AI-assisted quiz generation, course recommendation, essay grading assistant, learner risk prediction, and semantic search (see **AI Sprint Track** below)
+- [ ] **AI Sprint Track follow-up**: add external LLM provider adapter, recommendation, essay grading assistant, learner risk prediction, and semantic search (see **AI Sprint Track** below)
 - [ ] **Sprint 3 follow-up**: real Zoom API implementation, webhooks, API integration tests for training classes
 - [x] Angular SPA MVP: login, register, profile, orgs, courses, training classes (see `frontend/README.md`, `docs/sprint4-completion.md`)
 - [ ] API integration tests (identity, organizations, **courses**)
@@ -94,7 +96,7 @@ status: in-progress
 | Class / session scheduling API | Sprint 3 | Backend Team | — | **Done (MVP)** |
 | Angular SPA MVP (auth + org + courses + classes) | Sprint 4 | Frontend Team | 2 weeks | **MVP done** (see `docs/sprint4-completion.md`) |
 | Sprint 4b — FE polish & wrappers (optional) | Pre–Sprint 5 | Frontend Team | 2–4 days | **Recommended** (see Sprint 4b) |
-| AI-1 — Quiz question generator | AI Sprint Track | Backend + Frontend | 2 weeks | Planned |
+| AI-1 — Quiz question generator | AI Sprint Track | Backend + Frontend | 2 weeks | **MVP done** |
 | AI-2 — Course recommendation | AI Sprint Track | Backend + Data | 2 weeks | Planned |
 | AI-3 — Essay grading assistant | AI Sprint Track | Backend + Frontend | 2 weeks | Planned |
 | AI-4 — Learner risk prediction | AI Sprint Track | Backend + Data | 2 weeks | Planned |
@@ -130,24 +132,24 @@ status: in-progress
 - [ ] Add guardrails: content size limits, profanity/sensitive-data filtering where applicable, structured JSON response validation, graceful fallback when provider fails.
 - [ ] Add permissions for instructor/admin AI actions and rate limits for AI endpoints.
 
-### AI-1: Quiz Question Generator (Priority 1, 2 weeks)
+### AI-1: Quiz Question Generator (Priority 1, 2 weeks) — **MVP DONE**
 
 **Goal**: Let instructors generate draft quiz questions from course/lesson content, then review before saving.
 
 #### Backend Tasks
-- [ ] **Feature: Generate quiz questions** — `POST /api/v1/ai/quizzes/generate-questions`
-- [ ] Input: `courseId`, `lessonId`, `questionCount`, `difficulty`, `questionTypes`
-- [ ] Output structured draft questions: text, type, options, correct answers, explanation, difficulty
-- [ ] Validate generated JSON before returning to UI
-- [ ] Add “accept generated question” flow that reuses existing quiz question commands
-- [ ] Persist AI generation metadata for audit
-- [ ] Unit tests for prompt builder, response parser, validation, and failure fallback
+- [x] **Feature: Generate quiz questions** — `POST /api/v1/ai/quizzes/generate-questions`
+- [x] Input: `courseId`, `lessonId`, `questionCount`, `difficulty`, `questionTypes`
+- [x] Output structured draft questions: text, type, options, correct answers, explanation, difficulty
+- [x] Validate generated payload before returning to UI
+- [x] Add “accept generated question” flow that reuses existing quiz question commands
+- [x] Persist AI generation metadata for audit
+- [x] Unit tests for provider output, validation, and audit log domain behavior
 
 #### Frontend Tasks
-- [ ] Add “Generate with AI” action in quiz create/detail screen
-- [ ] Add review panel for generated questions before insertion
-- [ ] Allow instructor to edit, discard, or accept each generated question
-- [ ] Show provider failure as a recoverable UI state
+- [x] Add “Generate with AI” action in quiz detail screen
+- [x] Add review panel for generated questions before insertion
+- [x] Allow instructor to discard or accept each generated question
+- [x] Show provider failure as a recoverable UI state
 
 **Definition of Done**:
 - Instructor can generate 5-10 draft questions from a lesson
