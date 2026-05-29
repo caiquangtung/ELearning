@@ -1,4 +1,5 @@
 using ELearning.Core.Abstractions;
+using ELearning.Domain.Aggregates.AiAggregate;
 using ELearning.Domain.Aggregates.AuditLogAggregate;
 using ELearning.Domain.Aggregates.CommerceAggregate;
 using ELearning.Domain.Aggregates.CertificateAggregate;
@@ -47,6 +48,7 @@ public class ApplicationDbContext(
     public DbSet<WatchEvent> WatchEvents => Set<WatchEvent>();
     public DbSet<Review> Reviews => Set<Review>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<AiRequestLog> AiRequestLogs => Set<AiRequestLog>();
 
     public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
     {
