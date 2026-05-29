@@ -1,10 +1,14 @@
 using System;
+using ELearning.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace ELearning.Infrastructure.Persistence.Migrations;
 
+[DbContext(typeof(ApplicationDbContext))]
+[Migration("20260512100000_Sprint9_Certificates")]
 public partial class Sprint9_Certificates : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)

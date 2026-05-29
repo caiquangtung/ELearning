@@ -1,10 +1,14 @@
 using System;
+using ELearning.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace ELearning.Infrastructure.Persistence.Migrations;
 
+[DbContext(typeof(ApplicationDbContext))]
+[Migration("20260527100000_AiQuestionGeneration")]
 public partial class AiQuestionGeneration : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
