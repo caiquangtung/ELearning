@@ -48,6 +48,7 @@ status: in-progress
 - AI-2: **Backend MVP done** — local hybrid course recommendation service, explainable scoring, Redis-cached learner recommendations, audit logging, learner-accessible API `GET /api/v1/ai/recommendations/courses`; Angular dashboard/catalog recommendation UI still open.
 - AI-3: **MVP done** — local deterministic essay/code grading assistant, rubric-aware score suggestions, AI audit logging, guardrail that suggestions do not submit final grades, Angular manual grading AI panel (see `docs/ai3-completion.md`).
 - AI-4: **MVP done** — local deterministic learner risk scoring, learner and organization risk APIs, AI audit logging, organization member risk badges/detail panel (see `docs/ai4-completion.md`).
+- AI-5: **MVP done** — local token embedding semantic course search, AI learning path draft generator, Redis cache, AI audit logging, Angular semantic search mode and learning path draft UI (see `docs/ai5-completion.md`).
 - **Sprint 4 polish (optional, 2–4 days)**: recommended before full Sprint 5 — thin `shared/ui` wrappers, pilot screen, global loading, E2E smoke, UX polish (see **Sprint 4b** below and `docs/sprint4-completion.md` *Sprint 4 review*)
 
 ### Completed Work Checklist
@@ -75,6 +76,7 @@ status: in-progress
 - [x] **AI-2 (backend MVP)**: Explainable hybrid course recommendation API with Redis cache and AI request audit log
 - [x] **AI-3 (MVP)**: Essay/code grading suggestions API, local AI provider, audit metadata, instructor review/apply UI
 - [x] **AI-4 (MVP)**: Learner risk prediction API, organization risk report, explainable signals, risk badges/detail UI
+- [x] **AI-5 (MVP)**: Semantic course search, local embedding abstraction, learning path draft generator, Redis cache, catalog AI UI
 
 ### Remaining Immediate Priorities
 - [ ] **Frontend (recommended before Sprint 5)**: Sprint 4b polish — `UiButton` / `PageShell` / `UiDataTable`, pilot list screen, global loading indicator, minimal E2E, doc refresh (`docs/sprint4-completion.md`)
@@ -106,7 +108,7 @@ status: in-progress
 | AI-2 — Course recommendation | AI Sprint Track | Backend + Data | 2 weeks | **Backend MVP done** |
 | AI-3 — Essay grading assistant | AI Sprint Track | Backend + Frontend | 2 weeks | **MVP done** |
 | AI-4 — Learner risk prediction | AI Sprint Track | Backend + Data | 2 weeks | **MVP done** |
-| AI-5 — Semantic search + learning path generator | AI Sprint Track | Backend + Frontend | 2 weeks | Planned |
+| AI-5 — Semantic search + learning path generator | AI Sprint Track | Backend + Frontend | 2 weeks | **MVP done** |
 | Sprint 15a — Redis performance & consistency layer | Pre–Sprint 15 | Backend + DevOps | 1 week | Done |
 | API integration tests | Sprint 1–2 | Backend + QA | 2-3 days | Planned |
 | API rate limiting + lockout + auth audit log | Sprint 1 | Backend + DevOps | 3-5 days | Planned |
@@ -228,23 +230,23 @@ status: in-progress
 - Risk model is explainable and deterministic for MVP
 - Missing progress data does not produce misleading high-risk labels
 
-### AI-5: Semantic Search + Learning Path Generator (Priority 5, 2 weeks)
+### AI-5: Semantic Search + Learning Path Generator (Priority 5, 2 weeks) — **MVP DONE**
 
 **Goal**: Improve discovery with semantic search and generate draft learning paths from learner goals.
 
 #### Backend Tasks
-- [ ] **Feature: Semantic course search** — `GET /api/v1/ai/search/courses?q=...`
-- [ ] Generate and refresh course embeddings for published courses
-- [ ] Implement vector similarity with fallback keyword search
-- [ ] **Feature: Generate learning path** — `POST /api/v1/ai/learning-paths/generate`
-- [ ] Input: learner goal, current skills, target role, optional organization scope
-- [ ] Output: ordered courses with reasons and estimated effort
+- [x] **Feature: Semantic course search** — `GET /api/v1/ai/search/courses?q=...`
+- [x] Generate local token embeddings for published courses at query time
+- [x] Implement vector similarity with fallback keyword search
+- [x] **Feature: Generate learning path** — `POST /api/v1/ai/learning-paths/generate`
+- [x] Input: learner goal, current skills, target role, optional organization scope
+- [x] Output: ordered courses with reasons and estimated effort
 - [ ] Tests for embedding refresh, ranking, fallback, and tenant boundaries
 
 #### Frontend Tasks
-- [ ] Add semantic search mode to course catalog search
-- [ ] Add “Create learning path with AI” entry point
-- [ ] Show generated path as draft that admin/learner can edit before saving
+- [x] Add semantic search mode to course catalog search
+- [x] Add “Create learning path with AI” entry point
+- [x] Show generated path as draft for review before any assignment workflow
 
 **Definition of Done**:
 - Natural-language queries can find semantically related courses

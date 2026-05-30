@@ -625,6 +625,59 @@ export interface OrganizationRiskReportDto {
   learners: LearnerRiskDto[];
 }
 
+export interface SemanticCourseSearchDto {
+  provider: string;
+  model: string;
+  promptVersion: string;
+  inputHash: string;
+  results: SemanticCourseSearchResultDto[];
+}
+
+export interface SemanticCourseSearchResultDto {
+  courseId: string;
+  title: string;
+  description: string | null;
+  priceCents: number;
+  currency: string;
+  createdAt: string;
+  score: number;
+  matchedConcepts: string[];
+  reasons: string[];
+}
+
+export interface GenerateLearningPathRequest {
+  goal: string;
+  currentSkills: string | null;
+  targetRole: string | null;
+  organizationId: string | null;
+  maxCourses: number;
+}
+
+export interface LearningPathDraftDto {
+  provider: string;
+  model: string;
+  promptVersion: string;
+  inputHash: string;
+  goal: string;
+  targetRole: string | null;
+  confidence: number;
+  estimatedEffort: string;
+  missingSkills: string[];
+  courses: LearningPathCourseDto[];
+}
+
+export interface LearningPathCourseDto {
+  order: number;
+  courseId: string;
+  title: string;
+  description: string | null;
+  priceCents: number;
+  currency: string;
+  score: number;
+  estimatedEffort: string;
+  reasons: string[];
+}
+
 export interface GenerateQuizQuestionsRequest {
   courseId: string;
   lessonId: string | null;
@@ -1053,6 +1106,15 @@ export class LmsApiService {
      return this.http.get<OrganizationRiskReportDto>(
        `${this.base}/ai/organizations/${organizationId}/risk-report`,
      );
+   }
+
+   semanticCourseSearch(query: string, limit = 10): Observable<SemanticCourseSearchDto> {
+     const params = new HttpParams().set('q', query).set('limit', limit);
+     return this.http.get<SemanticCourseSearchDto>(`${this.base}/ai/search/courses`, { params });
+   }
+
+   generateLearningPath(body: GenerateLearningPathRequest): Observable<LearningPathDraftDto> {
+     return this.http.post<LearningPathDraftDto>(`${this.base}/ai/learning-paths/generate`, body);
    }
 
    getQuizAnalytics(id: string): Observable<QuizAnalyticsDto> {

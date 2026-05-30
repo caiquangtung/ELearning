@@ -10,6 +10,13 @@
           (clicked)="searchDialogVisible = true"
         />
         <app-ui-button
+          label="AI path"
+          icon="pi pi-bolt"
+          severity="help"
+          [text]="true"
+          (clicked)="openLearningPathDialog()"
+        />
+        <app-ui-button
           label="Refresh"
           icon="pi pi-refresh"
           severity="secondary"
@@ -108,6 +115,15 @@
         (onHide)="searchDialogVisible = false"
       >
         <div class="course-filter-grid">
+          <p-dropdown
+            [options]="searchModeOptions"
+            [(ngModel)]="searchMode"
+            optionLabel="label"
+            optionValue="value"
+            appendTo="body"
+            styleClass="course-filter-grid__control"
+            name="searchModePopup"
+          />
           <input
             pInputText
             [(ngModel)]="search"
@@ -170,6 +186,120 @@
         </ng-template>
       </p-dialog>
 
+      <p-dialog
+        header="Create learning path with AI"
+        [(visible)]="learningPathVisible"
+        appendTo="body"
+        [modal]="true"
+        [draggable]="false"
+        [resizable]="false"
+        styleClass="app-dialog app-dialog--lg"
+        [style]="{ width: 'min(54rem, calc(100vw - 2rem))' }"
+      >
+        <div class="app-form">
+          <div class="field-block">
+            <label for="path-goal">Learning goal</label>
+            <textarea
+              id="path-goal"
+              pInputTextarea
+              [(ngModel)]="pathGoal"
+              rows="3"
+              placeholder="I want to become a backend developer"
+              name="pathGoal"
+            ></textarea>
+          </div>
+          <div class="app-form-grid">
+            <div class="field-block">
+              <label for="path-skills">Current skills</label>
+              <input
+                id="path-skills"
+                pInputText
+                [(ngModel)]="pathCurrentSkills"
+                placeholder="HTML, basic SQL"
+                name="pathCurrentSkills"
+              />
+            </div>
+            <div class="field-block">
+              <label for="path-role">Target role</label>
+              <input
+                id="path-role"
+                pInputText
+                [(ngModel)]="pathTargetRole"
+                placeholder="Backend Developer"
+                name="pathTargetRole"
+              />
+            </div>
+          </div>
+          <div class="field-block">
+            <label for="path-max">Max courses</label>
+            <input
+              id="path-max"
+              pInputText
+              type="number"
+              min="1"
+              max="12"
+              [(ngModel)]="pathMaxCourses"
+              name="pathMaxCourses"
+            />
+          </div>
+
+          @if (learningPath(); as path) {
+            <section class="learning-path-draft">
+              <div class="learning-path-draft__header">
+                <div>
+                  <h3>Draft path</h3>
+                  <p>{{ path.estimatedEffort }} · confidence {{ path.confidence | percent:'1.0-0' }}</p>
+                </div>
+                <p-tag severity="info" [value]="path.model" />
+              </div>
+
+              <div class="learning-path-draft__missing">
+                @for (skill of path.missingSkills; track skill) {
+                  <p-tag severity="warn" [value]="skill" />
+                }
+              </div>
+
+              @for (course of path.courses; track course.courseId) {
+                <article class="learning-path-course">
+                  <span class="learning-path-course__order">{{ course.order }}</span>
+                  <div>
+                    <a [routerLink]="['/courses', course.courseId]">{{ course.title }}</a>
+                    <p>{{ course.description || 'No description.' }}</p>
+                    <div class="learning-path-course__meta">
+                      <span>{{ course.estimatedEffort }}</span>
+                      <span>Score {{ course.score }}</span>
+                      <span>{{ formatPrice(course.priceCents, course.currency) }}</span>
+                    </div>
+                    <ul>
+                      @for (reason of course.reasons; track reason) {
+                        <li>{{ reason }}</li>
+                      }
+                    </ul>
+                  </div>
+                </article>
+              }
+            </section>
+          }
+        </div>
+
+        <ng-template pTemplate="footer">
+          <app-ui-button
+            label="Close"
+            severity="secondary"
+            [text]="true"
+            (clicked)="learningPathVisible = false"
+          />
+          <app-ui-button
+            label="Generate path"
+            icon="pi pi-bolt"
+            severity="help"
+            [disabled]="!pathGoal.trim() || generatingPath()"
+            [loading]="generatingPath()"
+            (clicked)="generateLearningPath()"
+          />
+        </ng-template>
+      </p-dialog>
+
       @if (loading() && !page()) {
         <div class="course-loading" aria-label="Loading courses">
           @for (row of skeletonRows; track row) {
@@ -178,7 +308,46 @@
         </div>
       }
 
-      @if (page(); as p) {
+      @if (semanticLoading()) {
+        <div class="course-loading" aria-label="Semantic search loading">
+          @for (row of skeletonRows; track row) {
+            <p-skeleton height="4.5rem" borderRadius="8px" />
+          }
+        </div>
+      }
+
+      @if (semanticResults(); as results) {
+        <section class="semantic-results" aria-label="Semantic AI results">
+          @if (results.length === 0) {
+            <div class="semantic-empty">
+              No semantic matches. Try a broader learning goal.
+            </div>
+          } @else {
+            @for (result of results; track result.courseId) {
+              <article class="semantic-result">
+                <div>
+                  <a [routerLink]="['/courses', result.courseId]">{{ result.title }}</a>
+                  <p>{{ result.description || 'No description.' }}</p>
+                  <div class="semantic-result__tags">
+                    <p-tag severity="help" [value]="'Score ' + result.score" />
+                    @for (concept of result.matchedConcepts; track concept) {
+                      <p-tag severity="info" [value]="concept" />
+                    }
+                  </div>
+                  <ul>
+                    @for (reason of result.reasons; track reason) {
+                      <li>{{ reason }}</li>
+                    }
+                  </ul>
+                </div>
+                <strong>{{ formatPrice(result.priceCents, result.currency) }}</strong>
+              </article>
+            }
+          }
+        </section>
+      }
+
+      @if (!semanticResults() && page(); as p) {
         <app-ui-data-table
           [value]="p.items"
           [loading]="loading()"

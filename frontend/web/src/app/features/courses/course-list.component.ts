@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, PercentPipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -12,6 +12,8 @@ import { Tag } from 'primeng/tag';
 import {
   LmsApiService,
   CourseListItemDto,
+  LearningPathDraftDto,
+  SemanticCourseSearchResultDto,
 } from '../../core/api/lms-api.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { PagedList } from '../../core/models/paged-list.model';
@@ -29,6 +31,7 @@ import {
   standalone: true,
   imports: [
     DatePipe,
+    PercentPipe,
     FormsModule,
     RouterLink,
     DialogModule,
@@ -55,8 +58,12 @@ export class CourseListComponent implements OnInit {
   readonly auth = inject(AuthService);
 
   readonly page = signal<PagedList<CourseListItemDto> | null>(null);
+  readonly semanticResults = signal<SemanticCourseSearchResultDto[] | null>(null);
+  readonly learningPath = signal<LearningPathDraftDto | null>(null);
   readonly loading = signal(true);
   readonly creating = signal(false);
+  readonly semanticLoading = signal(false);
+  readonly generatingPath = signal(false);
   readonly summary = computed(() => {
     const items = this.page()?.items ?? [];
     const published = items.filter(
@@ -77,7 +84,9 @@ export class CourseListComponent implements OnInit {
   });
 
   search = '';
+  searchMode: 'Keyword' | 'Semantic' = 'Keyword';
   searchDialogVisible = false;
+  learningPathVisible = false;
   createVisible = false;
   status = '';
   minPrice: number | null = null;
@@ -85,6 +94,10 @@ export class CourseListComponent implements OnInit {
   sort = 'Newest';
   newTitle = '';
   newDescription = '';
+  pathGoal = '';
+  pathCurrentSkills = '';
+  pathTargetRole = '';
+  pathMaxCourses = 5;
 
   pageSize = 10;
   readonly pageSizeOptions = [5, 10, 20, 50];
@@ -104,6 +117,11 @@ export class CourseListComponent implements OnInit {
     { label: 'Title Z-A', value: 'TitleDesc' },
     { label: 'Price low-high', value: 'PriceAsc' },
     { label: 'Price high-low', value: 'PriceDesc' },
+  ];
+
+  readonly searchModeOptions = [
+    { label: 'Keyword', value: 'Keyword' },
+    { label: 'Semantic AI', value: 'Semantic' },
   ];
 
   canCreate(): boolean {
@@ -136,6 +154,13 @@ export class CourseListComponent implements OnInit {
 
   applyFilters(): void {
     this.pageNum = 1;
+    if (this.searchMode === 'Semantic') {
+      this.searchDialogVisible = false;
+      this.semanticSearch();
+      return;
+    }
+
+    this.semanticResults.set(null);
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: {
@@ -160,8 +185,14 @@ export class CourseListComponent implements OnInit {
   }
 
   reload(): void {
+    if (this.searchMode === 'Semantic' && this.search.trim()) {
+      this.semanticSearch();
+      return;
+    }
+
     this.errors.clear();
     this.loading.set(true);
+    this.semanticResults.set(null);
     this.api
       .listCourses({
         page: this.pageNum,
@@ -179,6 +210,55 @@ export class CourseListComponent implements OnInit {
         },
         error: () => this.loading.set(false),
       });
+  }
+
+  semanticSearch(): void {
+    const query = this.search.trim();
+    if (!query) {
+      this.semanticResults.set([]);
+      return;
+    }
+
+    this.errors.clear();
+    this.semanticLoading.set(true);
+    this.loading.set(false);
+    this.api.semanticCourseSearch(query, this.pageSize).subscribe({
+      next: (result) => {
+        this.semanticResults.set(result.results);
+        this.semanticLoading.set(false);
+      },
+      error: () => this.semanticLoading.set(false),
+    });
+  }
+
+  openLearningPathDialog(): void {
+    this.pathGoal = this.search.trim();
+    this.pathCurrentSkills = '';
+    this.pathTargetRole = '';
+    this.pathMaxCourses = 5;
+    this.learningPath.set(null);
+    this.learningPathVisible = true;
+  }
+
+  generateLearningPath(): void {
+    const goal = this.pathGoal.trim();
+    if (!goal) return;
+
+    this.generatingPath.set(true);
+    this.errors.clear();
+    this.api.generateLearningPath({
+      goal,
+      currentSkills: this.pathCurrentSkills.trim() || null,
+      targetRole: this.pathTargetRole.trim() || null,
+      organizationId: null,
+      maxCourses: this.pathMaxCourses,
+    }).subscribe({
+      next: (draft) => {
+        this.learningPath.set(draft);
+        this.generatingPath.set(false);
+      },
+      error: () => this.generatingPath.set(false),
+    });
   }
 
   formatPrice(cents: number, currency: string): string {
