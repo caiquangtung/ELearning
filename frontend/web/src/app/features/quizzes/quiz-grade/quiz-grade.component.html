@@ -1,4 +1,15 @@
     <app-page-shell title="Grade Quiz Attempt">
+      <ng-container pageActions>
+        <app-ui-button
+          icon="pi pi-bolt"
+          label="AI"
+          severity="help"
+          [loading]="suggestingAi()"
+          [disabled]="!attempt() || suggestingAi()"
+          (onClick)="suggestWithAi()"
+        />
+      </ng-container>
+
       <div *ngIf="attempt(); else loadingTemplate" class="space-y-6">
         <div class="flex items-center gap-4">
           <p-tag
@@ -26,6 +37,40 @@
         </div>
 
         <form [formGroup]="gradeForm" (ngSubmit)="onSubmit()" class="space-y-6">
+          <div class="space-y-2">
+            <label for="rubric" class="block text-sm font-medium">Optional rubric for AI suggestion</label>
+            <textarea
+              id="rubric"
+              formControlName="rubric"
+              rows="3"
+              class="w-full border border-gray-200 rounded p-3"
+              placeholder="Describe grading criteria, expected concepts, or scoring rules"
+            ></textarea>
+          </div>
+
+          <div *ngIf="aiSuggestion()" class="border border-purple-100 rounded p-4 bg-purple-50 space-y-3">
+            <div class="flex items-center justify-between gap-3">
+              <div>
+                <h4 class="font-semibold text-purple-950">AI grading suggestion</h4>
+                <p class="text-sm text-purple-900">
+                  Suggested {{ aiSuggestion()!.suggestedScore }} / {{ aiSuggestion()!.maxScore }}
+                  · confidence {{ aiSuggestion()!.confidence | percent:'1.0-0' }}
+                </p>
+              </div>
+              <i class="pi pi-bolt text-purple-700"></i>
+            </div>
+
+            <p class="text-sm text-purple-950">{{ aiSuggestion()!.reasoning }}</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+              <div *ngFor="let item of aiSuggestion()!.rubricBreakdown" class="bg-white rounded border border-purple-100 p-3">
+                <div class="font-medium">{{ item.criterion }}</div>
+                <div class="text-sm text-gray-600">{{ item.score }} / {{ item.maxScore }}</div>
+                <p class="text-xs text-gray-500 mt-1">{{ item.comment }}</p>
+              </div>
+            </div>
+          </div>
+
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="space-y-2">
               <label for="score" class="block text-sm font-medium">Score (0-{{ attempt()!.points }}) *</label>
@@ -81,7 +126,7 @@
               type="submit"
               label="Submit Grade"
               severity="success"
-              [loading]="loading()"
+              [loading]="submitting()"
               [disabled]="gradeForm.invalid"
             />
           </div>

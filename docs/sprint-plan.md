@@ -46,6 +46,7 @@ status: in-progress
 - Sprint 13: **MVP done** — course catalog search across title/description/lessons, status/price filters, sort options, global course search, and course results UI; category/level/instructor facets, Redis catalog cache, suggestions, and Elasticsearch still open (see `docs/sprint13-completion.md`)
 - AI-1: **MVP done** — local AI quiz question generator, provider abstraction, AI request audit log, generation API, rate limit hook, Angular generate/review/accept UI, migration `AiQuestionGeneration`; external LLM provider adapter and prompt-quality evaluation remain follow-up (see `docs/ai1-completion.md`)
 - AI-2: **Backend MVP done** — local hybrid course recommendation service, explainable scoring, Redis-cached learner recommendations, audit logging, learner-accessible API `GET /api/v1/ai/recommendations/courses`; Angular dashboard/catalog recommendation UI still open.
+- AI-3: **MVP done** — local deterministic essay/code grading assistant, rubric-aware score suggestions, AI audit logging, guardrail that suggestions do not submit final grades, Angular manual grading AI panel (see `docs/ai3-completion.md`).
 - **Sprint 4 polish (optional, 2–4 days)**: recommended before full Sprint 5 — thin `shared/ui` wrappers, pilot screen, global loading, E2E smoke, UX polish (see **Sprint 4b** below and `docs/sprint4-completion.md` *Sprint 4 review*)
 
 ### Completed Work Checklist
@@ -71,6 +72,7 @@ status: in-progress
 - [x] **Sprint 13 (MVP)**: Course search/filter/sort API, global course search, advanced course list filters
 - [x] **AI-1 (MVP)**: Quiz question generation API, local AI provider, audit metadata table, instructor review/accept UI
 - [x] **AI-2 (backend MVP)**: Explainable hybrid course recommendation API with Redis cache and AI request audit log
+- [x] **AI-3 (MVP)**: Essay/code grading suggestions API, local AI provider, audit metadata, instructor review/apply UI
 
 ### Remaining Immediate Priorities
 - [ ] **Frontend (recommended before Sprint 5)**: Sprint 4b polish — `UiButton` / `PageShell` / `UiDataTable`, pilot list screen, global loading indicator, minimal E2E, doc refresh (`docs/sprint4-completion.md`)
@@ -79,7 +81,7 @@ status: in-progress
 - [ ] **Sprint 11 follow-up**: CSV/Excel export, Redis analytics cache, dedicated course/org analytics pages, chart library visualizations, reporting integration tests
 - [ ] **Sprint 12 follow-up**: S3/Azure/Mux storage, CDN delivery, transcoding, richer player UX, reporting integration with completion rules
 - [ ] **Sprint 13 follow-up**: category/level/instructor course metadata, Redis catalog cache, search suggestions, Elasticsearch, dedicated faceted search page
-- [ ] **AI Sprint Track follow-up**: add external LLM provider adapter, recommendation, essay grading assistant, learner risk prediction, and semantic search (see **AI Sprint Track** below)
+- [ ] **AI Sprint Track follow-up**: add external LLM provider adapter, learner risk prediction, semantic search, and complete AI-2 recommendation UI polish (see **AI Sprint Track** below)
 - [ ] **Sprint 3 follow-up**: real Zoom API implementation, webhooks, API integration tests for training classes
 - [x] Angular SPA MVP: login, register, profile, orgs, courses, training classes (see `frontend/README.md`, `docs/sprint4-completion.md`)
 - [ ] API integration tests (identity, organizations, **courses**)
@@ -100,7 +102,7 @@ status: in-progress
 | Sprint 4b — FE polish & wrappers (optional) | Pre–Sprint 5 | Frontend Team | 2–4 days | **Recommended** (see Sprint 4b) |
 | AI-1 — Quiz question generator | AI Sprint Track | Backend + Frontend | 2 weeks | **MVP done** |
 | AI-2 — Course recommendation | AI Sprint Track | Backend + Data | 2 weeks | **Backend MVP done** |
-| AI-3 — Essay grading assistant | AI Sprint Track | Backend + Frontend | 2 weeks | Planned |
+| AI-3 — Essay grading assistant | AI Sprint Track | Backend + Frontend | 2 weeks | **MVP done** |
 | AI-4 — Learner risk prediction | AI Sprint Track | Backend + Data | 2 weeks | Planned |
 | AI-5 — Semantic search + learning path generator | AI Sprint Track | Backend + Frontend | 2 weeks | Planned |
 | Sprint 15a — Redis performance & consistency layer | Pre–Sprint 15 | Backend + DevOps | 1 week | Done |
@@ -180,22 +182,22 @@ status: in-progress
 - Recommendations respect organization boundaries and published-course status
 - Empty-history users still receive sensible fallback recommendations
 
-### AI-3: Essay Grading Assistant (Priority 3, 2 weeks)
+### AI-3: Essay Grading Assistant (Priority 3, 2 weeks) — **MVP DONE**
 
 **Goal**: Assist instructors with rubric-based essay grading while keeping final grading human-controlled.
 
 #### Backend Tasks
-- [ ] **Feature: Suggest essay grades** — `POST /api/v1/ai/quizzes/attempts/{attemptId}/grade-suggestions`
-- [ ] Input: essay answers, question text, max score, optional rubric
-- [ ] Output: suggested score, confidence, reasoning, rubric breakdown
-- [ ] Add guardrail: AI suggestion cannot submit final grade directly
-- [ ] Record accepted/overridden suggestions for audit and model-quality review
+- [x] **Feature: Suggest essay grades** — `POST /api/v1/ai/quizzes/attempts/{attemptId}/grade-suggestions`
+- [x] Input: essay answers, question text, max score, optional rubric
+- [x] Output: suggested score, confidence, reasoning, rubric breakdown
+- [x] Add guardrail: AI suggestion cannot submit final grade directly
+- [x] Record suggestions in AI request audit log for model-quality review
 - [ ] Unit tests for authorization, response parsing, and manual override behavior
 
 #### Frontend Tasks
-- [ ] Add AI suggestion panel to manual grading screen
-- [ ] Let instructor apply, edit, or ignore suggested score
-- [ ] Show rubric explanation without hiding the learner answer
+- [x] Add AI suggestion panel to manual grading screen
+- [x] Let instructor apply, edit, or ignore suggested score before final submission
+- [x] Show rubric explanation without hiding the learner answer
 
 **Definition of Done**:
 - Instructor can request AI suggestions for essay answers
