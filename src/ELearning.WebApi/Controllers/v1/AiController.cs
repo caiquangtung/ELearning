@@ -2,7 +2,9 @@ using Asp.Versioning;
 using ELearning.Application.Features.Ai.CourseRecommendations;
 using ELearning.Application.Features.Ai.EssayGrading;
 using ELearning.Application.Features.Ai.LearnerRisk;
+using ELearning.Application.Features.Ai.LearningPaths;
 using ELearning.Application.Features.Ai.QuizQuestionGeneration;
+using ELearning.Application.Features.Ai.SemanticSearch;
 using ELearning.Core.Common;
 using ELearning.Core.Constants;
 using ELearning.WebApi.Authorization;
@@ -25,6 +27,31 @@ public sealed class AiController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> GetCourseRecommendations([FromQuery] int limit = 6, CancellationToken ct = default)
     {
         var result = await mediator.Send(new GetCourseRecommendationsQuery(limit), ct);
+        return result.IsSuccess ? Ok(result.Value) : ProblemFrom(result.Error);
+    }
+
+    [HttpGet("search/courses")]
+    [HasPermission(Permissions.Courses.Read)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> SearchCourses([FromQuery] string q, [FromQuery] int limit = 10, CancellationToken ct = default)
+    {
+        var result = await mediator.Send(new SemanticCourseSearchQuery(q, limit), ct);
+        return result.IsSuccess ? Ok(result.Value) : ProblemFrom(result.Error);
+    }
+
+    [HttpPost("learning-paths/generate")]
+    [HasPermission(Permissions.Courses.Read)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GenerateLearningPath([FromBody] GenerateLearningPathRequestDto body, CancellationToken ct)
+    {
+        var result = await mediator.Send(
+            new GenerateLearningPathCommand(
+                body.Goal,
+                body.CurrentSkills,
+                body.TargetRole,
+                body.OrganizationId,
+                body.MaxCourses),
+            ct);
         return result.IsSuccess ? Ok(result.Value) : ProblemFrom(result.Error);
     }
 
