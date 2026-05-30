@@ -86,6 +86,7 @@ public static class DependencyInjection
         services.AddSingleton<IAiQuizQuestionGenerator, LocalQuizQuestionGenerator>();
         services.AddSingleton<IAiEssayGradingService, LocalEssayGradingService>();
         services.AddScoped<IAiCourseRecommendationService, LocalCourseRecommendationService>();
+        services.AddScoped<IAiLearnerRiskService, LocalLearnerRiskService>();
 
         services.AddSingleton<IFileStorage, LocalFileStorage>();
         services.AddSingleton<IZoomMeetingService, NoOpZoomMeetingService>();

@@ -1,6 +1,7 @@
 using Asp.Versioning;
 using ELearning.Application.Features.Ai.CourseRecommendations;
 using ELearning.Application.Features.Ai.EssayGrading;
+using ELearning.Application.Features.Ai.LearnerRisk;
 using ELearning.Application.Features.Ai.QuizQuestionGeneration;
 using ELearning.Core.Common;
 using ELearning.Core.Constants;
@@ -53,6 +54,24 @@ public sealed class AiController(IMediator mediator) : ControllerBase
         CancellationToken ct)
     {
         var result = await mediator.Send(new SuggestEssayGradesCommand(attemptId, body.Rubric), ct);
+        return result.IsSuccess ? Ok(result.Value) : ProblemFrom(result.Error);
+    }
+
+    [HttpGet("learners/{userId:guid}/risk")]
+    [HasPermission(Permissions.Ai.Use)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetLearnerRisk(Guid userId, CancellationToken ct)
+    {
+        var result = await mediator.Send(new GetLearnerRiskQuery(userId), ct);
+        return result.IsSuccess ? Ok(result.Value) : ProblemFrom(result.Error);
+    }
+
+    [HttpGet("organizations/{organizationId:guid}/risk-report")]
+    [HasPermission(Permissions.Organizations.Read)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetOrganizationRiskReport(Guid organizationId, CancellationToken ct)
+    {
+        var result = await mediator.Send(new GetOrganizationRiskReportQuery(organizationId), ct);
         return result.IsSuccess ? Ok(result.Value) : ProblemFrom(result.Error);
     }
 
