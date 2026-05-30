@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using ELearning.Application.Features.Ai.CourseRecommendations;
 using ELearning.Application.Features.Ai.QuizQuestionGeneration;
 using ELearning.Core.Common;
 using ELearning.Core.Constants;
@@ -16,6 +17,15 @@ namespace ELearning.WebApi.Controllers.v1;
 [Route("api/v{version:apiVersion}/ai")]
 public sealed class AiController(IMediator mediator) : ControllerBase
 {
+    [HttpGet("recommendations/courses")]
+    [HasPermission(Permissions.Courses.Read)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetCourseRecommendations([FromQuery] int limit = 6, CancellationToken ct = default)
+    {
+        var result = await mediator.Send(new GetCourseRecommendationsQuery(limit), ct);
+        return result.IsSuccess ? Ok(result.Value) : ProblemFrom(result.Error);
+    }
+
     [HttpPost("quizzes/generate-questions")]
     [HasPermission(Permissions.Ai.Use)]
     [ProducesResponseType(StatusCodes.Status200OK)]

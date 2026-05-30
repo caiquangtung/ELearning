@@ -45,6 +45,7 @@ status: in-progress
 - Sprint 12: **MVP done** — video asset/watch progress aggregates, upload/playback/progress/complete APIs, EF migration `Sprint12_VideoProgress`, Angular course lesson video player/upload/progress tracking; CDN/transcoding and production video storage still open (see `docs/sprint12-completion.md`)
 - Sprint 13: **MVP done** — course catalog search across title/description/lessons, status/price filters, sort options, global course search, and course results UI; category/level/instructor facets, Redis catalog cache, suggestions, and Elasticsearch still open (see `docs/sprint13-completion.md`)
 - AI-1: **MVP done** — local AI quiz question generator, provider abstraction, AI request audit log, generation API, rate limit hook, Angular generate/review/accept UI, migration `AiQuestionGeneration`; external LLM provider adapter and prompt-quality evaluation remain follow-up (see `docs/ai1-completion.md`)
+- AI-2: **Backend MVP done** — local hybrid course recommendation service, explainable scoring, Redis-cached learner recommendations, audit logging, learner-accessible API `GET /api/v1/ai/recommendations/courses`; Angular dashboard/catalog recommendation UI still open.
 - **Sprint 4 polish (optional, 2–4 days)**: recommended before full Sprint 5 — thin `shared/ui` wrappers, pilot screen, global loading, E2E smoke, UX polish (see **Sprint 4b** below and `docs/sprint4-completion.md` *Sprint 4 review*)
 
 ### Completed Work Checklist
@@ -69,6 +70,7 @@ status: in-progress
 - [x] **Sprint 12 (MVP)**: Video upload/playback/progress tracking, watch completion threshold, course lesson video UI, migration `Sprint12_VideoProgress`
 - [x] **Sprint 13 (MVP)**: Course search/filter/sort API, global course search, advanced course list filters
 - [x] **AI-1 (MVP)**: Quiz question generation API, local AI provider, audit metadata table, instructor review/accept UI
+- [x] **AI-2 (backend MVP)**: Explainable hybrid course recommendation API with Redis cache and AI request audit log
 
 ### Remaining Immediate Priorities
 - [ ] **Frontend (recommended before Sprint 5)**: Sprint 4b polish — `UiButton` / `PageShell` / `UiDataTable`, pilot list screen, global loading indicator, minimal E2E, doc refresh (`docs/sprint4-completion.md`)
@@ -97,7 +99,7 @@ status: in-progress
 | Angular SPA MVP (auth + org + courses + classes) | Sprint 4 | Frontend Team | 2 weeks | **MVP done** (see `docs/sprint4-completion.md`) |
 | Sprint 4b — FE polish & wrappers (optional) | Pre–Sprint 5 | Frontend Team | 2–4 days | **Recommended** (see Sprint 4b) |
 | AI-1 — Quiz question generator | AI Sprint Track | Backend + Frontend | 2 weeks | **MVP done** |
-| AI-2 — Course recommendation | AI Sprint Track | Backend + Data | 2 weeks | Planned |
+| AI-2 — Course recommendation | AI Sprint Track | Backend + Data | 2 weeks | **Backend MVP done** |
 | AI-3 — Essay grading assistant | AI Sprint Track | Backend + Frontend | 2 weeks | Planned |
 | AI-4 — Learner risk prediction | AI Sprint Track | Backend + Data | 2 weeks | Planned |
 | AI-5 — Semantic search + learning path generator | AI Sprint Track | Backend + Frontend | 2 weeks | Planned |
@@ -157,15 +159,15 @@ status: in-progress
 - Invalid provider responses are rejected safely
 - Audit metadata is recorded for each generation
 
-### AI-2: Course Recommendation (Priority 2, 2 weeks)
+### AI-2: Course Recommendation (Priority 2, 2 weeks) — **BACKEND MVP DONE**
 
 **Goal**: Recommend courses to learners based on profile, organization context, course history, and semantic similarity.
 
 #### Backend Tasks
-- [ ] **Feature: Get learner course recommendations** — `GET /api/v1/ai/recommendations/courses`
-- [ ] Implement hybrid scoring: role/department rules, popularity, completion history, quiz performance, and course similarity
-- [ ] Add explainable recommendation reasons (`Because you completed...`, `Popular in your department...`)
-- [ ] Add fallback recommendations when learner history is sparse
+- [x] **Feature: Get learner course recommendations** — `GET /api/v1/ai/recommendations/courses`
+- [x] Implement hybrid scoring: organization context, popularity, watch/completion history, quiz performance, and course similarity
+- [x] Add explainable recommendation reasons (`Matches topics...`, `Popular in your organization...`, `Recently added...`)
+- [x] Add fallback recommendations when learner history is sparse
 - [ ] Add tests for score ranking and tenant isolation
 
 #### Frontend Tasks
