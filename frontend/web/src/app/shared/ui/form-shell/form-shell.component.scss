@@ -1,0 +1,20 @@
+:host {
+  display: block;
+}
+
+.form-search {
+  display: block;
+}
+
+.form-body {
+  padding: 0.5rem 0;
+}
+
+.form-footer {
+  margin-top: 0.75rem;
+}
+
+/* hide any legacy inline search containers if present */
+.form-search {
+  display: none !important;
+}

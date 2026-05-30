@@ -14,7 +14,7 @@ import {
 } from '../../core/api/lms-api.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { GlobalErrorService } from '../../core/error/global-error.service';
-import { PageShellComponent } from '../../shared/ui/page-shell/page-shell.component';
+import { PageShellComponent } from '../../shared/ui';
 import { UiButtonComponent } from '../../shared/ui/ui-button/ui-button.component';
 
 const uuidRe =
@@ -29,50 +29,95 @@ function formatMoney(cents: number, currency: string): string {
 @Component({
   selector: 'app-checkout',
   standalone: true,
-  imports: [FormsModule, InputTextModule, Panel, PageShellComponent, UiButtonComponent],
+  imports: [
+    FormsModule,
+    InputTextModule,
+    Panel,
+    PageShellComponent,
+    UiButtonComponent,
+  ],
   template: `
     <app-page-shell title="Checkout" subtitle="Review and place your order">
       @if (invalidParams()) {
-        <p class="text-color-secondary">Missing or invalid checkout link. Open a course, class, or license pool and use Buy / Enroll.</p>
+        <p class="text-color-secondary">
+          Missing or invalid checkout link. Open a course, class, or license
+          pool and use Buy / Enroll.
+        </p>
       } @else if (loading()) {
         <p>Loading…</p>
       } @else {
         <p-panel header="Summary" styleClass="mb-4">
-          <p class="mt-0"><strong>{{ title() }}</strong></p>
+          <p class="mt-0">
+            <strong>{{ title() }}</strong>
+          </p>
           <p class="text-sm text-color-secondary mb-2">{{ typeLabel() }}</p>
           <p class="mb-1">
-            Quantity: {{ quantity() }} · Unit: {{ formatMoney(unitPriceCents(), currency()) }}
+            Quantity: {{ quantity() }} · Unit:
+            {{ formatMoney(unitPriceCents(), currency()) }}
           </p>
           @if (quote(); as q) {
             <p class="mb-0">
-              Subtotal: {{ formatMoney(q.subtotalCents, q.currency) }} · Discount:
-              <strong>-{{ formatMoney(q.discountCents, q.currency) }}</strong> · Total:
+              Subtotal: {{ formatMoney(q.subtotalCents, q.currency) }} ·
+              Discount:
+              <strong>-{{ formatMoney(q.discountCents, q.currency) }}</strong> ·
+              Total:
               <strong>{{ formatMoney(q.totalCents, q.currency) }}</strong>
             </p>
           } @else {
             <p class="mb-0">
-              <strong>Total: {{ formatMoney(lineTotalCents(), currency()) }}</strong>
+              <strong
+                >Total: {{ formatMoney(lineTotalCents(), currency()) }}</strong
+              >
             </p>
           }
         </p-panel>
 
         <div class="flex flex-column gap-3 mb-4" style="max-width: 30rem">
           <label class="text-sm font-medium" for="qty">Quantity</label>
-          <input id="qty" pInputText type="number" min="1" [(ngModel)]="qtyModel" (ngModelChange)="onQtyChange($event)" />
+          <input
+            id="qty"
+            pInputText
+            type="number"
+            min="1"
+            [(ngModel)]="qtyModel"
+            (ngModelChange)="onQtyChange($event)"
+          />
 
-          <label class="text-sm font-medium" for="coupon">Coupon code (optional)</label>
+          <label class="text-sm font-medium" for="coupon"
+            >Coupon code (optional)</label
+          >
           <div class="flex gap-2">
-            <input id="coupon" pInputText [(ngModel)]="couponModel" placeholder="e.g. SPRING20" class="w-full" />
-            <app-ui-button label="Apply" severity="secondary" [text]="true" (clicked)="applyCoupon()" />
+            <input
+              id="coupon"
+              pInputText
+              [(ngModel)]="couponModel"
+              placeholder="e.g. SPRING20"
+              class="w-full"
+            />
+            <app-ui-button
+              label="Apply"
+              severity="secondary"
+              [text]="true"
+              (clicked)="applyCoupon()"
+            />
           </div>
           @if (quote(); as q) {
             @if (q.appliedCouponCode) {
-              <p class="text-sm text-color-secondary m-0">Applied: <strong>{{ q.appliedCouponCode }}</strong></p>
+              <p class="text-sm text-color-secondary m-0">
+                Applied: <strong>{{ q.appliedCouponCode }}</strong>
+              </p>
             }
           }
 
-          <label class="text-sm font-medium" for="org">Organization ID (optional)</label>
-          <input id="org" pInputText [(ngModel)]="orgModel" placeholder="UUID for org-scoped purchase" />
+          <label class="text-sm font-medium" for="org"
+            >Organization ID (optional)</label
+          >
+          <input
+            id="org"
+            pInputText
+            [(ngModel)]="orgModel"
+            placeholder="UUID for org-scoped purchase"
+          />
         </div>
 
         <app-ui-button
@@ -122,7 +167,11 @@ export class CheckoutComponent implements OnInit {
       this.loading.set(false);
       return;
     }
-    if (type !== 'Course' && type !== 'TrainingClass' && type !== 'LicensePool') {
+    if (
+      type !== 'Course' &&
+      type !== 'TrainingClass' &&
+      type !== 'LicensePool'
+    ) {
       this.invalidParams.set(true);
       this.loading.set(false);
       return;
@@ -234,7 +283,8 @@ export class CheckoutComponent implements OnInit {
   private refreshQuote(): void {
     const user = this.auth.user();
     const type = this.checkoutType;
-    if (!user || !type || !this.referenceId || this.unitPriceCents() <= 0) return;
+    if (!user || !type || !this.referenceId || this.unitPriceCents() <= 0)
+      return;
 
     const orgTrim = this.orgModel.trim();
     const orgId = orgTrim && uuidRe.test(orgTrim) ? orgTrim : null;
@@ -245,7 +295,13 @@ export class CheckoutComponent implements OnInit {
       organizationId: orgId,
       currency: this.currency(),
       couponCode: coupon ? coupon : null,
-      items: [{ itemType: type, referenceId: this.referenceId, quantity: this.quantity() }],
+      items: [
+        {
+          itemType: type,
+          referenceId: this.referenceId,
+          quantity: this.quantity(),
+        },
+      ],
     };
 
     this.errors.clear();
@@ -285,7 +341,9 @@ export class CheckoutComponent implements OnInit {
     this.api.createOrder(body).subscribe({
       next: (o) => {
         this.submitting.set(false);
-        void this.router.navigate(['/orders', o.id], { queryParams: { pay: '1' } });
+        void this.router.navigate(['/orders', o.id], {
+          queryParams: { pay: '1' },
+        });
       },
       error: () => this.submitting.set(false),
     });

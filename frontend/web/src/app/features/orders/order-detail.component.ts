@@ -5,9 +5,13 @@ import { Button } from 'primeng/button';
 import { Panel } from 'primeng/panel';
 import { Tag } from 'primeng/tag';
 import { finalize } from 'rxjs';
-import { InvoiceDto, LmsApiService, OrderDto } from '../../core/api/lms-api.service';
+import {
+  InvoiceDto,
+  LmsApiService,
+  OrderDto,
+} from '../../core/api/lms-api.service';
 import { GlobalErrorService } from '../../core/error/global-error.service';
-import { PageShellComponent } from '../../shared/ui/page-shell/page-shell.component';
+import { PageShellComponent } from '../../shared/ui';
 import { UiButtonComponent } from '../../shared/ui/ui-button/ui-button.component';
 import { UiDataTableComponent } from '../../shared/ui/ui-data-table/ui-data-table.component';
 import {
@@ -35,21 +39,37 @@ function formatMoney(cents: number, currency: string): string {
     UiDataTableBodyTemplateDirective,
   ],
   template: `
-    <p-button label="Back to orders" icon="pi pi-arrow-left" [text]="true" routerLink="/orders" styleClass="mb-3" />
+    <p-button
+      label="Back to orders"
+      icon="pi pi-arrow-left"
+      [text]="true"
+      routerLink="/orders"
+      styleClass="mb-3"
+    />
     @if (loading()) {
       <p>Loading…</p>
     } @else {
       @if (order(); as o) {
         <app-page-shell title="Order" [subtitle]="o.id">
           <ng-container pageActions>
-            <app-ui-button label="Refresh" icon="pi pi-refresh" severity="secondary" [text]="true" (clicked)="reload()" />
+            <app-ui-button
+              label="Refresh"
+              icon="pi pi-refresh"
+              severity="secondary"
+              [text]="true"
+              (clicked)="reload()"
+            />
           </ng-container>
 
           <div class="flex gap-2 flex-wrap align-items-center mb-3">
             <p-tag [value]="o.status" [severity]="statusSeverity(o.status)" />
-            <span class="text-600 text-sm">Total: {{ formatMoney(o.totalCents, o.currency) }}</span>
+            <span class="text-600 text-sm"
+              >Total: {{ formatMoney(o.totalCents, o.currency) }}</span
+            >
             @if (o.checkoutExpiresAtUtc && o.status === 'PendingPayment') {
-              <span class="text-600 text-sm">Pay before: {{ o.checkoutExpiresAtUtc | date: 'medium' }}</span>
+              <span class="text-600 text-sm"
+                >Pay before: {{ o.checkoutExpiresAtUtc | date: 'medium' }}</span
+              >
             }
           </div>
 
@@ -63,22 +83,31 @@ function formatMoney(cents: number, currency: string): string {
                 (clicked)="pay()"
               />
               <p class="text-sm text-color-secondary mt-2 mb-0">
-                Development uses the NoOp payment provider; payment completes immediately after you confirm.
+                Development uses the NoOp payment provider; payment completes
+                immediately after you confirm.
               </p>
             </p-panel>
           }
 
           @if (invoice(); as inv) {
             <p-panel header="Invoice" styleClass="mb-4">
-              <p class="mt-0"><strong>{{ inv.invoiceNumber }}</strong></p>
+              <p class="mt-0">
+                <strong>{{ inv.invoiceNumber }}</strong>
+              </p>
               <p class="text-sm text-color-secondary mb-0">
-                Issued {{ inv.issuedAt | date: 'medium' }} · {{ formatMoney(inv.totalCents, inv.currency) }}
+                Issued {{ inv.issuedAt | date: 'medium' }} ·
+                {{ formatMoney(inv.totalCents, inv.currency) }}
               </p>
             </p-panel>
           }
 
           <h2 class="text-xl">Line items</h2>
-          <app-ui-data-table [value]="o.items" [emptyColspan]="5" [showPaginator]="false" [tableStyle]="{ 'min-width': '52rem' }">
+          <app-ui-data-table
+            [value]="o.items"
+            [emptyColspan]="5"
+            [showPaginator]="false"
+            [tableStyle]="{ 'min-width': '52rem' }"
+          >
             <ng-template uiDataTableHeader>
               <tr>
                 <th>Type</th>
@@ -122,15 +151,21 @@ export class OrderDetailComponent implements OnInit {
     this.reload(() => {
       if (autoPay && this.order()?.status === 'PendingPayment') {
         this.pay(() => {
-          void this.router.navigate(['/orders', this.orderId], { replaceUrl: true });
+          void this.router.navigate(['/orders', this.orderId], {
+            replaceUrl: true,
+          });
         });
       } else if (autoPay) {
-        void this.router.navigate(['/orders', this.orderId], { replaceUrl: true });
+        void this.router.navigate(['/orders', this.orderId], {
+          replaceUrl: true,
+        });
       }
     });
   }
 
-  statusSeverity(status: string): 'success' | 'warn' | 'danger' | 'info' | 'secondary' {
+  statusSeverity(
+    status: string,
+  ): 'success' | 'warn' | 'danger' | 'info' | 'secondary' {
     switch (status) {
       case 'Paid':
         return 'success';

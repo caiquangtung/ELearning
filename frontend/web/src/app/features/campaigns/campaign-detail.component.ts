@@ -14,7 +14,7 @@ import {
 } from '../../core/api/lms-api.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { GlobalErrorService } from '../../core/error/global-error.service';
-import { PageShellComponent } from '../../shared/ui/page-shell/page-shell.component';
+import { PageShellComponent } from '../../shared/ui';
 import { UiButtonComponent } from '../../shared/ui/ui-button/ui-button.component';
 import { UiDataTableComponent } from '../../shared/ui/ui-data-table/ui-data-table.component';
 import {
@@ -39,7 +39,11 @@ import {
     UiDataTableBodyTemplateDirective,
   ],
   template: `
-    <a routerLink="/campaigns" class="text-primary font-medium inline-block mb-3">← Back to campaigns</a>
+    <a
+      routerLink="/campaigns"
+      class="text-primary font-medium inline-block mb-3"
+      >← Back to campaigns</a
+    >
 
     @if (loading()) {
       <p>Loading…</p>
@@ -47,14 +51,27 @@ import {
       @if (campaign(); as c) {
         <app-page-shell title="{{ c.name }}" [subtitle]="c.id">
           <ng-container pageActions>
-            <app-ui-button label="Refresh" icon="pi pi-refresh" severity="secondary" [text]="true" (clicked)="reload()" />
+            <app-ui-button
+              label="Refresh"
+              icon="pi pi-refresh"
+              severity="secondary"
+              [text]="true"
+              (clicked)="reload()"
+            />
           </ng-container>
 
           <div class="flex gap-3 flex-wrap mb-3">
-            <span class="text-sm text-color-secondary">Scope: <strong>{{ c.scope }}</strong></span>
-            <span class="text-sm text-color-secondary">Status: <strong>{{ c.status }}</strong></span>
+            <span class="text-sm text-color-secondary"
+              >Scope: <strong>{{ c.scope }}</strong></span
+            >
+            <span class="text-sm text-color-secondary"
+              >Status: <strong>{{ c.status }}</strong></span
+            >
             <span class="text-sm text-color-secondary">
-              Window: <strong>{{ c.startUtc | date: 'medium' }}</strong> → <strong>{{ c.endUtc ? (c.endUtc | date: 'medium') : '—' }}</strong>
+              Window: <strong>{{ c.startUtc | date: 'medium' }}</strong> →
+              <strong>{{
+                c.endUtc ? (c.endUtc | date: 'medium') : '—'
+              }}</strong>
             </span>
           </div>
 
@@ -62,20 +79,34 @@ import {
             <p-panel header="Analytics" styleClass="mb-4">
               <div class="flex gap-4 flex-wrap">
                 <div>
-                  <div class="text-sm text-color-secondary">Total redemptions</div>
-                  <div class="text-lg font-medium">{{ a.totalRedemptions }}</div>
+                  <div class="text-sm text-color-secondary">
+                    Total redemptions
+                  </div>
+                  <div class="text-lg font-medium">
+                    {{ a.totalRedemptions }}
+                  </div>
                 </div>
                 <div>
                   <div class="text-sm text-color-secondary">Unique buyers</div>
                   <div class="text-lg font-medium">{{ a.uniqueBuyers }}</div>
                 </div>
                 <div>
-                  <div class="text-sm text-color-secondary">Discount total (cents)</div>
-                  <div class="text-lg font-medium">{{ a.totalDiscountCents }}</div>
+                  <div class="text-sm text-color-secondary">
+                    Discount total (cents)
+                  </div>
+                  <div class="text-lg font-medium">
+                    {{ a.totalDiscountCents }}
+                  </div>
                 </div>
                 <div>
                   <div class="text-sm text-color-secondary">Last redeemed</div>
-                  <div class="text-lg font-medium">{{ a.lastRedeemedAtUtc ? (a.lastRedeemedAtUtc | date: 'medium') : '—' }}</div>
+                  <div class="text-lg font-medium">
+                    {{
+                      a.lastRedeemedAtUtc
+                        ? (a.lastRedeemedAtUtc | date: 'medium')
+                        : '—'
+                    }}
+                  </div>
                 </div>
               </div>
             </p-panel>
@@ -83,7 +114,9 @@ import {
 
           <p-panel header="Preview (quote)" styleClass="mb-4">
             <div class="flex flex-column gap-3" style="max-width: 40rem">
-              <label class="text-sm font-medium" for="p-itemType">Item type</label>
+              <label class="text-sm font-medium" for="p-itemType"
+                >Item type</label
+              >
               <p-multiSelect
                 id="p-itemType"
                 [options]="itemTypeOptions"
@@ -94,17 +127,44 @@ import {
                 styleClass="w-full"
               />
 
-              <label class="text-sm font-medium" for="p-ref">Reference ID (GUID)</label>
-              <input id="p-ref" pInputText [(ngModel)]="previewReferenceId" placeholder="Course/Class/Pool ID" />
+              <label class="text-sm font-medium" for="p-ref"
+                >Reference ID (GUID)</label
+              >
+              <input
+                id="p-ref"
+                pInputText
+                [(ngModel)]="previewReferenceId"
+                placeholder="Course/Class/Pool ID"
+              />
 
               <label class="text-sm font-medium" for="p-qty">Quantity</label>
-              <input id="p-qty" pInputText type="number" min="1" [(ngModel)]="previewQuantity" />
+              <input
+                id="p-qty"
+                pInputText
+                type="number"
+                min="1"
+                [(ngModel)]="previewQuantity"
+              />
 
-              <label class="text-sm font-medium" for="p-org">Organization ID (optional)</label>
-              <input id="p-org" pInputText [(ngModel)]="previewOrgId" placeholder="UUID (enables B2B volume tiers)" />
+              <label class="text-sm font-medium" for="p-org"
+                >Organization ID (optional)</label
+              >
+              <input
+                id="p-org"
+                pInputText
+                [(ngModel)]="previewOrgId"
+                placeholder="UUID (enables B2B volume tiers)"
+              />
 
-              <label class="text-sm font-medium" for="p-coupon">Coupon code (optional)</label>
-              <input id="p-coupon" pInputText [(ngModel)]="previewCoupon" placeholder="e.g. SPRING20" />
+              <label class="text-sm font-medium" for="p-coupon"
+                >Coupon code (optional)</label
+              >
+              <input
+                id="p-coupon"
+                pInputText
+                [(ngModel)]="previewCoupon"
+                placeholder="e.g. SPRING20"
+              />
 
               <app-ui-button
                 label="Preview quote"
@@ -116,7 +176,8 @@ import {
 
               @if (preview(); as q) {
                 <p class="m-0 text-sm text-color-secondary">
-                  Subtotal: <strong>{{ q.subtotalCents }}</strong> · Discount: <strong>{{ q.discountCents }}</strong> · Total:
+                  Subtotal: <strong>{{ q.subtotalCents }}</strong> · Discount:
+                  <strong>{{ q.discountCents }}</strong> · Total:
                   <strong>{{ q.totalCents }}</strong>
                 </p>
               }
@@ -126,9 +187,18 @@ import {
           <p-panel header="Add rule: Item % off" styleClass="mb-4">
             <div class="flex flex-column gap-3" style="max-width: 40rem">
               <label class="text-sm font-medium" for="pct">Percent off</label>
-              <input id="pct" pInputText type="number" min="1" max="100" [(ngModel)]="percentOff" />
+              <input
+                id="pct"
+                pInputText
+                type="number"
+                min="1"
+                max="100"
+                [(ngModel)]="percentOff"
+              />
 
-              <label class="text-sm font-medium" for="types">Applies to item types</label>
+              <label class="text-sm font-medium" for="types"
+                >Applies to item types</label
+              >
               <p-multiSelect
                 id="types"
                 [options]="itemTypeOptions"
@@ -152,13 +222,33 @@ import {
           <p-panel header="Create coupon" styleClass="mb-4">
             <div class="flex flex-column gap-3" style="max-width: 40rem">
               <label class="text-sm font-medium" for="code">Code</label>
-              <input id="code" pInputText [(ngModel)]="couponCode" placeholder="e.g. SPRING20" />
+              <input
+                id="code"
+                pInputText
+                [(ngModel)]="couponCode"
+                placeholder="e.g. SPRING20"
+              />
 
-              <label class="text-sm font-medium" for="exp">Expires (UTC, optional)</label>
-              <input id="exp" pInputText type="datetime-local" [(ngModel)]="couponExpiresLocal" />
+              <label class="text-sm font-medium" for="exp"
+                >Expires (UTC, optional)</label
+              >
+              <input
+                id="exp"
+                pInputText
+                type="datetime-local"
+                [(ngModel)]="couponExpiresLocal"
+              />
 
-              <label class="text-sm font-medium" for="per">Per-buyer max redemptions</label>
-              <input id="per" pInputText type="number" min="1" [(ngModel)]="perBuyerMax" />
+              <label class="text-sm font-medium" for="per"
+                >Per-buyer max redemptions</label
+              >
+              <input
+                id="per"
+                pInputText
+                type="number"
+                min="1"
+                [(ngModel)]="perBuyerMax"
+              />
 
               <app-ui-button
                 label="Create coupon"
@@ -171,7 +261,12 @@ import {
           </p-panel>
 
           <h2 class="text-xl">Rules</h2>
-          <app-ui-data-table [value]="c.rules" [emptyColspan]="3" [showPaginator]="false" styleClass="mb-4">
+          <app-ui-data-table
+            [value]="c.rules"
+            [emptyColspan]="3"
+            [showPaginator]="false"
+            styleClass="mb-4"
+          >
             <ng-template uiDataTableHeader>
               <tr>
                 <th>Type</th>
@@ -189,7 +284,11 @@ import {
           </app-ui-data-table>
 
           <h2 class="text-xl">Coupons</h2>
-          <app-ui-data-table [value]="c.coupons" [emptyColspan]="4" [showPaginator]="false">
+          <app-ui-data-table
+            [value]="c.coupons"
+            [emptyColspan]="4"
+            [showPaginator]="false"
+          >
             <ng-template uiDataTableHeader>
               <tr>
                 <th>Code</th>
@@ -202,7 +301,9 @@ import {
               <tr>
                 <td class="font-mono text-sm">{{ cp.code }}</td>
                 <td>{{ cp.status }}</td>
-                <td>{{ cp.expiresUtc ? (cp.expiresUtc | date: 'medium') : '—' }}</td>
+                <td>
+                  {{ cp.expiresUtc ? (cp.expiresUtc | date: 'medium') : '—' }}
+                </td>
                 <td>{{ cp.perBuyerMaxRedemptions }}</td>
               </tr>
             </ng-template>
@@ -307,7 +408,11 @@ export class CampaignDetailComponent implements OnInit {
   }
 
   canAddRule(): boolean {
-    return this.percentOff >= 1 && this.percentOff <= 100 && this.selectedItemTypes.length > 0;
+    return (
+      this.percentOff >= 1 &&
+      this.percentOff <= 100 &&
+      this.selectedItemTypes.length > 0
+    );
   }
 
   addRule(): void {
@@ -339,7 +444,9 @@ export class CampaignDetailComponent implements OnInit {
     this.api
       .createCampaignCoupon(this.campaignId, {
         code: this.couponCode.trim(),
-        expiresUtc: this.couponExpiresLocal ? new Date(this.couponExpiresLocal).toISOString() : null,
+        expiresUtc: this.couponExpiresLocal
+          ? new Date(this.couponExpiresLocal).toISOString()
+          : null,
         perBuyerMaxRedemptions: Math.floor(this.perBuyerMax),
       })
       .subscribe({
@@ -354,4 +461,3 @@ export class CampaignDetailComponent implements OnInit {
       });
   }
 }
-

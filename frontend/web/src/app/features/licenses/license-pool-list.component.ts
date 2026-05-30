@@ -2,15 +2,19 @@ import { DatePipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { DialogModule } from 'primeng/dialog';
 import { InputText } from 'primeng/inputtext';
-import { Panel } from 'primeng/panel';
 import { PaginatorState } from 'primeng/paginator';
+import { PrimeTemplate } from 'primeng/api';
 import { Skeleton } from 'primeng/skeleton';
 import { Tag } from 'primeng/tag';
-import { LmsApiService, LicensePoolListItemDto } from '../../core/api/lms-api.service';
+import {
+  LmsApiService,
+  LicensePoolListItemDto,
+} from '../../core/api/lms-api.service';
 import { GlobalErrorService } from '../../core/error/global-error.service';
 import { PagedList } from '../../core/models/paged-list.model';
-import { PageShellComponent } from '../../shared/ui/page-shell/page-shell.component';
+import { PageShellComponent } from '../../shared/ui';
 import { UiButtonComponent } from '../../shared/ui/ui-button/ui-button.component';
 import { UiDataTableComponent } from '../../shared/ui/ui-data-table/ui-data-table.component';
 import {
@@ -25,8 +29,9 @@ import {
     DatePipe,
     FormsModule,
     RouterLink,
+    DialogModule,
     InputText,
-    Panel,
+    PrimeTemplate,
     Skeleton,
     Tag,
     PageShellComponent,
@@ -38,19 +43,62 @@ import {
   template: `
     <app-page-shell title="License pools" [subtitle]="'Organization: ' + orgId">
       <ng-container pageActions>
-        <app-ui-button label="Refresh" icon="pi pi-refresh" severity="secondary" [text]="true" (clicked)="reload()" />
+        <app-ui-button
+          label="Refresh"
+          icon="pi pi-refresh"
+          severity="secondary"
+          [text]="true"
+          (clicked)="reload()"
+        />
+        <app-ui-button
+          label="New pool"
+          icon="pi pi-plus"
+          (clicked)="openCreateDialog()"
+        />
       </ng-container>
 
-      <p-panel header="Create pool" [toggleable]="true" styleClass="mb-4">
-        <div class="flex flex-column gap-3" style="max-width: 36rem">
-          <input pInputText [(ngModel)]="name" placeholder="Pool name" class="w-full" name="lpname" />
-          <input
-            pInputText
-            [(ngModel)]="totalSeats"
-            placeholder="Total seats"
-            class="w-full"
-            name="lpseats"
-            inputmode="numeric"
+      <p-dialog
+        header="New license pool"
+        [(visible)]="createVisible"
+        [modal]="true"
+        [draggable]="false"
+        [resizable]="false"
+        styleClass="app-dialog app-dialog--md"
+        [style]="{ width: 'min(34rem, calc(100vw - 2rem))' }"
+        (onHide)="closeCreateDialog()"
+      >
+        <form class="app-form" (ngSubmit)="create()">
+          <div class="field-block">
+            <label for="pool-name">Pool name</label>
+            <input
+              id="pool-name"
+              pInputText
+              [(ngModel)]="name"
+              placeholder="Pool name"
+              class="w-full"
+              name="lpname"
+            />
+          </div>
+          <div class="field-block">
+            <label for="pool-seats">Total seats</label>
+            <input
+              id="pool-seats"
+              pInputText
+              [(ngModel)]="totalSeats"
+              placeholder="Total seats"
+              class="w-full"
+              name="lpseats"
+              inputmode="numeric"
+            />
+          </div>
+        </form>
+
+        <ng-template pTemplate="footer">
+          <app-ui-button
+            label="Cancel"
+            severity="secondary"
+            [text]="true"
+            (clicked)="closeCreateDialog()"
           />
           <app-ui-button
             label="Create"
@@ -59,10 +107,11 @@ import {
             [loading]="creating()"
             (clicked)="create()"
           />
-        </div>
-      </p-panel>
+        </ng-template>
+      </p-dialog>
 
       @if (loading()) {
+        appendTo="body"
         <div class="flex flex-column gap-2">
           @for (_ of skeletonRows; track $index) {
             <p-skeleton height="2.75rem" width="100%" />
@@ -93,13 +142,24 @@ import {
             <ng-template uiDataTableBody let-pool>
               <tr>
                 <td>
-                  <a [routerLink]="['/license-pools', pool.id]" class="text-primary font-medium">{{ pool.name }}</a>
+                  <a
+                    [routerLink]="['/license-pools', pool.id]"
+                    class="text-primary font-medium"
+                    >{{ pool.name }}</a
+                  >
                 </td>
                 <td>{{ pool.activeSeats }} / {{ pool.totalSeats }}</td>
                 <td>
-                  <p-tag [value]="pool.availableSeats.toString()" [severity]="pool.availableSeats > 0 ? 'success' : 'danger'" />
+                  <p-tag
+                    [value]="pool.availableSeats.toString()"
+                    [severity]="pool.availableSeats > 0 ? 'success' : 'danger'"
+                  />
                 </td>
-                <td>{{ pool.expiresAt ? (pool.expiresAt | date: 'mediumDate') : '—' }}</td>
+                <td>
+                  {{
+                    pool.expiresAt ? (pool.expiresAt | date: 'mediumDate') : '—'
+                  }}
+                </td>
                 <td>{{ pool.createdAt | date: 'mediumDate' }}</td>
               </tr>
             </ng-template>
@@ -120,6 +180,7 @@ export class LicensePoolListComponent implements OnInit {
   readonly creating = signal(false);
   readonly skeletonRows = Array.from({ length: 6 });
 
+  createVisible = false;
   name = '';
   totalSeats = '50';
   readonly pageSize = 20;
@@ -130,17 +191,33 @@ export class LicensePoolListComponent implements OnInit {
     this.reload();
   }
 
+  openCreateDialog(): void {
+    this.name = '';
+    this.totalSeats = '50';
+    this.createVisible = true;
+  }
+
+  closeCreateDialog(): void {
+    if (this.creating()) return;
+    this.createVisible = false;
+  }
+
   reload(): void {
     this.errors.clear();
     if (!this.orgId) return;
     this.loading.set(true);
-    this.api.listLicensePools(this.orgId, { page: this.pageNum, pageSize: this.pageSize }).subscribe({
-      next: (page) => {
-        this.page.set(page);
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
-    });
+    this.api
+      .listLicensePools(this.orgId, {
+        page: this.pageNum,
+        pageSize: this.pageSize,
+      })
+      .subscribe({
+        next: (page) => {
+          this.page.set(page);
+          this.loading.set(false);
+        },
+        error: () => this.loading.set(false),
+      });
   }
 
   onPageChange(event: PaginatorState): void {
@@ -163,6 +240,7 @@ export class LicensePoolListComponent implements OnInit {
         this.creating.set(false);
         this.name = '';
         this.totalSeats = '50';
+        this.createVisible = false;
         this.reload();
       },
       error: () => this.creating.set(false),

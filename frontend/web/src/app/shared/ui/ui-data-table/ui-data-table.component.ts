@@ -1,5 +1,11 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, ContentChild, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ContentChild,
+  input,
+  output,
+} from '@angular/core';
 import { Paginator, PaginatorState } from 'primeng/paginator';
 import { PrimeTemplate } from 'primeng/api';
 import { TableModule } from 'primeng/table';
@@ -21,7 +27,9 @@ import {
       styleClass="p-datatable-sm"
       [tableStyle]="tableStyle()"
       [scrollable]="scrollable() || virtualScroll()"
-      [scrollHeight]="scrollHeight()"
+      [scrollHeight]="
+        scrollable() || virtualScroll() ? scrollHeight() : undefined
+      "
       [virtualScroll]="virtualScroll()"
       [virtualScrollItemSize]="virtualScrollItemSize()"
     >
@@ -31,18 +39,24 @@ import {
 
       <ng-template pTemplate="body" let-row let-ri="rowIndex">
         <ng-container
-          *ngTemplateOutlet="bodyTpl?.templateRef ?? null; context: { $implicit: row, index: ri }"
+          *ngTemplateOutlet="
+            bodyTpl?.templateRef ?? null;
+            context: { $implicit: row, index: ri }
+          "
         />
       </ng-template>
 
       <ng-template pTemplate="emptymessage">
-        <ng-container *ngTemplateOutlet="emptyTpl?.templateRef ?? defaultEmpty" />
+        <ng-container
+          *ngTemplateOutlet="emptyTpl?.templateRef ?? defaultEmpty"
+        />
       </ng-template>
     </p-table>
 
     @if (showPaginator()) {
       <p-paginator
         [rows]="rows()"
+        [rowsPerPageOptions]="rowsPerPageOptions()"
         [totalRecords]="totalRecords()"
         [first]="first()"
         (onPageChange)="pageChange.emit($event)"
@@ -61,7 +75,9 @@ import {
 export class UiDataTableComponent<T extends object> {
   readonly value = input<T[]>([]);
   readonly loading = input(false);
-  readonly tableStyle = input<Record<string, string> | null>({ 'min-width': '40rem' });
+  readonly tableStyle = input<Record<string, string> | null>({
+    'min-width': '40rem',
+  });
   readonly scrollable = input(false);
   readonly scrollHeight = input('400px');
   readonly virtualScroll = input(false);
@@ -69,6 +85,7 @@ export class UiDataTableComponent<T extends object> {
 
   readonly showPaginator = input(true);
   readonly rows = input(20);
+  readonly rowsPerPageOptions = input<number[]>([10, 20, 50]);
   readonly totalRecords = input(0);
   readonly first = input(0);
 
@@ -76,7 +93,10 @@ export class UiDataTableComponent<T extends object> {
 
   readonly pageChange = output<PaginatorState>();
 
-  @ContentChild(UiDataTableHeaderTemplateDirective) headerTpl?: UiDataTableHeaderTemplateDirective;
-  @ContentChild(UiDataTableBodyTemplateDirective) bodyTpl?: UiDataTableBodyTemplateDirective;
-  @ContentChild(UiDataTableEmptyTemplateDirective) emptyTpl?: UiDataTableEmptyTemplateDirective;
+  @ContentChild(UiDataTableHeaderTemplateDirective)
+  headerTpl?: UiDataTableHeaderTemplateDirective;
+  @ContentChild(UiDataTableBodyTemplateDirective)
+  bodyTpl?: UiDataTableBodyTemplateDirective;
+  @ContentChild(UiDataTableEmptyTemplateDirective)
+  emptyTpl?: UiDataTableEmptyTemplateDirective;
 }

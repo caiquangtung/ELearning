@@ -3,14 +3,19 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { InputTextModule } from 'primeng/inputtext';
-import { Panel } from 'primeng/panel';
+import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { PaginatorState } from 'primeng/paginator';
+import { PrimeTemplate } from 'primeng/api';
 import { Skeleton } from 'primeng/skeleton';
-import { LmsApiService, CampaignListItemDto, CreateCampaignRequest } from '../../core/api/lms-api.service';
+import {
+  LmsApiService,
+  CampaignListItemDto,
+  CreateCampaignRequest,
+} from '../../core/api/lms-api.service';
 import { GlobalErrorService } from '../../core/error/global-error.service';
 import { PagedList } from '../../core/models/paged-list.model';
-import { PageShellComponent } from '../../shared/ui/page-shell/page-shell.component';
+import { PageShellComponent } from '../../shared/ui';
 import { UiButtonComponent } from '../../shared/ui/ui-button/ui-button.component';
 import { UiDataTableComponent } from '../../shared/ui/ui-data-table/ui-data-table.component';
 import {
@@ -30,9 +35,10 @@ type ScopeOption = { label: string; value: string };
     DatePipe,
     FormsModule,
     RouterLink,
-    Panel,
+    DialogModule,
     InputTextModule,
     DropdownModule,
+    PrimeTemplate,
     Skeleton,
     PageShellComponent,
     UiButtonComponent,
@@ -40,36 +46,164 @@ type ScopeOption = { label: string; value: string };
     UiDataTableHeaderTemplateDirective,
     UiDataTableBodyTemplateDirective,
   ],
+  styleUrl: './campaign-list.component.scss',
   template: `
-    <app-page-shell title="Campaigns" subtitle="Create and manage promotion campaigns">
+    <app-page-shell
+      title="Campaigns"
+      subtitle="Create and manage promotion campaigns"
+    >
       <ng-container pageActions>
-        <app-ui-button label="Refresh" icon="pi pi-refresh" severity="secondary" [text]="true" (clicked)="reload()" />
+        <app-ui-button
+          icon="pi pi-search"
+          severity="secondary"
+          [text]="true"
+          (clicked)="searchDialogVisible = true"
+        />
+        <app-ui-button
+          label="Refresh"
+          icon="pi pi-refresh"
+          severity="secondary"
+          [text]="true"
+          (clicked)="reload()"
+        />
+        <app-ui-button
+          label="New campaign"
+          icon="pi pi-plus"
+          (clicked)="openCreateDialog()"
+        />
       </ng-container>
 
-      <p-panel header="Create campaign" [toggleable]="true" styleClass="mb-4">
-        <div class="flex flex-column gap-3" style="max-width: 40rem">
-          <label class="text-sm font-medium" for="name">Name</label>
-          <input id="name" pInputText [(ngModel)]="name" placeholder="e.g. Spring sale" />
+      <p-dialog
+        header="Search campaigns"
+        [(visible)]="searchDialogVisible"
+        appendTo="body"
+        [modal]="true"
+        [draggable]="false"
+        [resizable]="false"
+        styleClass="app-dialog app-dialog--sm"
+        [style]="{ width: 'min(36rem, calc(100vw - 2rem))' }"
+        (onHide)="searchDialogVisible = false"
+      >
+        <div class="field-block">
+          <label for="campaign-search-name">Name</label>
+          <input
+            id="campaign-search-name"
+            pInputText
+            [(ngModel)]="searchName"
+            name="searchName"
+            placeholder="Search by name"
+          />
+        </div>
 
-          <label class="text-sm font-medium" for="scope">Scope</label>
+        <div class="field-block">
+          <label for="campaign-search-scope">Scope</label>
           <p-dropdown
-            id="scope"
+            id="campaign-search-scope"
             [options]="scopeOptions"
-            [(ngModel)]="scope"
+            [(ngModel)]="searchScope"
             optionLabel="label"
             optionValue="value"
             styleClass="w-full"
+            name="searchScope"
           />
+        </div>
 
-          <label class="text-sm font-medium" for="org">Organization ID (required for Organization scope)</label>
-          <input id="org" pInputText [(ngModel)]="orgId" placeholder="UUID" />
+        <ng-template pTemplate="footer">
+          <app-ui-button
+            label="Cancel"
+            severity="secondary"
+            [text]="true"
+            (clicked)="searchDialogVisible = false"
+          />
+          <app-ui-button
+            label="Apply"
+            icon="pi pi-filter"
+            (clicked)="searchDialogVisible = false; reload()"
+          />
+        </ng-template>
+      </p-dialog>
 
-          <label class="text-sm font-medium" for="start">Start (UTC)</label>
-          <input id="start" pInputText type="datetime-local" [(ngModel)]="startLocal" />
+      <p-dialog
+        header="Create campaign"
+        [(visible)]="formVisible"
+        appendTo="body"
+        [modal]="true"
+        [draggable]="false"
+        [resizable]="false"
+        styleClass="app-dialog app-dialog--md"
+        [style]="{ width: 'min(38rem, calc(100vw - 2rem))' }"
+        (onHide)="closeDialog()"
+      >
+        <form class="app-form" (ngSubmit)="create()">
+          <div class="field-block">
+            <label for="name">Name</label>
+            <input
+              id="name"
+              pInputText
+              [(ngModel)]="name"
+              name="name"
+              placeholder="e.g. Spring sale"
+            />
+          </div>
 
-          <label class="text-sm font-medium" for="end">End (UTC, optional)</label>
-          <input id="end" pInputText type="datetime-local" [(ngModel)]="endLocal" />
+          <div class="field-block">
+            <label for="scope">Scope</label>
+            <p-dropdown
+              id="scope"
+              [options]="scopeOptions"
+              [(ngModel)]="scope"
+              optionLabel="label"
+              optionValue="value"
+              styleClass="w-full"
+              name="scope"
+            />
+          </div>
 
+          @if (scope === 'Organization') {
+            <div class="field-block">
+              <label for="org">Organization ID</label>
+              <input
+                id="org"
+                pInputText
+                [(ngModel)]="orgId"
+                name="orgId"
+                placeholder="UUID"
+              />
+            </div>
+          }
+
+          <div class="app-form-grid">
+            <div class="field-block">
+              <label for="start">Start (UTC)</label>
+              <input
+                id="start"
+                pInputText
+                type="datetime-local"
+                [(ngModel)]="startLocal"
+                name="startLocal"
+              />
+            </div>
+
+            <div class="field-block">
+              <label for="end">End (UTC, optional)</label>
+              <input
+                id="end"
+                pInputText
+                type="datetime-local"
+                [(ngModel)]="endLocal"
+                name="endLocal"
+              />
+            </div>
+          </div>
+        </form>
+
+        <ng-template pTemplate="footer">
+          <app-ui-button
+            label="Cancel"
+            severity="secondary"
+            [text]="true"
+            (clicked)="closeDialog()"
+          />
           <app-ui-button
             label="Create"
             icon="pi pi-plus"
@@ -77,8 +211,8 @@ type ScopeOption = { label: string; value: string };
             [disabled]="creating() || !canCreate()"
             (clicked)="create()"
           />
-        </div>
-      </p-panel>
+        </ng-template>
+      </p-dialog>
 
       @if (loading()) {
         <div class="flex flex-column gap-2">
@@ -114,9 +248,16 @@ type ScopeOption = { label: string; value: string };
                 <td>{{ c.scope }}</td>
                 <td class="font-mono text-sm">{{ c.organizationId ?? '—' }}</td>
                 <td>{{ c.status }}</td>
-                <td>{{ c.startUtc | date: 'mediumDate' }} → {{ c.endUtc ? (c.endUtc | date: 'mediumDate') : '—' }}</td>
+                <td>
+                  {{ c.startUtc | date: 'mediumDate' }} →
+                  {{ c.endUtc ? (c.endUtc | date: 'mediumDate') : '—' }}
+                </td>
                 <td class="text-right">
-                  <a [routerLink]="['/campaigns', c.id]" class="text-primary font-medium">Manage</a>
+                  <a
+                    [routerLink]="['/campaigns', c.id]"
+                    class="text-primary font-medium"
+                    >Manage</a
+                  >
                 </td>
               </tr>
             </ng-template>
@@ -135,6 +276,11 @@ export class CampaignListComponent implements OnInit {
   readonly creating = signal(false);
   readonly skeletonRows = Array.from({ length: 6 });
 
+  searchDialogVisible = false;
+  searchName = '';
+  searchScope: string | null = null;
+
+  formVisible = false;
   name = '';
   scope = 'Global';
   orgId = '';
@@ -149,26 +295,37 @@ export class CampaignListComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    const now = new Date();
-    this.startLocal = this.toLocalInput(now.toISOString());
+    this.resetForm();
     this.reload();
+  }
+
+  openCreateDialog(): void {
+    this.resetForm();
+    this.formVisible = true;
+  }
+
+  closeDialog(): void {
+    if (this.creating()) return;
+    this.formVisible = false;
   }
 
   reload(): void {
     this.errors.clear();
     this.loading.set(true);
-    this.api.listCampaigns({
-      organizationId: null,
-      includeGlobal: true,
-      page: this.pageNum,
-      pageSize: this.pageSize,
-    }).subscribe({
-      next: (page) => {
-        this.page.set(page);
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
-    });
+    this.api
+      .listCampaigns({
+        organizationId: null,
+        includeGlobal: true,
+        page: this.pageNum,
+        pageSize: this.pageSize,
+      })
+      .subscribe({
+        next: (page) => {
+          this.page.set(page);
+          this.loading.set(false);
+        },
+        error: () => this.loading.set(false),
+      });
   }
 
   onPageChange(event: PaginatorState): void {
@@ -181,7 +338,8 @@ export class CampaignListComponent implements OnInit {
   canCreate(): boolean {
     if (!this.name.trim()) return false;
     if (!this.startLocal) return false;
-    if (this.scope === 'Organization' && !uuidRe.test(this.orgId.trim())) return false;
+    if (this.scope === 'Organization' && !uuidRe.test(this.orgId.trim()))
+      return false;
     return true;
   }
 
@@ -202,13 +360,20 @@ export class CampaignListComponent implements OnInit {
     this.api.createCampaign(body).subscribe({
       next: () => {
         this.creating.set(false);
-        this.name = '';
-        this.orgId = '';
-        this.endLocal = '';
+        this.formVisible = false;
+        this.resetForm();
         this.reload();
       },
       error: () => this.creating.set(false),
     });
+  }
+
+  private resetForm(): void {
+    this.name = '';
+    this.scope = 'Global';
+    this.orgId = '';
+    this.endLocal = '';
+    this.startLocal = this.toLocalInput(new Date().toISOString());
   }
 
   private toLocalInput(iso: string): string {

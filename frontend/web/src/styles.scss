@@ -1,15 +1,35 @@
-@import 'primeicons/primeicons.css';
+@import "primeicons/primeicons.css";
 
-/* App shell spacing (PrimeNG handles component theming via Aura) */
+:root {
+  color-scheme: light;
+  --app-surface: #f7f9fc;
+  --app-surface-strong: #ffffff;
+  --app-border: rgba(15, 23, 42, 0.09);
+  --app-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --app-shadow-md: 0 10px 26px rgba(15, 23, 42, 0.08);
+  --app-motion-fast: 140ms cubic-bezier(0.2, 0, 0, 1);
+  --app-motion: 220ms cubic-bezier(0.2, 0, 0, 1);
+}
+
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    sans-serif;
+  background:
+    linear-gradient(180deg, #ffffff 0, var(--app-surface) 22rem),
+    var(--app-surface);
+  color: #172033;
 }
 
 .layout-main {
-  padding: 1rem 1.25rem;
-  max-width: 1200px;
+  padding: 2rem 1.25rem 3rem;
+  max-width: 1440px;
   margin: 0 auto;
+  animation: page-enter var(--app-motion) both;
 }
 
 .auth-wrapper {
@@ -28,6 +48,263 @@ body {
   gap: 0.35rem;
 }
 
+.app-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.app-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.app-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.field-block label {
+  color: #334155;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.field-block input,
+.field-block textarea,
+.field-block .p-dropdown,
+.field-block .p-inputnumber,
+.field-block .p-inputnumber-input {
+  width: 100%;
+}
+
+.p-dialog-mask {
+  z-index: 3000 !important;
+}
+
+.p-dialog {
+  z-index: 3001 !important;
+}
+
+.p-dialog.app-dialog,
+.app-dialog.p-dialog {
+  animation: dialog-enter var(--app-motion) both;
+  display: flex !important;
+  flex-direction: column !important;
+  margin: 0 !important;
+  max-height: calc(100vh - 2rem) !important;
+}
+
+.p-dialog.app-dialog--sm,
+.app-dialog--sm.p-dialog {
+  width: min(32rem, calc(100vw - 2rem)) !important;
+}
+
+.p-dialog.app-dialog--md,
+.app-dialog--md.p-dialog {
+  width: min(42rem, calc(100vw - 2rem)) !important;
+}
+
+.p-dialog.app-dialog--lg,
+.app-dialog--lg.p-dialog {
+  width: min(56rem, calc(100vw - 2rem)) !important;
+}
+
+.p-dialog.app-dialog--fullscreen,
+.app-dialog--fullscreen.p-dialog {
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  max-height: none !important;
+  border-radius: 0 !important;
+}
+
+.app-dialog .p-dialog-content {
+  flex: 1 1 auto;
+  overflow: auto;
+  padding-top: 0.25rem;
+}
+
+.app-dialog .p-dialog-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.875rem 1.25rem !important;
+  border-top: 1px solid var(--app-border);
+}
+
+.app-dialog .p-dialog-header {
+  border-radius: 0;
+}
+
 .w-full {
   width: 100%;
+}
+
+a {
+  transition:
+    color var(--app-motion-fast),
+    text-decoration-color var(--app-motion-fast);
+}
+
+a:hover {
+  text-decoration-color: currentColor;
+}
+
+/* Table / page content links: remove default blue/underline, keep hover accent */
+.page-content a,
+.p-datatable-table a,
+.p-datatable .p-datatable-tbody a {
+  color: inherit;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.page-content a:hover,
+.p-datatable-table a:hover,
+.p-datatable .p-datatable-tbody a:hover {
+  color: var(--primary-color, #0f766e);
+  text-decoration: none;
+}
+
+.p-button,
+.p-inputtext,
+.p-select,
+.p-dropdown,
+.p-panel,
+.p-card,
+.p-datatable,
+.p-paginator {
+  transition:
+    background-color var(--app-motion-fast),
+    border-color var(--app-motion-fast),
+    box-shadow var(--app-motion-fast),
+    transform var(--app-motion-fast);
+}
+
+.p-button:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: var(--app-shadow-sm);
+}
+
+.p-button:not(:disabled):active {
+  transform: translateY(0);
+}
+
+.p-inputtext:enabled:hover,
+.p-dropdown:not(.p-disabled):hover,
+.p-select:not(.p-disabled):hover {
+  border-color: color-mix(in srgb, var(--primary-color, #0f766e) 45%, #cbd5e1);
+}
+
+.p-inputtext:enabled:focus,
+.p-dropdown:not(.p-disabled).p-focus,
+.p-select:not(.p-disabled).p-focus {
+  box-shadow: 0 0 0 3px
+    color-mix(in srgb, var(--primary-color, #0f766e) 16%, transparent);
+}
+
+.p-panel,
+.p-card,
+.p-toolbar {
+  border-color: var(--app-border);
+  box-shadow: var(--app-shadow-sm);
+}
+
+.p-panel:hover,
+.p-card:hover {
+  box-shadow: var(--app-shadow-md);
+}
+
+.p-datatable .p-datatable-tbody > tr {
+  transition:
+    background-color var(--app-motion-fast),
+    box-shadow var(--app-motion-fast),
+    transform var(--app-motion-fast);
+}
+
+.p-datatable .p-datatable-tbody > tr:hover {
+  background: color-mix(in srgb, var(--primary-color, #0f766e) 6%, #fff);
+}
+
+.p-datatable .p-datatable-thead > tr > th {
+  background: #f8fafc;
+  color: #475569;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  padding: 1rem 1.25rem;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--app-border);
+}
+
+.p-datatable .p-datatable-thead > tr > th:first-child {
+  border-top-left-radius: 0.9rem;
+}
+
+.p-datatable .p-datatable-thead > tr > th:last-child {
+  border-top-right-radius: 0.9rem;
+}
+
+.p-tag {
+  transition:
+    transform var(--app-motion-fast),
+    filter var(--app-motion-fast);
+}
+
+.p-tag:hover {
+  transform: translateY(-1px);
+  filter: saturate(1.08);
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes row-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes dialog-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 640px) {
+  .app-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
+  }
 }

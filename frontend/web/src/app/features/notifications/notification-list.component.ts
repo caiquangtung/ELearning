@@ -7,31 +7,57 @@ import { Card } from 'primeng/card';
 import { Checkbox } from 'primeng/checkbox';
 import { Tag } from 'primeng/tag';
 import { LmsApiService, NotificationDto } from '../../core/api/lms-api.service';
+import { PageShellComponent } from '../../shared/ui';
 
 @Component({
   selector: 'app-notification-list',
   standalone: true,
-  imports: [Button, Card, Checkbox, DatePipe, FormsModule, RouterLink, Tag],
+  imports: [
+    Button,
+    Card,
+    Checkbox,
+    DatePipe,
+    FormsModule,
+    RouterLink,
+    Tag,
+    PageShellComponent,
+  ],
   template: `
-    <div class="page">
-      <div class="page-header">
-        <div>
-          <h1>Notifications</h1>
-          <p>Recent updates, reminders, and announcements.</p>
-        </div>
-        <div class="actions">
-          <label class="unread-filter">
-            <p-checkbox [binary]="true" [ngModel]="unreadOnly()" (ngModelChange)="toggleUnread($event)" inputId="unreadOnly" />
-            <span>Unread only</span>
-          </label>
-          <p-button icon="pi pi-refresh" severity="secondary" [outlined]="true" (onClick)="load()" ariaLabel="Refresh notifications" />
-          <p-button label="Announcement" icon="pi pi-send" routerLink="/notifications/announcements" />
-        </div>
-      </div>
+    <app-page-shell
+      title="Notifications"
+      subtitle="Recent updates, reminders, and announcements."
+    >
+      <ng-container pageActions>
+        <label class="unread-filter">
+          <p-checkbox
+            [binary]="true"
+            [ngModel]="unreadOnly()"
+            (ngModelChange)="toggleUnread($event)"
+            inputId="unreadOnly"
+          />
+          <span>Unread only</span>
+        </label>
+        <p-button
+          icon="pi pi-refresh"
+          severity="secondary"
+          [outlined]="true"
+          (onClick)="load()"
+          ariaLabel="Refresh notifications"
+        />
+        <p-button
+          label="Announcement"
+          icon="pi pi-send"
+          routerLink="/notifications/announcements"
+        />
+      </ng-container>
 
       <div class="notification-list">
         @for (item of items(); track item.id) {
-          <p-card [styleClass]="item.isRead ? 'notification-card' : 'notification-card unread'">
+          <p-card
+            [styleClass]="
+              item.isRead ? 'notification-card' : 'notification-card unread'
+            "
+          >
             <div class="notification-row">
               <div>
                 <div class="notification-title">
@@ -46,7 +72,13 @@ import { LmsApiService, NotificationDto } from '../../core/api/lms-api.service';
                   <a class="action-link" [routerLink]="item.actionUrl">Open</a>
                 }
                 @if (!item.isRead) {
-                  <p-button label="Mark read" icon="pi pi-check" size="small" [outlined]="true" (onClick)="markRead(item)" />
+                  <p-button
+                    label="Mark read"
+                    icon="pi pi-check"
+                    size="small"
+                    [outlined]="true"
+                    (onClick)="markRead(item)"
+                  />
                 }
               </div>
             </div>
@@ -57,7 +89,7 @@ import { LmsApiService, NotificationDto } from '../../core/api/lms-api.service';
           </p-card>
         }
       </div>
-    </div>
+    </app-page-shell>
   `,
   styleUrl: './notification-list.component.scss',
 })
@@ -72,7 +104,13 @@ export class NotificationListComponent {
   }
 
   load(): void {
-    this.api.listNotifications({ page: 1, pageSize: 50, unreadOnly: this.unreadOnly() }).subscribe((page) => this.items.set(page.items));
+    this.api
+      .listNotifications({
+        page: 1,
+        pageSize: 50,
+        unreadOnly: this.unreadOnly(),
+      })
+      .subscribe((page) => this.items.set(page.items));
   }
 
   toggleUnread(value: boolean): void {
@@ -82,11 +120,15 @@ export class NotificationListComponent {
 
   markRead(item: NotificationDto): void {
     this.api.markNotificationRead(item.id).subscribe((updated) => {
-      this.items.update((items) => items.map((x) => (x.id === updated.id ? updated : x)));
+      this.items.update((items) =>
+        items.map((x) => (x.id === updated.id ? updated : x)),
+      );
     });
   }
 
-  severity(item: NotificationDto): 'success' | 'secondary' | 'info' | 'warn' | 'danger' | 'contrast' {
+  severity(
+    item: NotificationDto,
+  ): 'success' | 'secondary' | 'info' | 'warn' | 'danger' | 'contrast' {
     if (item.type === 'Warning') return 'warn';
     if (item.type === 'Reminder') return 'info';
     if (item.type === 'Announcement') return 'success';

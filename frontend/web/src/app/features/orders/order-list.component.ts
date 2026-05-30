@@ -3,11 +3,14 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { PaginatorState } from 'primeng/paginator';
 import { Skeleton } from 'primeng/skeleton';
-import { LmsApiService, OrderListItemDto } from '../../core/api/lms-api.service';
+import {
+  LmsApiService,
+  OrderListItemDto,
+} from '../../core/api/lms-api.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { GlobalErrorService } from '../../core/error/global-error.service';
 import { PagedList } from '../../core/models/paged-list.model';
-import { PageShellComponent } from '../../shared/ui/page-shell/page-shell.component';
+import { PageShellComponent } from '../../shared/ui';
 import { UiButtonComponent } from '../../shared/ui/ui-button/ui-button.component';
 import { UiDataTableComponent } from '../../shared/ui/ui-data-table/ui-data-table.component';
 import {
@@ -33,9 +36,18 @@ function formatMoney(cents: number, currency: string): string {
     UiDataTableBodyTemplateDirective,
   ],
   template: `
-    <app-page-shell title="My orders" subtitle="Recent purchases and pending checkouts">
+    <app-page-shell
+      title="My orders"
+      subtitle="Recent purchases and pending checkouts"
+    >
       <ng-container pageActions>
-        <app-ui-button label="Refresh" icon="pi pi-refresh" severity="secondary" [text]="true" (clicked)="reload()" />
+        <app-ui-button
+          label="Refresh"
+          icon="pi pi-refresh"
+          severity="secondary"
+          [text]="true"
+          (clicked)="reload()"
+        />
       </ng-container>
 
       @if (loading()) {
@@ -73,7 +85,11 @@ function formatMoney(cents: number, currency: string): string {
                 <td>{{ formatMoney(o.totalCents, o.currency) }}</td>
                 <td>{{ o.createdAt | date: 'medium' }}</td>
                 <td class="text-right">
-                  <a [routerLink]="['/orders', o.id]" class="text-primary font-medium">View</a>
+                  <a
+                    [routerLink]="['/orders', o.id]"
+                    class="text-primary font-medium"
+                    >View</a
+                  >
                 </td>
               </tr>
             </ng-template>
@@ -104,13 +120,19 @@ export class OrderListComponent implements OnInit {
     this.errors.clear();
     if (!user) return;
     this.loading.set(true);
-    this.api.listMyOrders({ buyerUserId: user.id, page: this.pageNum, pageSize: this.pageSize }).subscribe({
-      next: (page) => {
-        this.page.set(page);
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
-    });
+    this.api
+      .listMyOrders({
+        buyerUserId: user.id,
+        page: this.pageNum,
+        pageSize: this.pageSize,
+      })
+      .subscribe({
+        next: (page) => {
+          this.page.set(page);
+          this.loading.set(false);
+        },
+        error: () => this.loading.set(false),
+      });
   }
 
   onPageChange(event: PaginatorState): void {

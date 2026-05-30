@@ -1,23 +1,30 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { Button } from 'primeng/button';
 import { Card } from 'primeng/card';
-import { AdminDashboardDto, InstructorDashboardDto, LmsApiService, StudentDashboardDto } from '../../core/api/lms-api.service';
+import {
+  AdminDashboardDto,
+  InstructorDashboardDto,
+  LmsApiService,
+  StudentDashboardDto,
+} from '../../core/api/lms-api.service';
 import { AuthService } from '../../core/auth/auth.service';
+import { PageShellComponent } from '../../shared/ui';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [Button, Card],
+  imports: [Button, Card, PageShellComponent],
   template: `
-    <section class="dashboard">
-      <div class="dashboard-header">
-        <div>
-          <p class="eyebrow">Dashboard</p>
-          <h1>{{ greeting() }}</h1>
-          <p>{{ subtitle() }}</p>
-        </div>
-        <p-button icon="pi pi-refresh" label="Refresh" severity="secondary" [outlined]="true" (onClick)="load()" />
-      </div>
+    <app-page-shell [title]="greeting()" [subtitle]="subtitle()">
+      <ng-container pageActions>
+        <p-button
+          icon="pi pi-refresh"
+          label="Refresh"
+          severity="secondary"
+          [outlined]="true"
+          (onClick)="load()"
+        />
+      </ng-container>
 
       @if (isAdmin() && admin(); as stats) {
         <div class="metric-grid">
@@ -58,7 +65,10 @@ import { AuthService } from '../../core/auth/auth.service';
             <p-card styleClass="metric-card strong">
               <span>Learning orders</span>
               <strong>{{ stats.paidOrders }}</strong>
-              <small>{{ stats.coursePurchases }} courses, {{ stats.classPurchases }} classes</small>
+              <small
+                >{{ stats.coursePurchases }} courses,
+                {{ stats.classPurchases }} classes</small
+              >
             </p-card>
             <p-card styleClass="metric-card">
               <span>Upcoming sessions</span>
@@ -97,7 +107,7 @@ import { AuthService } from '../../core/auth/auth.service';
           <p>{{ error() }}</p>
         </p-card>
       }
-    </section>
+    </app-page-shell>
   `,
   styleUrl: './dashboard.component.scss',
 })
@@ -112,7 +122,9 @@ export class DashboardComponent {
 
   readonly isAdmin = computed(() => this.hasRole('Admin'));
   readonly isInstructor = computed(() => this.hasRole('Instructor'));
-  readonly greeting = computed(() => `Welcome, ${this.auth.user()?.fullName ?? 'learner'}`);
+  readonly greeting = computed(
+    () => `Welcome, ${this.auth.user()?.fullName ?? 'learner'}`,
+  );
   readonly subtitle = computed(() =>
     this.isAdmin()
       ? 'Platform performance, commerce, and learning activity at a glance.'

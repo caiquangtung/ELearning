@@ -6,9 +6,12 @@ import { Button } from 'primeng/button';
 import { InputText } from 'primeng/inputtext';
 import { Panel } from 'primeng/panel';
 import { Tag } from 'primeng/tag';
-import { LmsApiService, LicensePoolDetailDto } from '../../core/api/lms-api.service';
+import {
+  LmsApiService,
+  LicensePoolDetailDto,
+} from '../../core/api/lms-api.service';
 import { GlobalErrorService } from '../../core/error/global-error.service';
-import { PageShellComponent } from '../../shared/ui/page-shell/page-shell.component';
+import { PageShellComponent } from '../../shared/ui';
 import { UiButtonComponent } from '../../shared/ui/ui-button/ui-button.component';
 import { UiDataTableComponent } from '../../shared/ui/ui-data-table/ui-data-table.component';
 import {
@@ -37,7 +40,13 @@ import {
     @if (pool(); as p) {
       <app-page-shell title="{{ p.name }}" [subtitle]="'Pool: ' + p.id">
         <ng-container pageActions>
-          <app-ui-button label="Refresh" icon="pi pi-refresh" severity="secondary" [text]="true" (clicked)="reload()" />
+          <app-ui-button
+            label="Refresh"
+            icon="pi pi-refresh"
+            severity="secondary"
+            [text]="true"
+            (clicked)="reload()"
+          />
           @if (p.seatPriceCents > 0) {
             <p-button
               label="Buy seats"
@@ -49,19 +58,44 @@ import {
         </ng-container>
 
         <div class="flex gap-3 flex-wrap mb-3">
-          <p-tag [value]="p.activeSeats + ' / ' + p.totalSeats + ' used'" severity="info" />
-          <p-tag [value]="p.availableSeats + ' available'" [severity]="p.availableSeats > 0 ? 'success' : 'danger'" />
-          <span class="text-600 text-sm">Created: {{ p.createdAt | date: 'medium' }}</span>
+          <p-tag
+            [value]="p.activeSeats + ' / ' + p.totalSeats + ' used'"
+            severity="info"
+          />
+          <p-tag
+            [value]="p.availableSeats + ' available'"
+            [severity]="p.availableSeats > 0 ? 'success' : 'danger'"
+          />
+          <span class="text-600 text-sm"
+            >Created: {{ p.createdAt | date: 'medium' }}</span
+          >
         </div>
 
         <p-panel header="Assign license" styleClass="mb-4">
           <div class="flex flex-column gap-3" style="max-width: 36rem">
-            <input pInputText [(ngModel)]="userId" placeholder="User ID (GUID)" class="w-full" name="lpuserid" />
-            <app-ui-button label="Assign" icon="pi pi-user-plus" [disabled]="!userId.trim() || assigning()" [loading]="assigning()" (clicked)="assign()" />
+            <input
+              pInputText
+              [(ngModel)]="userId"
+              placeholder="User ID (GUID)"
+              class="w-full"
+              name="lpuserid"
+            />
+            <app-ui-button
+              label="Assign"
+              icon="pi pi-user-plus"
+              [disabled]="!userId.trim() || assigning()"
+              [loading]="assigning()"
+              (clicked)="assign()"
+            />
           </div>
         </p-panel>
 
-        <app-ui-data-table [value]="p.assignments" [emptyColspan]="4" [showPaginator]="false" [tableStyle]="{ 'min-width': '52rem' }">
+        <app-ui-data-table
+          [value]="p.assignments"
+          [emptyColspan]="4"
+          [showPaginator]="false"
+          [tableStyle]="{ 'min-width': '52rem' }"
+        >
           <ng-template uiDataTableHeader>
             <tr>
               <th>User</th>
@@ -76,7 +110,10 @@ import {
               <td class="font-mono text-sm">{{ a.userId }}</td>
               <td>{{ a.assignedAt | date: 'medium' }}</td>
               <td>
-                <p-tag [value]="a.revokedAt ? 'Revoked' : 'Active'" [severity]="a.revokedAt ? 'secondary' : 'success'" />
+                <p-tag
+                  [value]="a.revokedAt ? 'Revoked' : 'Active'"
+                  [severity]="a.revokedAt ? 'secondary' : 'success'"
+                />
               </td>
               <td class="text-right">
                 @if (!a.revokedAt) {
@@ -150,4 +187,3 @@ export class LicensePoolDetailComponent implements OnInit {
     });
   }
 }
-
