@@ -12,7 +12,6 @@ test('smoke: login then navigate to courses', async ({ page }) => {
   await expect(page.getByText('ELearning')).toBeVisible();
 
   // Navigate to Courses
-  await page.getByRole('menuitem', { name: 'Courses' }).click();
+  await page.getByRole('link', { name: 'Courses' }).click();
   await expect(page.getByRole('heading', { name: 'Courses' })).toBeVisible();
 });
-

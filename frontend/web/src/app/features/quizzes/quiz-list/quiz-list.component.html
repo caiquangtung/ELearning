@@ -1,0 +1,120 @@
+    <app-page-shell title="Quizzes">
+      <ng-container pageActions>
+        <app-ui-button
+          label="Refresh"
+          icon="pi pi-refresh"
+          severity="secondary"
+          [text]="true"
+          (clicked)="loadQuizzes()"
+        />
+        <app-ui-button
+          label="Create Quiz"
+          icon="pi pi-plus"
+          (clicked)="navigateToCreate()"
+        />
+      </ng-container>
+
+      <div class="mb-4">
+        <div class="flex gap-3 align-items-center">
+          <div class="flex-1">
+            <span class="p-float-label">
+              <input
+                pInputText
+                id="search"
+                [(ngModel)]="searchTerm"
+                placeholder="Search quizzes..."
+                class="w-full"
+              />
+              <label for="search">Search</label>
+            </span>
+          </div>
+          <div class="w-12rem">
+            <p-dropdown
+              [options]="statusOptions"
+              [(ngModel)]="statusFilter"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Status"
+              [showClear]="true"
+              appendTo="body"
+            />
+          </div>
+          <app-ui-button
+            label="Apply"
+            icon="pi pi-filter"
+            (clicked)="applyFilters()"
+          />
+        </div>
+      </div>
+
+      <app-ui-data-table
+        [value]="page()?.items || []"
+        [loading]="isLoading()"
+        [rows]="pageSize"
+        [totalRecords]="page()?.totalCount || 0"
+        [first]="((page()?.page || 1) - 1) * pageSize"
+        [emptyColspan]="5"
+        [tableStyle]="{ 'min-width': '56rem' }"
+        [rowsPerPageOptions]="[10, 25, 50]"
+        (pageChange)="onPageChange($event)"
+      >
+        <ng-template uiDataTableHeader>
+          <tr>
+            <th>Title</th>
+            <th>Status</th>
+            <th>Questions</th>
+            <th>Created</th>
+            <th>Actions</th>
+          </tr>
+        </ng-template>
+
+        <ng-template uiDataTableBody let-quiz>
+          <tr>
+            <td>
+              <a
+                [routerLink]="['/quizzes', quiz.id]"
+                class="text-primary font-medium"
+              >
+                {{ quiz.title }}
+              </a>
+            </td>
+            <td>
+              <p-tag
+                [value]="quiz.status"
+                [severity]="
+                  quiz.status === 'Published'
+                    ? 'success'
+                    : quiz.status === 'Draft'
+                      ? 'warn'
+                      : 'secondary'
+                "
+              />
+            </td>
+            <td>{{ quiz.questionCount }}</td>
+            <td>{{ quiz.createdAt | date: 'mediumDate' }}</td>
+            <td>
+              <div class="flex gap-2">
+                <a
+                  [routerLink]="['/quizzes', quiz.id, 'edit']"
+                  class="text-primary"
+                >
+                  <i class="pi pi-pencil"></i> Edit
+                </a>
+                <button
+                  type="button"
+                  class="p-link text-red-500"
+                  (click)="confirmDelete(quiz.id)"
+                >
+                  <i class="pi pi-trash"></i>
+                  <span>Delete</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </app-ui-data-table>
+    </app-page-shell>
+
+    <p-confirmDialog />
+    <p-toast />
+  

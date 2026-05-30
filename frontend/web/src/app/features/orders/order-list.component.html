@@ -1,0 +1,62 @@
+    <app-page-shell
+      title="My orders"
+      subtitle="Recent purchases and pending checkouts"
+    >
+      <ng-container pageActions>
+        <app-ui-button
+          label="Refresh"
+          icon="pi pi-refresh"
+          severity="secondary"
+          [text]="true"
+          (clicked)="reload()"
+        />
+      </ng-container>
+
+      @if (loading()) {
+        <div class="flex flex-column gap-2">
+          @for (_ of skeletonRows; track $index) {
+            <p-skeleton height="2.75rem" width="100%" />
+          }
+        </div>
+      } @else {
+        @if (page(); as p) {
+          <app-ui-data-table
+            [value]="p.items"
+            [emptyColspan]="5"
+            [rows]="p.pageSize"
+            [totalRecords]="p.totalCount"
+            [first]="(p.page - 1) * p.pageSize"
+            [tableStyle]="{ 'min-width': '48rem' }"
+            [virtualScroll]="p.items.length > 25"
+            (pageChange)="onPageChange($event)"
+          >
+            <ng-template uiDataTableHeader>
+              <tr>
+                <th>Order</th>
+                <th>Status</th>
+                <th>Total</th>
+                <th>Created</th>
+                <th></th>
+              </tr>
+            </ng-template>
+
+            <ng-template uiDataTableBody let-o>
+              <tr>
+                <td class="font-mono text-sm">{{ o.id }}</td>
+                <td>{{ o.status }}</td>
+                <td>{{ formatMoney(o.totalCents, o.currency) }}</td>
+                <td>{{ o.createdAt | date: 'medium' }}</td>
+                <td class="text-right">
+                  <a
+                    [routerLink]="['/orders', o.id]"
+                    class="text-primary font-medium"
+                    >View</a
+                  >
+                </td>
+              </tr>
+            </ng-template>
+          </app-ui-data-table>
+        }
+      }
+    </app-page-shell>
+  

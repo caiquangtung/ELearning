@@ -1,0 +1,109 @@
+    <app-page-shell
+      title="Organizations"
+      subtitle="Create and manage tenant organizations."
+    >
+      <ng-container pageActions>
+        @if (isAdmin()) {
+          <app-ui-button
+            label="New organization"
+            icon="pi pi-plus"
+            (clicked)="openCreateDialog()"
+          />
+        }
+      </ng-container>
+
+      @if (isAdmin()) {
+        <p-dialog
+          header="New organization"
+          [(visible)]="createVisible"
+          appendTo="body"
+          [modal]="true"
+          [draggable]="false"
+          [resizable]="false"
+          styleClass="app-dialog app-dialog--md"
+          [style]="{ width: 'min(34rem, calc(100vw - 2rem))' }"
+          (onHide)="closeCreateDialog()"
+        >
+          <form class="app-form" (ngSubmit)="createOrg()">
+            <div class="field-block">
+              <label for="org-name">Name</label>
+              <input
+                pInputText
+                id="org-name"
+                [(ngModel)]="newName"
+                name="orgName"
+                class="w-full"
+              />
+            </div>
+            <div class="field-block">
+              <label for="org-slug">Slug (optional)</label>
+              <input
+                pInputText
+                id="org-slug"
+                [(ngModel)]="newSlug"
+                name="orgSlug"
+                class="w-full"
+              />
+            </div>
+          </form>
+
+          <ng-template pTemplate="footer">
+            <app-ui-button
+              label="Cancel"
+              severity="secondary"
+              [text]="true"
+              (clicked)="closeCreateDialog()"
+            />
+            <app-ui-button
+              label="Create"
+              icon="pi pi-plus"
+              [disabled]="!newName.trim() || creating()"
+              [loading]="creating()"
+              (clicked)="createOrg()"
+            />
+          </ng-template>
+        </p-dialog>
+      }
+      @if (loading()) {
+        <div class="flex flex-column gap-2">
+          @for (_ of skeletonRows; track $index) {
+            <p-skeleton height="2.75rem" width="100%" />
+          }
+        </div>
+      } @else {
+        @if (page(); as p) {
+          <app-ui-data-table
+            [value]="p.items"
+            [tableStyle]="{ 'min-width': '50rem' }"
+            [virtualScroll]="p.items.length > 25"
+            [rows]="p.pageSize"
+            [totalRecords]="p.totalCount"
+            [first]="(p.page - 1) * p.pageSize"
+            [emptyColspan]="3"
+            (pageChange)="onPageChange($event)"
+          >
+            <ng-template uiDataTableHeader>
+              <tr>
+                <th>Name</th>
+                <th>Slug</th>
+                <th>Status</th>
+              </tr>
+            </ng-template>
+            <ng-template uiDataTableBody let-o>
+              <tr>
+                <td>
+                  <a
+                    [routerLink]="['/organizations', o.id]"
+                    class="text-primary font-medium"
+                    >{{ o.name }}</a
+                  >
+                </td>
+                <td>{{ o.slug }}</td>
+                <td><p-tag [value]="o.status" severity="secondary" /></td>
+              </tr>
+            </ng-template>
+          </app-ui-data-table>
+        }
+      }
+    </app-page-shell>
+  

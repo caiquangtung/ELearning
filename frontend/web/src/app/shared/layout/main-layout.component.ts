@@ -1,18 +1,41 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import {
+  ActivatedRouteSnapshot,
+  NavigationEnd,
+  Router,
+  RouterModule,
+} from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { Button } from 'primeng/button';
-import { ProgressBar } from 'primeng/progressbar';
 import { InputText } from 'primeng/inputtext';
 import { LmsApiService } from '../../core/api/lms-api.service';
 import { AuthService } from '../../core/auth/auth.service';
-import { LoadingService } from '../../core/loading/loading.service';
+import { filter } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
+type SidebarItem = {
+  label: string;
+  icon: string;
+  routerLink: string;
+  visible?: boolean;
+  exact?: boolean;
+};
+
+type SidebarGroup = {
+  label?: string;
+  items: SidebarItem[];
+};
+
+type BreadcrumbItem = {
+  label: string;
+  routerLink: string;
+};
 
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [FormsModule, RouterModule, Button, ProgressBar, InputText],
+  imports: [FormsModule, RouterModule, Button, InputText],
   template: `
     <div class="app-shell" [class.is-sidebar-collapsed]="isSidebarCollapsed()">
       <aside
@@ -26,19 +49,26 @@ import { LoadingService } from '../../core/loading/loading.service';
         </div>
 
         <nav class="sidebar-nav">
-          @for (item of navItems; track item.label) {
-            @if (item.visible !== false) {
-              <a
-                class="sidebar-nav__link"
-                [routerLink]="item.routerLink"
-                routerLinkActive="is-active"
-                [routerLinkActiveOptions]="{
-                  exact: item.routerLink === '/dashboard',
-                }"
-              >
-                <i [class]="item.icon"></i>
-                <span>{{ item.label }}</span>
-              </a>
+          @for (group of sidebarGroups; track group.label ?? $index) {
+            @if (group.label) {
+              <div class="sidebar-nav__group-label">{{ group.label }}</div>
+            }
+
+            @for (item of group.items; track item.label) {
+              @if (item.visible !== false) {
+                <a
+                  class="sidebar-nav__link"
+                  [class.sidebar-nav__link--child]="!!group.label"
+                  [routerLink]="item.routerLink"
+                  routerLinkActive="is-active"
+                  [routerLinkActiveOptions]="{
+                    exact: item.exact ?? item.routerLink === '/dashboard',
+                  }"
+                >
+                  <i [class]="item.icon"></i>
+                  <span>{{ item.label }}</span>
+                </a>
+              }
             }
           }
         </nav>
@@ -76,21 +106,74 @@ import { LoadingService } from '../../core/loading/loading.service';
               <span>{{ unreadCount() > 99 ? '99+' : unreadCount() }}</span>
             }
           </a>
-          <div class="account-pill">
-            <i class="pi pi-user"></i>
-            <span>{{ auth.user()?.fullName ?? auth.user()?.email }}</span>
+          <div
+            class="account-menu"
+            [class.is-open]="isAccountMenuOpen()"
+            (mouseenter)="showAccountMenu()"
+            (mouseleave)="hideAccountMenu()"
+          >
+            <button
+              type="button"
+              class="account-trigger"
+              aria-label="Account menu"
+              [attr.aria-expanded]="isAccountMenuOpen()"
+              (click)="toggleAccountMenu()"
+            >
+              <i class="pi pi-user"></i>
+            </button>
+
+            @if (isAccountMenuOpen()) {
+              <div class="account-popover" role="menu">
+                <div class="account-popover__identity">
+                  <span class="account-popover__avatar">
+                    <i class="pi pi-user"></i>
+                  </span>
+                  <div>
+                    <strong>{{
+                      auth.user()?.fullName ?? 'System user'
+                    }}</strong>
+                    <span>{{ auth.user()?.email }}</span>
+                  </div>
+                </div>
+
+                <a
+                  class="account-popover__item"
+                  routerLink="/profile"
+                  role="menuitem"
+                >
+                  <i class="pi pi-id-card"></i>
+                  <span>Profile</span>
+                </a>
+
+                <button
+                  type="button"
+                  class="account-popover__item account-popover__item--danger"
+                  role="menuitem"
+                  (click)="signOut()"
+                >
+                  <i class="pi pi-sign-out"></i>
+                  <span>Sign out</span>
+                </button>
+              </div>
+            }
           </div>
-          <p-button
-            label="Sign out"
-            icon="pi pi-sign-out"
-            severity="secondary"
-            [text]="true"
-            (onClick)="signOut()"
-          />
         </header>
 
-        @if (loading.isLoading() > 0) {
-          <p-progressBar mode="indeterminate" [style]="{ height: '3px' }" />
+        @if (breadcrumbs().length) {
+          <nav class="app-breadcrumbs" aria-label="Breadcrumb">
+            @for (
+              crumb of breadcrumbs();
+              track crumb.routerLink;
+              let last = $last
+            ) {
+              @if (last) {
+                <span class="app-breadcrumbs__current">{{ crumb.label }}</span>
+              } @else {
+                <a [routerLink]="crumb.routerLink">{{ crumb.label }}</a>
+                <i class="pi pi-angle-right" aria-hidden="true"></i>
+              }
+            }
+          </nav>
         }
 
         <div class="layout-main">
@@ -102,39 +185,78 @@ import { LoadingService } from '../../core/loading/loading.service';
   styleUrl: './main-layout.component.scss',
 })
 export class MainLayoutComponent {
+  private readonly destroyRef = inject(DestroyRef);
   readonly auth = inject(AuthService);
-  readonly loading = inject(LoadingService);
   private readonly router = inject(Router);
   private readonly api = inject(LmsApiService);
   readonly unreadCount = signal(0);
   readonly isSidebarCollapsed = signal(false);
+  readonly isAccountMenuOpen = signal(false);
+  readonly breadcrumbs = signal<BreadcrumbItem[]>([]);
   globalSearch = '';
 
-  readonly navItems: MenuItem[] = [
-    { label: 'Dashboard', icon: 'pi pi-home', routerLink: '/dashboard' },
-    { label: 'Profile', icon: 'pi pi-user', routerLink: '/profile' },
+  readonly sidebarGroups: SidebarGroup[] = [
     {
-      label: 'Organizations',
-      icon: 'pi pi-building',
-      routerLink: '/organizations',
+      items: [
+        {
+          label: 'Dashboard',
+          icon: 'pi pi-home',
+          routerLink: '/dashboard',
+          exact: true,
+        },
+      ],
     },
-    { label: 'Courses', icon: 'pi pi-book', routerLink: '/courses' },
     {
-      label: 'Classes',
-      icon: 'pi pi-calendar',
-      routerLink: '/training-classes',
+      label: 'Learning',
+      items: [
+        { label: 'Courses', icon: 'pi pi-book', routerLink: '/courses' },
+        {
+          label: 'Training classes',
+          icon: 'pi pi-calendar',
+          routerLink: '/training-classes',
+        },
+      ],
     },
-    { label: 'My orders', icon: 'pi pi-shopping-bag', routerLink: '/orders' },
     {
-      label: 'Campaigns',
-      icon: 'pi pi-ticket',
-      routerLink: '/campaigns',
-      visible: this.isAdmin(),
+      label: 'Business',
+      items: [
+        {
+          label: 'Organizations',
+          icon: 'pi pi-building',
+          routerLink: '/organizations',
+        },
+        { label: 'Orders', icon: 'pi pi-shopping-bag', routerLink: '/orders' },
+        {
+          label: 'Campaigns',
+          icon: 'pi pi-ticket',
+          routerLink: '/campaigns',
+          visible: this.isAdmin(),
+        },
+      ],
+    },
+    {
+      label: 'Activity',
+      items: [
+        {
+          label: 'Notifications',
+          icon: 'pi pi-bell',
+          routerLink: '/notifications',
+        },
+      ],
     },
   ];
 
   constructor() {
     this.refreshUnreadCount();
+    this.updateBreadcrumbs();
+    this.router.events
+      .pipe(
+        filter(
+          (event): event is NavigationEnd => event instanceof NavigationEnd,
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(() => this.updateBreadcrumbs());
   }
 
   private isAdmin(): boolean {
@@ -146,6 +268,18 @@ export class MainLayoutComponent {
     this.auth.logout();
   }
 
+  showAccountMenu(): void {
+    this.isAccountMenuOpen.set(true);
+  }
+
+  hideAccountMenu(): void {
+    this.isAccountMenuOpen.set(false);
+  }
+
+  toggleAccountMenu(): void {
+    this.isAccountMenuOpen.update((isOpen) => !isOpen);
+  }
+
   toggleSidebar(): void {
     this.isSidebarCollapsed.update((current) => !current);
   }
@@ -155,6 +289,36 @@ export class MainLayoutComponent {
     void this.router.navigate(['/courses'], {
       queryParams: search ? { search, sort: 'Newest' } : {},
     });
+  }
+
+  private updateBreadcrumbs(): void {
+    const items: BreadcrumbItem[] = [
+      { label: 'Dashboard', routerLink: '/dashboard' },
+    ];
+    this.collectBreadcrumbs(this.router.routerState.snapshot.root, '', items);
+    this.breadcrumbs.set(items);
+  }
+
+  private collectBreadcrumbs(
+    route: ActivatedRouteSnapshot,
+    url: string,
+    items: BreadcrumbItem[],
+  ): void {
+    const path = route.url.map((segment) => segment.path).join('/');
+    const nextUrl = path ? `${url}/${path}` : url;
+    const breadcrumb = route.data['breadcrumb'] as string | undefined;
+
+    if (
+      breadcrumb &&
+      nextUrl &&
+      items[items.length - 1]?.routerLink !== nextUrl
+    ) {
+      items.push({ label: breadcrumb, routerLink: nextUrl });
+    }
+
+    for (const child of route.children) {
+      this.collectBreadcrumbs(child, nextUrl, items);
+    }
   }
 
   private refreshUnreadCount(): void {

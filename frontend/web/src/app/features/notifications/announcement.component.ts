@@ -12,72 +12,17 @@ import { LmsApiService } from '../../core/api/lms-api.service';
 @Component({
   selector: 'app-announcement',
   standalone: true,
-  imports: [Button, Card, DropdownModule, FormsModule, InputText, InputTextarea, Message, RouterLink],
-  template: `
-    <div class="page">
-      <div class="page-header">
-        <div>
-          <h1>Send announcement</h1>
-          <p>Create an in-app announcement for selected recipients.</p>
-        </div>
-        <p-button label="Back" icon="pi pi-arrow-left" severity="secondary" [outlined]="true" routerLink="/notifications" />
-      </div>
-
-      <p-card>
-        <form class="form" (ngSubmit)="submit()">
-          @if (success(); as msg) {
-            <p-message severity="success" [text]="msg" />
-          }
-          @if (error(); as msg) {
-            <p-message severity="error" [text]="msg" />
-          }
-
-          <label>
-            <span>Recipients</span>
-            <textarea
-              pInputTextarea
-              rows="4"
-              name="recipients"
-              [(ngModel)]="recipientText"
-              placeholder="One user ID per line"
-              required
-            ></textarea>
-          </label>
-
-          <div class="grid">
-            <label>
-              <span>Scope</span>
-              <p-dropdown
-                name="scope"
-                [options]="scopeOptions"
-                [(ngModel)]="scope"
-                optionLabel="label"
-                optionValue="value"
-              />
-            </label>
-            <label>
-              <span>Action URL</span>
-              <input pInputText name="actionUrl" [(ngModel)]="actionUrl" placeholder="/courses" />
-            </label>
-          </div>
-
-          <label>
-            <span>Subject</span>
-            <input pInputText name="subject" [(ngModel)]="subject" maxlength="200" required />
-          </label>
-
-          <label>
-            <span>Body</span>
-            <textarea pInputTextarea rows="6" name="body" [(ngModel)]="body" maxlength="4000" required></textarea>
-          </label>
-
-          <div class="footer">
-            <p-button type="submit" label="Send" icon="pi pi-send" [disabled]="submitting()" />
-          </div>
-        </form>
-      </p-card>
-    </div>
-  `,
+  imports: [
+    Button,
+    Card,
+    DropdownModule,
+    FormsModule,
+    InputText,
+    InputTextarea,
+    Message,
+    RouterLink,
+  ],
+  templateUrl: './announcement.component.html',
   styleUrl: './announcement.component.scss',
 })
 export class AnnouncementComponent {
@@ -114,21 +59,25 @@ export class AnnouncementComponent {
     this.submitting.set(true);
     this.error.set(null);
     this.success.set(null);
-    this.api.sendAnnouncement({
-      recipientUserIds,
-      subject: this.subject.trim(),
-      body: this.body.trim(),
-      scope: this.scope,
-      organizationId: null,
-      courseId: null,
-      trainingClassId: null,
-      actionUrl: this.actionUrl.trim() || null,
-    }).subscribe({
-      next: (message) => {
-        this.success.set(`Announcement sent to ${message.recipientCount} recipient(s).`);
-        this.submitting.set(false);
-      },
-      error: () => this.submitting.set(false),
-    });
+    this.api
+      .sendAnnouncement({
+        recipientUserIds,
+        subject: this.subject.trim(),
+        body: this.body.trim(),
+        scope: this.scope,
+        organizationId: null,
+        courseId: null,
+        trainingClassId: null,
+        actionUrl: this.actionUrl.trim() || null,
+      })
+      .subscribe({
+        next: (message) => {
+          this.success.set(
+            `Announcement sent to ${message.recipientCount} recipient(s).`,
+          );
+          this.submitting.set(false);
+        },
+        error: () => this.submitting.set(false),
+      });
   }
 }

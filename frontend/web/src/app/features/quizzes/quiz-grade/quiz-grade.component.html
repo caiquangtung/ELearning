@@ -1,0 +1,100 @@
+    <app-page-shell title="Grade Quiz Attempt">
+      <div *ngIf="attempt(); else loadingTemplate" class="space-y-6">
+        <div class="flex items-center gap-4">
+          <p-tag
+            [value]="attempt()!.isCorrect === true ? 'Correct' : attempt()!.isCorrect === false ? 'Incorrect' : 'Not Graded'"
+            [severity]="attempt()!.isCorrect === true ? 'success' : attempt()!.isCorrect === false ? 'danger' : 'warn'"
+          />
+        </div>
+
+        <div class="space-y-4">
+          <h3 class="text-xl font-semibold">{{ quizTitle() }}</h3>
+
+          <div class="space-y-2">
+            <p><strong>Question:</strong> {{ attempt()!.questionText }}</p>
+            <p><strong>Points Possible:</strong> {{ attempt()!.points }}</p>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <p class="font-medium">Student Answer:</p>
+            <div class="border border-gray-200 rounded p-4 bg-gray-50 min-h-[3rem]">
+              {{ attempt()!.textAnswer || 'No answer provided' }}
+            </div>
+          </div>
+        </div>
+
+        <form [formGroup]="gradeForm" (ngSubmit)="onSubmit()" class="space-y-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <label for="score" class="block text-sm font-medium">Score (0-{{ attempt()!.points }}) *</label>
+              <p-inputNumber
+                inputId="score"
+                formControlName="score"
+                [min]="0"
+                [max]="attempt()!.points"
+                placeholder="Enter score"
+                class="w-full"
+                [class.ng-invalid]="gradeForm.get('score')?.invalid && gradeForm.get('score')?.touched"
+              />
+              <div *ngIf="gradeForm.get('score')?.invalid && gradeForm.get('score')?.touched" class="text-red-500 text-sm">
+                Please enter a valid score between 0 and {{ attempt()!.points }}
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-sm font-medium">Is Correct? *</label>
+              <div class="flex gap-4">
+                <div class="flex items-center">
+                  <p-radioButton
+                    name="isCorrect"
+                    [value]="true"
+                    formControlName="isCorrect"
+                    inputId="isCorrectYes"
+                    class="mr-2"
+                  />
+                  <label for="isCorrectYes" class="cursor-pointer">Yes</label>
+                </div>
+                <div class="flex items-center">
+                  <p-radioButton
+                    name="isCorrect"
+                    [value]="false"
+                    formControlName="isCorrect"
+                    inputId="isCorrectNo"
+                    class="mr-2"
+                  />
+                  <label for="isCorrectNo" class="cursor-pointer">No</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex gap-3 pt-4">
+            <app-ui-button
+              type="button"
+              label="Cancel"
+              severity="secondary"
+              (onClick)="onCancel()"
+            />
+            <app-ui-button
+              type="submit"
+              label="Submit Grade"
+              severity="success"
+              [loading]="loading()"
+              [disabled]="gradeForm.invalid"
+            />
+          </div>
+        </form>
+      </div>
+
+      <ng-template #loadingTemplate>
+        <div class="text-center py-8">
+          <i class="pi pi-spin pi-spinner text-2xl"></i>
+          <p class="mt-2">Loading attempt...</p>
+        </div>
+      </ng-template>
+    </app-page-shell>
+
+    <p-toast />
+  

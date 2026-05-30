@@ -43,131 +43,7 @@ function toIso(local: string): string {
     Tag,
     PrimeTemplate,
   ],
-  template: `
-    <p-button label="Back" icon="pi pi-arrow-left" [text]="true" routerLink="/training-classes" styleClass="mb-3" />
-    @if (loading()) {
-      <p>Loading…</p>
-    } @else {
-      @if (tc(); as t) {
-        <h1 class="text-2xl font-semibold mt-0">{{ t.title }}</h1>
-        <p class="text-color-secondary flex align-items-center gap-2 flex-wrap">
-          <p-tag [value]="t.status" severity="info" />
-          <span>Max learners: {{ t.maxLearners }}</span>
-        </p>
-        <div class="flex flex-wrap gap-2 align-items-center mb-3">
-          <p-button label="View course" icon="pi pi-book" [text]="true" [routerLink]="['/courses', t.courseId]" styleClass="p-0" />
-          @if (canCheckout(t)) {
-            <p-button
-              label="Enroll / checkout"
-              icon="pi pi-shopping-cart"
-              [routerLink]="['/checkout']"
-              [queryParams]="{ type: 'TrainingClass', ref: t.id, qty: 1 }"
-            />
-          }
-        </div>
-        @if (canManageSessions()) {
-          <p-panel header="Schedule / update session" [toggleable]="true" styleClass="mb-3">
-            <div class="flex flex-column gap-3" style="max-width: 32rem">
-              <input pInputText [(ngModel)]="sessTitle" placeholder="Session title" class="w-full" name="stitle" />
-              <p-dropdown
-                [options]="sessionTypeOptions"
-                [(ngModel)]="sessType"
-                optionLabel="label"
-                optionValue="value"
-                placeholder="Type"
-                styleClass="w-full"
-                name="stype"
-              />
-              <div class="flex flex-column gap-2">
-                <label class="text-sm font-medium" for="sess-start">Start (local)</label>
-                <input id="sess-start" type="datetime-local" pInputText [(ngModel)]="sessStart" class="w-full" name="sstart" />
-              </div>
-              <div class="flex flex-column gap-2">
-                <label class="text-sm font-medium" for="sess-end">End (local)</label>
-                <input id="sess-end" type="datetime-local" pInputText [(ngModel)]="sessEnd" class="w-full" name="send" />
-              </div>
-              <input pInputText [(ngModel)]="sessLocation" placeholder="Location (required for Offline)" class="w-full" name="sloc" />
-              <div class="flex flex-wrap gap-2">
-                <p-button
-                  [label]="editingSessionId() ? 'Update session' : 'Schedule session'"
-                  icon="pi pi-calendar-plus"
-                  [loading]="sessionPending()"
-                  (onClick)="saveSession()"
-                />
-                @if (editingSessionId()) {
-                  <p-button label="Cancel edit" severity="secondary" [outlined]="true" type="button" (onClick)="clearEdit()" />
-                }
-              </div>
-            </div>
-          </p-panel>
-          <p-panel header="Assign instructor" [toggleable]="true" styleClass="mb-4">
-            <div class="flex flex-wrap gap-2 align-items-end">
-              <input pInputText [(ngModel)]="instructorUserId" placeholder="User ID" class="w-full md:w-25rem" name="iid" />
-              <p-button
-                label="Assign"
-                icon="pi pi-user-plus"
-                [loading]="instructorPending()"
-                (onClick)="assignInstructor()"
-              />
-            </div>
-          </p-panel>
-        }
-        <h2 class="text-xl">Sessions</h2>
-        <p-table [value]="t.sessions" styleClass="p-datatable-sm mb-4" [tableStyle]="{ 'min-width': '50rem' }">
-          <ng-template pTemplate="header">
-            <tr>
-              <th>Title</th>
-              <th>Type</th>
-              <th>Start (UTC)</th>
-              <th>End (UTC)</th>
-              <th>Location / Zoom</th>
-              <th>Status</th>
-              <th></th>
-            </tr>
-          </ng-template>
-          <ng-template pTemplate="body" let-s>
-            <tr>
-              <td>{{ s.title }}</td>
-              <td>{{ s.sessionType }}</td>
-              <td>{{ s.startUtc | date: 'medium' }}</td>
-              <td>{{ s.endUtc | date: 'medium' }}</td>
-              <td>
-                @if (s.zoomJoinUrl) {
-                  <a [href]="s.zoomJoinUrl" target="_blank" rel="noopener" class="text-primary">Join</a>
-                } @else if (s.location) {
-                  {{ s.location }}
-                } @else {
-                  —
-                }
-              </td>
-              <td><p-tag [value]="s.status" [severity]="s.status === 'Cancelled' ? 'danger' : 'success'" /></td>
-              <td>
-                @if (canManageSessions() && s.status !== 'Cancelled') {
-                  <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" (onClick)="startEdit(s)" />
-                  <p-button icon="pi pi-times" severity="danger" [rounded]="true" [text]="true" (onClick)="cancelSession(s.id)" />
-                }
-              </td>
-            </tr>
-          </ng-template>
-        </p-table>
-        <h2 class="text-xl">Instructors</h2>
-        <p-table [value]="t.instructors" styleClass="p-datatable-sm" [tableStyle]="{ 'min-width': '28rem' }">
-          <ng-template pTemplate="header">
-            <tr>
-              <th>User ID</th>
-              <th>Assigned</th>
-            </tr>
-          </ng-template>
-          <ng-template pTemplate="body" let-i>
-            <tr>
-              <td class="font-mono text-sm">{{ i.userId }}</td>
-              <td>{{ i.assignedAt | date: 'short' }}</td>
-            </tr>
-          </ng-template>
-        </p-table>
-      }
-    }
-  `,
+  templateUrl: './training-class-detail.component.html',
 })
 export class TrainingClassDetailComponent implements OnInit {
   private readonly api = inject(LmsApiService);
@@ -180,6 +56,8 @@ export class TrainingClassDetailComponent implements OnInit {
   readonly editingSessionId = signal<string | null>(null);
   readonly sessionPending = signal(false);
   readonly instructorPending = signal(false);
+  showSessionForm = false;
+  showInstructorForm = false;
 
   classId = '';
 
@@ -198,7 +76,9 @@ export class TrainingClassDetailComponent implements OnInit {
 
   canManageSessions(): boolean {
     const roles = this.auth.user()?.roles ?? [];
-    return roles.some((r) => r === 'Admin' || r === 'OrgAdmin' || r === 'Instructor');
+    return roles.some(
+      (r) => r === 'Admin' || r === 'OrgAdmin' || r === 'Instructor',
+    );
   }
 
   canCheckout(t: TrainingClassDetailDto): boolean {

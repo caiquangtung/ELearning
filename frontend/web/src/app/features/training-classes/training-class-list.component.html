@@ -1,0 +1,181 @@
+    <app-page-shell
+      title="Training classes"
+      subtitle="Create cohorts and manage scheduled learning sessions."
+    >
+      <ng-container pageActions>
+        <app-ui-button
+          label="Search"
+          icon="pi pi-search"
+          severity="secondary"
+          [text]="true"
+          (clicked)="searchDialogVisible = true"
+        />
+        <app-ui-button
+          label="Refresh"
+          icon="pi pi-refresh"
+          severity="secondary"
+          [text]="true"
+          (clicked)="reload()"
+        />
+        @if (canCreate()) {
+          <app-ui-button
+            label="New class"
+            icon="pi pi-plus"
+            (clicked)="openCreateDialog()"
+          />
+        }
+      </ng-container>
+
+      <p-dialog
+        header="Search training classes"
+        [(visible)]="searchDialogVisible"
+        appendTo="body"
+        [modal]="true"
+        [draggable]="false"
+        [resizable]="false"
+        styleClass="app-dialog app-dialog--sm"
+        [style]="{ width: 'min(32rem, calc(100vw - 2rem))' }"
+        (onHide)="searchDialogVisible = false"
+      >
+        <div class="field-block">
+          <label for="training-class-search">Search</label>
+          <input
+            id="training-class-search"
+            pInputText
+            [(ngModel)]="search"
+            placeholder="Search"
+            name="tsearchPopup"
+          />
+        </div>
+
+        <ng-template pTemplate="footer">
+          <app-ui-button
+            label="Cancel"
+            severity="secondary"
+            [text]="true"
+            (clicked)="searchDialogVisible = false"
+          />
+          <app-ui-button
+            label="Apply"
+            icon="pi pi-filter"
+            (clicked)="applyFilters(); searchDialogVisible = false"
+          />
+        </ng-template>
+      </p-dialog>
+
+      @if (canCreate()) {
+        <p-dialog
+          header="New training class"
+          [(visible)]="createVisible"
+          appendTo="body"
+          [modal]="true"
+          [draggable]="false"
+          [resizable]="false"
+          styleClass="app-dialog app-dialog--md"
+          [style]="{ width: 'min(40rem, calc(100vw - 2rem))' }"
+          (onHide)="closeCreateDialog()"
+        >
+          <form class="app-form" (ngSubmit)="createClass()">
+            <p class="text-sm text-color-secondary mt-0 mb-0">
+              Course must be <strong>Published</strong>.
+            </p>
+            <div class="field-block">
+              <label for="class-course">Course</label>
+              <p-dropdown
+                inputId="class-course"
+                [options]="publishedCourses()"
+                [(ngModel)]="createCourseId"
+                optionLabel="title"
+                optionValue="id"
+                placeholder="Select course"
+                [filter]="true"
+                filterPlaceholder="Search"
+                appendTo="body"
+                styleClass="w-full"
+                name="ccourse"
+              />
+            </div>
+            <div class="app-form-grid">
+              <div class="field-block">
+                <label for="class-title">Title</label>
+                <input
+                  id="class-title"
+                  pInputText
+                  [(ngModel)]="createTitle"
+                  placeholder="Title"
+                  class="w-full"
+                  name="ctitle"
+                />
+              </div>
+              <div class="field-block">
+                <label for="class-max">Max learners</label>
+                <p-inputNumber
+                  inputId="class-max"
+                  [(ngModel)]="createMax"
+                  [min]="1"
+                  placeholder="Max learners"
+                  name="cmax"
+                />
+              </div>
+            </div>
+          </form>
+
+          <ng-template pTemplate="footer">
+            <app-ui-button
+              label="Cancel"
+              severity="secondary"
+              [text]="true"
+              (clicked)="closeCreateDialog()"
+            />
+            <app-ui-button
+              label="Create"
+              icon="pi pi-plus"
+              [disabled]="!createCourseId || !createTitle.trim() || creating()"
+              [loading]="creating()"
+              (clicked)="createClass()"
+            />
+          </ng-template>
+        </p-dialog>
+      }
+      @if (loading()) {
+        <div class="flex flex-column gap-2">
+          @for (_ of skeletonRows; track $index) {
+            <p-skeleton height="2.75rem" width="100%" />
+          }
+        </div>
+      } @else {
+        @if (page(); as p) {
+          <app-ui-data-table
+            [value]="p.items"
+            [tableStyle]="{ 'min-width': '40rem' }"
+            [rows]="p.pageSize"
+            [totalRecords]="p.totalCount"
+            [first]="(p.page - 1) * p.pageSize"
+            [emptyColspan]="3"
+            (pageChange)="onPageChange($event)"
+          >
+            <ng-template uiDataTableHeader>
+              <tr>
+                <th>Title</th>
+                <th>Status</th>
+                <th>Max learners</th>
+              </tr>
+            </ng-template>
+            <ng-template uiDataTableBody let-t>
+              <tr>
+                <td>
+                  <a
+                    [routerLink]="['/training-classes', t.id]"
+                    class="text-primary font-medium"
+                    >{{ t.title }}</a
+                  >
+                </td>
+                <td><p-tag [value]="t.status" severity="secondary" /></td>
+                <td>{{ t.maxLearners }}</td>
+              </tr>
+            </ng-template>
+          </app-ui-data-table>
+        }
+      }
+    </app-page-shell>
+  

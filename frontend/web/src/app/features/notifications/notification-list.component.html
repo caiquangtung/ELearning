@@ -1,0 +1,68 @@
+    <app-page-shell
+      title="Notifications"
+      subtitle="Recent updates, reminders, and announcements."
+    >
+      <ng-container pageActions>
+        <label class="unread-filter">
+          <p-checkbox
+            [binary]="true"
+            [ngModel]="unreadOnly()"
+            (ngModelChange)="toggleUnread($event)"
+            inputId="unreadOnly"
+          />
+          <span>Unread only</span>
+        </label>
+        <p-button
+          icon="pi pi-refresh"
+          severity="secondary"
+          [outlined]="true"
+          (onClick)="load()"
+          ariaLabel="Refresh notifications"
+        />
+        <p-button
+          label="Announcement"
+          icon="pi pi-send"
+          routerLink="/notifications/announcements"
+        />
+      </ng-container>
+
+      <div class="notification-list">
+        @for (item of items(); track item.id) {
+          <p-card
+            [styleClass]="
+              item.isRead ? 'notification-card' : 'notification-card unread'
+            "
+          >
+            <div class="notification-row">
+              <div>
+                <div class="notification-title">
+                  <span>{{ item.title }}</span>
+                  <p-tag [value]="item.type" [severity]="severity(item)" />
+                </div>
+                <p>{{ item.body }}</p>
+                <div class="meta">{{ item.createdAt | date: 'medium' }}</div>
+              </div>
+              <div class="row-actions">
+                @if (item.actionUrl) {
+                  <a class="action-link" [routerLink]="item.actionUrl">Open</a>
+                }
+                @if (!item.isRead) {
+                  <p-button
+                    label="Mark read"
+                    icon="pi pi-check"
+                    size="small"
+                    [outlined]="true"
+                    (onClick)="markRead(item)"
+                  />
+                }
+              </div>
+            </div>
+          </p-card>
+        } @empty {
+          <p-card>
+            <p class="empty">No notifications found.</p>
+          </p-card>
+        }
+      </div>
+    </app-page-shell>
+  

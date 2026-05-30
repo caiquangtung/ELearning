@@ -1,17 +1,17 @@
-import { Injectable, signal } from '@angular/core';
+import { computed, Injectable, signal } from '@angular/core';
 
 @Injectable({ providedIn: 'root' })
 export class LoadingService {
-  private readonly active = signal(0);
+  private readonly activeRequests = signal(0);
 
-  readonly isLoading = this.active.asReadonly();
+  readonly activeCount = this.activeRequests.asReadonly();
+  readonly isLoading = computed(() => this.activeRequests() > 0);
 
   start(): void {
-    this.active.update((n) => n + 1);
+    this.activeRequests.update((count) => count + 1);
   }
 
   stop(): void {
-    this.active.update((n) => (n > 0 ? n - 1 : 0));
+    this.activeRequests.update((count) => (count > 0 ? count - 1 : 0));
   }
 }
-

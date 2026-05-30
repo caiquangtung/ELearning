@@ -7,20 +7,18 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <header class="flex align-items-start gap-3 mb-3">
-      <div class="flex-1 min-w-0">
-        <h1 class="text-2xl font-semibold m-0">{{ title }}</h1>
-        <p *ngIf="subtitle" class="text-600 mt-1 mb-0">{{ subtitle }}</p>
+    <header class="page-shell__header">
+      <div class="page-shell__title-block">
+        <h1>{{ title }}</h1>
+        <p *ngIf="subtitle">{{ subtitle }}</p>
       </div>
 
-      <div
-        class="flex flex-wrap align-items-center justify-content-end gap-2 ml-auto page-actions"
-      >
+      <div class="page-shell__actions">
         <ng-content select="[pageActions]"></ng-content>
       </div>
     </header>
 
-    <section class="page-content">
+    <section class="page-shell__content page-content">
       <ng-content></ng-content>
     </section>
   `,

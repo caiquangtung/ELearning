@@ -1,0 +1,92 @@
+    <p-button
+      label="Back to orders"
+      icon="pi pi-arrow-left"
+      [text]="true"
+      routerLink="/orders"
+      styleClass="mb-3"
+    />
+    @if (loading()) {
+      <p>Loading…</p>
+    } @else {
+      @if (order(); as o) {
+        <app-page-shell title="Order" [subtitle]="o.id">
+          <ng-container pageActions>
+            <app-ui-button
+              label="Refresh"
+              icon="pi pi-refresh"
+              severity="secondary"
+              [text]="true"
+              (clicked)="reload()"
+            />
+          </ng-container>
+
+          <div class="flex gap-2 flex-wrap align-items-center mb-3">
+            <p-tag [value]="o.status" [severity]="statusSeverity(o.status)" />
+            <span class="text-600 text-sm"
+              >Total: {{ formatMoney(o.totalCents, o.currency) }}</span
+            >
+            @if (o.checkoutExpiresAtUtc && o.status === 'PendingPayment') {
+              <span class="text-600 text-sm"
+                >Pay before: {{ o.checkoutExpiresAtUtc | date: 'medium' }}</span
+              >
+            }
+          </div>
+
+          @if (o.status === 'PendingPayment') {
+            <p-panel header="Payment" [toggleable]="true" styleClass="mb-4">
+              <app-ui-button
+                label="Pay now (NoOp)"
+                icon="pi pi-credit-card"
+                [loading]="paying()"
+                [disabled]="paying()"
+                (clicked)="pay()"
+              />
+              <p class="text-sm text-color-secondary mt-2 mb-0">
+                Development uses the NoOp payment provider; payment completes
+                immediately after you confirm.
+              </p>
+            </p-panel>
+          }
+
+          @if (invoice(); as inv) {
+            <p-panel header="Invoice" [toggleable]="true" styleClass="mb-4">
+              <p class="mt-0">
+                <strong>{{ inv.invoiceNumber }}</strong>
+              </p>
+              <p class="text-sm text-color-secondary mb-0">
+                Issued {{ inv.issuedAt | date: 'medium' }} ·
+                {{ formatMoney(inv.totalCents, inv.currency) }}
+              </p>
+            </p-panel>
+          }
+
+          <h2 class="text-xl">Line items</h2>
+          <app-ui-data-table
+            [value]="o.items"
+            [emptyColspan]="5"
+            [showPaginator]="false"
+            [tableStyle]="{ 'min-width': '52rem' }"
+          >
+            <ng-template uiDataTableHeader>
+              <tr>
+                <th>Type</th>
+                <th>Reference</th>
+                <th>Qty</th>
+                <th>Unit</th>
+                <th>Line</th>
+              </tr>
+            </ng-template>
+            <ng-template uiDataTableBody let-i>
+              <tr>
+                <td>{{ i.itemType }}</td>
+                <td class="font-mono text-sm">{{ i.referenceId }}</td>
+                <td>{{ i.quantity }}</td>
+                <td>{{ formatMoney(i.unitPriceCents, i.currency) }}</td>
+                <td>{{ formatMoney(i.lineTotalCents, i.currency) }}</td>
+              </tr>
+            </ng-template>
+          </app-ui-data-table>
+        </app-page-shell>
+      }
+    }
+  

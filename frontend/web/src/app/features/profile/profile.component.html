@@ -1,0 +1,55 @@
+    <p-dialog
+      header="Profile"
+      [(visible)]="visible"
+      appendTo="body"
+      [modal]="true"
+      [draggable]="false"
+      [resizable]="false"
+      [dismissableMask]="false"
+      [closable]="true"
+      styleClass="app-dialog app-dialog--md profile-dialog"
+      [style]="{ width: 'min(38rem, calc(100vw - 2rem))' }"
+      (onHide)="close()"
+    >
+      <form [formGroup]="form" (ngSubmit)="save()" class="profile-form">
+        <div class="field-block">
+          <label for="pf-fn">First name</label>
+          <input
+            pInputText
+            id="pf-fn"
+            formControlName="firstName"
+            class="w-full"
+          />
+        </div>
+        <div class="field-block">
+          <label for="pf-ln">Last name</label>
+          <input
+            pInputText
+            id="pf-ln"
+            formControlName="lastName"
+            class="w-full"
+          />
+        </div>
+        <p class="text-sm text-color-secondary">
+          Email: {{ auth.user()?.email }} (read-only)
+        </p>
+      </form>
+
+      <ng-template pTemplate="footer">
+        <p-button
+          label="Cancel"
+          severity="secondary"
+          [text]="true"
+          (onClick)="close()"
+        />
+        <p-button
+          type="button"
+          label="Save"
+          icon="pi pi-check"
+          [disabled]="form.invalid || form.pristine || pending()"
+          [loading]="pending()"
+          (onClick)="save()"
+        />
+      </ng-template>
+    </p-dialog>
+  

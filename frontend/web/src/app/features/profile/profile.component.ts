@@ -1,8 +1,9 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { PrimeTemplate } from 'primeng/api';
 import { Button } from 'primeng/button';
-import { Card } from 'primeng/card';
-import { FloatLabel } from 'primeng/floatlabel';
+import { DialogModule } from 'primeng/dialog';
 import { InputText } from 'primeng/inputtext';
 import { AuthService } from '../../core/auth/auth.service';
 import { GlobalErrorService } from '../../core/error/global-error.service';
@@ -10,34 +11,23 @@ import { GlobalErrorService } from '../../core/error/global-error.service';
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [ReactiveFormsModule, Card, FloatLabel, InputText, Button],
-  template: `
-    <p-card header="Profile">
-      <form [formGroup]="form" (ngSubmit)="save()" class="flex flex-column gap-3" style="max-width: 28rem">
-        <p-floatlabel>
-          <input pInputText id="pf-fn" formControlName="firstName" class="w-full" fluid />
-          <label for="pf-fn">First name</label>
-        </p-floatlabel>
-        <p-floatlabel>
-          <input pInputText id="pf-ln" formControlName="lastName" class="w-full" fluid />
-          <label for="pf-ln">Last name</label>
-        </p-floatlabel>
-        <p class="text-sm text-color-secondary">Email: {{ auth.user()?.email }} (read-only)</p>
-        <p-button
-          type="submit"
-          label="Save"
-          icon="pi pi-check"
-          [disabled]="form.invalid || form.pristine || pending()"
-          [loading]="pending()"
-        />
-      </form>
-    </p-card>
-  `,
+  imports: [
+    ReactiveFormsModule,
+    DialogModule,
+    InputText,
+    Button,
+    PrimeTemplate,
+  ],
+  styleUrl: './profile.component.scss',
+  templateUrl: './profile.component.html',
 })
 export class ProfileComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
+  private readonly router = inject(Router);
   readonly auth = inject(AuthService);
   private readonly errors = inject(GlobalErrorService);
+
+  visible = true;
 
   readonly form = this.fb.nonNullable.group({
     firstName: ['', Validators.required],
@@ -70,5 +60,9 @@ export class ProfileComponent implements OnInit {
       },
       error: () => this.pending.set(false),
     });
+  }
+
+  close(): void {
+    void this.router.navigate(['/dashboard'], { replaceUrl: true });
   }
 }

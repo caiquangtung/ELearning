@@ -1,0 +1,125 @@
+    <app-page-shell title="Take Quiz">
+      <div *ngIf="quiz(); else loadingTemplate" class="space-y-6">
+        <div class="flex items-center gap-4">
+          <p-tag
+            [value]="quiz()!.status"
+            [severity]="quiz()!.status === 'Published' ? 'success' : 'warn'"
+          />
+        </div>
+
+        <div class="space-y-4">
+          <h3 class="text-xl font-semibold">{{ quiz()!.title }}</h3>
+          <p *ngIf="quiz()!.description" class="text-gray-700">{{ quiz()!.description }}</p>
+
+          <div *ngIf="quiz()!.timeLimitMinutes || quiz()!.passingScore" class="p-4 bg-blue-50 rounded">
+            <p *ngIf="quiz()!.timeLimitMinutes">
+              <strong>Time Limit:</strong> {{ quiz()!.timeLimitMinutes }} minutes
+            </p>
+            <p *ngIf="quiz()!.passingScore">
+              <strong>Passing Score:</strong> {{ quiz()!.passingScore }}%
+            </p>
+          </div>
+        </div>
+
+        <form *ngIf="quiz()!.questions && quiz()!.questions.length > 0; else noQuestions"
+              [formGroup]="quizForm"
+              (ngSubmit)="onSubmit()"
+              class="space-y-6">
+
+          <div formArrayName="questions" class="space-y-4">
+            <div *ngFor="let question of quiz()!.questions; let i = index"
+                 class="border border-gray-200 rounded p-6 bg-white"
+                 [formGroupName]="i">
+
+              <div class="mb-4">
+                <h5 class="font-medium text-lg mb-2">
+                  Question {{ i + 1 }} ({{ question.points }} points)
+                </h5>
+                <p class="text-gray-800">{{ question.text }}</p>
+              </div>
+
+              <div [ngSwitch]="question.type" class="space-y-3">
+                <!-- Multiple Choice -->
+                <div *ngSwitchCase="'MultipleChoice'">
+                  <div *ngFor="let option of question.options; let j = index" class="flex items-center">
+                    <p-radioButton
+                      [name]="'option_' + i"
+                      [value]="option.id"
+                      formControlName="selectedOptionId"
+                      [inputId]="'option_' + i + '_' + j"
+                      class="mr-3"
+                    />
+                    <label [for]="'option_' + i + '_' + j" class="cursor-pointer">
+                      {{ option.text }}
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Essay -->
+                <div *ngSwitchCase="'Essay'">
+                  <textarea
+                    pInputTextarea
+                    formControlName="textAnswer"
+                    rows="4"
+                    placeholder="Enter your answer here"
+                    class="w-full"
+                  ></textarea>
+                </div>
+
+                <!-- Code -->
+                <div *ngSwitchCase="'Code'">
+                  <textarea
+                    pInputTextarea
+                    formControlName="textAnswer"
+                    rows="6"
+                    placeholder="Enter your code here"
+                    class="w-full font-mono"
+                  ></textarea>
+                </div>
+
+                <!-- Default case -->
+                <div *ngSwitchDefault>
+                  <p class="text-gray-500">Unsupported question type: {{ question.type }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex gap-3 pt-4">
+            <app-ui-button
+              type="button"
+              label="Cancel Quiz"
+              severity="secondary"
+              (onClick)="onCancel()"
+            />
+            <app-ui-button
+              type="submit"
+              label="Submit Quiz"
+              severity="success"
+              [loading]="loading()"
+              [disabled]="quizForm.invalid"
+            />
+          </div>
+        </form>
+
+        <div *ngIf="quiz()!.questions && quiz()!.questions.length === 0" class="text-center py-8 text-gray-500">
+          <p>This quiz has no questions yet.</p>
+        </div>
+      </div>
+
+      <ng-template #loadingTemplate>
+        <div class="text-center py-8">
+          <i class="pi pi-spin pi-spinner text-2xl"></i>
+          <p class="mt-2">Loading quiz...</p>
+        </div>
+      </ng-template>
+
+      <ng-template #noQuestions>
+        <div class="text-center py-8 text-gray-500">
+          <p>This quiz has no questions yet.</p>
+        </div>
+      </ng-template>
+    </app-page-shell>
+
+    <p-toast />
+  

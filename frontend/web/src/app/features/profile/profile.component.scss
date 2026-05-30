@@ -1,0 +1,14 @@
+:host {
+  display: block;
+}
+
+:host ::ng-deep .profile-dialog .p-dialog-content {
+  overflow: visible;
+}
+
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}

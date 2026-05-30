@@ -20,6 +20,7 @@ import {
   standalone: true,
   imports: [TableModule, Paginator, PrimeTemplate, NgTemplateOutlet],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  styleUrl: './ui-data-table.component.scss',
   template: `
     <p-table
       [value]="value()"
@@ -66,8 +67,16 @@ import {
     }
 
     <ng-template #defaultEmpty>
-      <tr>
-        <td [attr.colspan]="emptyColspan()">No records.</td>
+      <tr class="ui-data-table-empty-row">
+        <td [attr.colspan]="emptyColspan()">
+          <div class="ui-data-table-empty">
+            <i
+              class="pi pi-inbox ui-data-table-empty__icon"
+              aria-hidden="true"
+            ></i>
+            <span class="ui-data-table-empty__text">No records.</span>
+          </div>
+        </td>
       </tr>
     </ng-template>
   `,

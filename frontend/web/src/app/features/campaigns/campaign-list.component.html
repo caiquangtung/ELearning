@@ -1,0 +1,220 @@
+    <app-page-shell
+      title="Campaigns"
+      subtitle="Create and manage promotion campaigns"
+    >
+      <ng-container pageActions>
+        <app-ui-button
+          icon="pi pi-search"
+          severity="secondary"
+          [text]="true"
+          (clicked)="searchDialogVisible = true"
+        />
+        <app-ui-button
+          label="Refresh"
+          icon="pi pi-refresh"
+          severity="secondary"
+          [text]="true"
+          (clicked)="reload()"
+        />
+        <app-ui-button
+          label="New campaign"
+          icon="pi pi-plus"
+          (clicked)="openCreateDialog()"
+        />
+      </ng-container>
+
+      <p-dialog
+        header="Search campaigns"
+        [(visible)]="searchDialogVisible"
+        appendTo="body"
+        [modal]="true"
+        [draggable]="false"
+        [resizable]="false"
+        styleClass="app-dialog app-dialog--sm"
+        [style]="{ width: 'min(36rem, calc(100vw - 2rem))' }"
+        (onHide)="searchDialogVisible = false"
+      >
+        <div class="field-block">
+          <label for="campaign-search-name">Name</label>
+          <input
+            id="campaign-search-name"
+            pInputText
+            [(ngModel)]="searchName"
+            name="searchName"
+            placeholder="Search by name"
+          />
+        </div>
+
+        <div class="field-block">
+          <label for="campaign-search-scope">Scope</label>
+          <p-dropdown
+            id="campaign-search-scope"
+            [options]="scopeOptions"
+            [(ngModel)]="searchScope"
+            optionLabel="label"
+            optionValue="value"
+            appendTo="body"
+            styleClass="w-full"
+            name="searchScope"
+          />
+        </div>
+
+        <ng-template pTemplate="footer">
+          <app-ui-button
+            label="Cancel"
+            severity="secondary"
+            [text]="true"
+            (clicked)="searchDialogVisible = false"
+          />
+          <app-ui-button
+            label="Apply"
+            icon="pi pi-filter"
+            (clicked)="searchDialogVisible = false; reload()"
+          />
+        </ng-template>
+      </p-dialog>
+
+      <p-dialog
+        header="Create campaign"
+        [(visible)]="formVisible"
+        appendTo="body"
+        [modal]="true"
+        [draggable]="false"
+        [resizable]="false"
+        styleClass="app-dialog app-dialog--md"
+        [style]="{ width: 'min(38rem, calc(100vw - 2rem))' }"
+        (onHide)="closeDialog()"
+      >
+        <form class="app-form" (ngSubmit)="create()">
+          <div class="field-block">
+            <label for="name">Name</label>
+            <input
+              id="name"
+              pInputText
+              [(ngModel)]="name"
+              name="name"
+              placeholder="e.g. Spring sale"
+            />
+          </div>
+
+          <div class="field-block">
+            <label for="scope">Scope</label>
+            <p-dropdown
+              id="scope"
+              [options]="scopeOptions"
+              [(ngModel)]="scope"
+              optionLabel="label"
+              optionValue="value"
+              appendTo="body"
+              styleClass="w-full"
+              name="scope"
+            />
+          </div>
+
+          @if (scope === 'Organization') {
+            <div class="field-block">
+              <label for="org">Organization ID</label>
+              <input
+                id="org"
+                pInputText
+                [(ngModel)]="orgId"
+                name="orgId"
+                placeholder="UUID"
+              />
+            </div>
+          }
+
+          <div class="app-form-grid">
+            <div class="field-block">
+              <label for="start">Start (UTC)</label>
+              <input
+                id="start"
+                pInputText
+                type="datetime-local"
+                [(ngModel)]="startLocal"
+                name="startLocal"
+              />
+            </div>
+
+            <div class="field-block">
+              <label for="end">End (UTC, optional)</label>
+              <input
+                id="end"
+                pInputText
+                type="datetime-local"
+                [(ngModel)]="endLocal"
+                name="endLocal"
+              />
+            </div>
+          </div>
+        </form>
+
+        <ng-template pTemplate="footer">
+          <app-ui-button
+            label="Cancel"
+            severity="secondary"
+            [text]="true"
+            (clicked)="closeDialog()"
+          />
+          <app-ui-button
+            label="Create"
+            icon="pi pi-plus"
+            [loading]="creating()"
+            [disabled]="creating() || !canCreate()"
+            (clicked)="create()"
+          />
+        </ng-template>
+      </p-dialog>
+
+      @if (loading()) {
+        <div class="flex flex-column gap-2">
+          @for (_ of skeletonRows; track $index) {
+            <p-skeleton height="2.75rem" width="100%" />
+          }
+        </div>
+      } @else {
+        @if (page(); as p) {
+          <app-ui-data-table
+            [value]="p.items"
+            [emptyColspan]="6"
+            [rows]="p.pageSize"
+            [totalRecords]="p.totalCount"
+            [first]="(p.page - 1) * p.pageSize"
+            [tableStyle]="{ 'min-width': '58rem' }"
+            [virtualScroll]="p.items.length > 25"
+            (pageChange)="onPageChange($event)"
+          >
+            <ng-template uiDataTableHeader>
+              <tr>
+                <th>Name</th>
+                <th>Scope</th>
+                <th>Organization</th>
+                <th>Status</th>
+                <th>Window</th>
+                <th></th>
+              </tr>
+            </ng-template>
+            <ng-template uiDataTableBody let-c>
+              <tr>
+                <td>{{ c.name }}</td>
+                <td>{{ c.scope }}</td>
+                <td class="font-mono text-sm">{{ c.organizationId ?? '—' }}</td>
+                <td>{{ c.status }}</td>
+                <td>
+                  {{ c.startUtc | date: 'mediumDate' }} →
+                  {{ c.endUtc ? (c.endUtc | date: 'mediumDate') : '—' }}
+                </td>
+                <td class="text-right">
+                  <a
+                    [routerLink]="['/campaigns', c.id]"
+                    class="text-primary font-medium"
+                    >Manage</a
+                  >
+                </td>
+              </tr>
+            </ng-template>
+          </app-ui-data-table>
+        }
+      }
+    </app-page-shell>
+  

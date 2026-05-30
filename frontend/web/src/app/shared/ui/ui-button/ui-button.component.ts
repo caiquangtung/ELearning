@@ -19,7 +19,7 @@ import { Button } from 'primeng/button';
       [type]="type()"
       [styleClass]="styleClass()"
       [attr.aria-busy]="loading()"
-      (onClick)="clicked.emit()"
+      (onClick)="handleClick()"
     >
       <ng-content />
     </p-button>
@@ -40,5 +40,10 @@ export class UiButtonComponent {
   readonly styleClass = input<string | undefined>(undefined);
 
   readonly clicked = output<void>();
-}
+  readonly onClick = output<void>();
 
+  handleClick(): void {
+    this.clicked.emit();
+    this.onClick.emit();
+  }
+}
