@@ -10,8 +10,10 @@ import { PrimeTemplate } from 'primeng/api';
 import { TableModule } from 'primeng/table';
 import { Tag } from 'primeng/tag';
 import {
+  LearnerRiskDto,
   LmsApiService,
   OrganizationDetailDto,
+  OrganizationRiskReportDto,
 } from '../../core/api/lms-api.service';
 import { GlobalErrorService } from '../../core/error/global-error.service';
 
@@ -38,8 +40,11 @@ export class OrganizationDetailComponent implements OnInit {
   private readonly errors = inject(GlobalErrorService);
 
   readonly detail = signal<OrganizationDetailDto | null>(null);
+  readonly riskReport = signal<OrganizationRiskReportDto | null>(null);
+  readonly selectedRisk = signal<LearnerRiskDto | null>(null);
   readonly loading = signal(true);
   readonly adding = signal(false);
+  readonly loadingRisk = signal(false);
   showAddMember = false;
 
   memberUserId = '';
@@ -90,5 +95,30 @@ export class OrganizationDetailComponent implements OnInit {
         },
         error: () => this.adding.set(false),
       });
+  }
+
+  loadRiskReport(): void {
+    const org = this.detail()?.organization;
+    if (!org) return;
+
+    this.loadingRisk.set(true);
+    this.api.getOrganizationRiskReport(org.id).subscribe({
+      next: (report) => {
+        this.riskReport.set(report);
+        this.loadingRisk.set(false);
+      },
+      error: () => this.loadingRisk.set(false),
+    });
+  }
+
+  riskFor(userId: string): LearnerRiskDto | null {
+    return this.riskReport()?.learners.find((x) => x.userId === userId) ?? null;
+  }
+
+  riskSeverity(level: string): 'success' | 'warn' | 'danger' | 'info' {
+    if (level === 'High') return 'danger';
+    if (level === 'Medium') return 'warn';
+    if (level === 'Low') return 'success';
+    return 'info';
   }
 }

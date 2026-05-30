@@ -32,7 +32,22 @@
             [outlined]="true"
             (onClick)="showAddMember = !showAddMember"
           />
+          <p-button
+            label="AI risk"
+            icon="pi pi-bolt"
+            severity="help"
+            [outlined]="true"
+            [loading]="loadingRisk()"
+            (onClick)="loadRiskReport()"
+          />
         </div>
+        @if (riskReport(); as report) {
+          <div class="mb-3 flex flex-wrap gap-2 align-items-center">
+            <p-tag severity="danger" [value]="'High ' + report.highRiskCount" />
+            <p-tag severity="warn" [value]="'Medium ' + report.mediumRiskCount" />
+            <p-tag severity="success" [value]="'Low ' + report.lowRiskCount" />
+          </div>
+        }
         <h2 class="text-xl">Members</h2>
         <p-table
           [value]="d.members"
@@ -43,6 +58,7 @@
             <tr>
               <th>User ID</th>
               <th>Role</th>
+              <th>AI Risk</th>
               <th>Joined</th>
             </tr>
           </ng-template>
@@ -50,10 +66,62 @@
             <tr>
               <td class="font-mono text-sm">{{ m.userId }}</td>
               <td>{{ m.orgRole }}</td>
+              <td>
+                @if (riskFor(m.userId); as risk) {
+                  <button
+                    type="button"
+                    class="p-link"
+                    (click)="selectedRisk.set(risk)"
+                  >
+                    <p-tag
+                      [severity]="riskSeverity(risk.riskLevel)"
+                      [value]="risk.riskLevel + ' · ' + risk.riskScore"
+                    />
+                  </button>
+                } @else {
+                  <span class="text-color-secondary">Not loaded</span>
+                }
+              </td>
               <td>{{ m.joinedAt | date: 'medium' }}</td>
             </tr>
           </ng-template>
         </p-table>
+        @if (selectedRisk(); as risk) {
+          <p-panel header="AI risk detail" styleClass="mb-4">
+            <div class="flex flex-wrap gap-2 mb-3">
+              <p-tag
+                [severity]="riskSeverity(risk.riskLevel)"
+                [value]="risk.riskLevel + ' risk · ' + risk.riskScore"
+              />
+              <p-tag
+                severity="info"
+                [value]="'Video ' + (risk.signals.averageVideoProgress ?? 0) + '%'"
+              />
+              <p-tag
+                severity="info"
+                [value]="'Quiz ' + (risk.signals.averageQuizScore ?? 0)"
+              />
+            </div>
+            <div class="grid">
+              <div class="col-12 md:col-6">
+                <h3 class="mt-0">Reasons</h3>
+                <ul>
+                  @for (reason of risk.reasons; track reason) {
+                    <li>{{ reason }}</li>
+                  }
+                </ul>
+              </div>
+              <div class="col-12 md:col-6">
+                <h3 class="mt-0">Recommended actions</h3>
+                <ul>
+                  @for (action of risk.recommendedActions; track action) {
+                    <li>{{ action }}</li>
+                  }
+                </ul>
+              </div>
+            </div>
+          </p-panel>
+        }
         @if (showAddMember) {
           <p-panel header="Add member" [toggleable]="true" styleClass="mb-4">
             <div

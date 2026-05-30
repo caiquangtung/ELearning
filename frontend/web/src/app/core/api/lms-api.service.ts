@@ -598,6 +598,33 @@ export interface EssayRubricBreakdownItemDto {
   comment: string;
 }
 
+export interface LearnerRiskSignalsDto {
+  averageVideoProgress: number | null;
+  averageQuizScore: number | null;
+  lastActivityAt: string | null;
+  daysSinceLastActivity: number | null;
+  activeLicenseCount: number;
+  nearestLicenseExpiry: string | null;
+}
+
+export interface LearnerRiskDto {
+  userId: string;
+  riskScore: number;
+  riskLevel: string;
+  reasons: string[];
+  recommendedActions: string[];
+  signals: LearnerRiskSignalsDto;
+}
+
+export interface OrganizationRiskReportDto {
+  organizationId: string;
+  learnerCount: number;
+  highRiskCount: number;
+  mediumRiskCount: number;
+  lowRiskCount: number;
+  learners: LearnerRiskDto[];
+}
+
 export interface GenerateQuizQuestionsRequest {
   courseId: string;
   lessonId: string | null;
@@ -1015,6 +1042,16 @@ export class LmsApiService {
      return this.http.post<EssayGradeSuggestionsDto>(
        `${this.base}/ai/quizzes/attempts/${attemptId}/grade-suggestions`,
        body,
+     );
+   }
+
+   getLearnerRisk(userId: string): Observable<LearnerRiskDto> {
+     return this.http.get<LearnerRiskDto>(`${this.base}/ai/learners/${userId}/risk`);
+   }
+
+   getOrganizationRiskReport(organizationId: string): Observable<OrganizationRiskReportDto> {
+     return this.http.get<OrganizationRiskReportDto>(
+       `${this.base}/ai/organizations/${organizationId}/risk-report`,
      );
    }
 

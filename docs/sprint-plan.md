@@ -47,6 +47,7 @@ status: in-progress
 - AI-1: **MVP done** — local AI quiz question generator, provider abstraction, AI request audit log, generation API, rate limit hook, Angular generate/review/accept UI, migration `AiQuestionGeneration`; external LLM provider adapter and prompt-quality evaluation remain follow-up (see `docs/ai1-completion.md`)
 - AI-2: **Backend MVP done** — local hybrid course recommendation service, explainable scoring, Redis-cached learner recommendations, audit logging, learner-accessible API `GET /api/v1/ai/recommendations/courses`; Angular dashboard/catalog recommendation UI still open.
 - AI-3: **MVP done** — local deterministic essay/code grading assistant, rubric-aware score suggestions, AI audit logging, guardrail that suggestions do not submit final grades, Angular manual grading AI panel (see `docs/ai3-completion.md`).
+- AI-4: **MVP done** — local deterministic learner risk scoring, learner and organization risk APIs, AI audit logging, organization member risk badges/detail panel (see `docs/ai4-completion.md`).
 - **Sprint 4 polish (optional, 2–4 days)**: recommended before full Sprint 5 — thin `shared/ui` wrappers, pilot screen, global loading, E2E smoke, UX polish (see **Sprint 4b** below and `docs/sprint4-completion.md` *Sprint 4 review*)
 
 ### Completed Work Checklist
@@ -73,6 +74,7 @@ status: in-progress
 - [x] **AI-1 (MVP)**: Quiz question generation API, local AI provider, audit metadata table, instructor review/accept UI
 - [x] **AI-2 (backend MVP)**: Explainable hybrid course recommendation API with Redis cache and AI request audit log
 - [x] **AI-3 (MVP)**: Essay/code grading suggestions API, local AI provider, audit metadata, instructor review/apply UI
+- [x] **AI-4 (MVP)**: Learner risk prediction API, organization risk report, explainable signals, risk badges/detail UI
 
 ### Remaining Immediate Priorities
 - [ ] **Frontend (recommended before Sprint 5)**: Sprint 4b polish — `UiButton` / `PageShell` / `UiDataTable`, pilot list screen, global loading indicator, minimal E2E, doc refresh (`docs/sprint4-completion.md`)
@@ -103,7 +105,7 @@ status: in-progress
 | AI-1 — Quiz question generator | AI Sprint Track | Backend + Frontend | 2 weeks | **MVP done** |
 | AI-2 — Course recommendation | AI Sprint Track | Backend + Data | 2 weeks | **Backend MVP done** |
 | AI-3 — Essay grading assistant | AI Sprint Track | Backend + Frontend | 2 weeks | **MVP done** |
-| AI-4 — Learner risk prediction | AI Sprint Track | Backend + Data | 2 weeks | Planned |
+| AI-4 — Learner risk prediction | AI Sprint Track | Backend + Data | 2 weeks | **MVP done** |
 | AI-5 — Semantic search + learning path generator | AI Sprint Track | Backend + Frontend | 2 weeks | Planned |
 | Sprint 15a — Redis performance & consistency layer | Pre–Sprint 15 | Backend + DevOps | 1 week | Done |
 | API integration tests | Sprint 1–2 | Backend + QA | 2-3 days | Planned |
@@ -204,21 +206,21 @@ status: in-progress
 - Final grade is still submitted through the existing grading workflow
 - Accepted vs overridden suggestions are auditable
 
-### AI-4: Learner Risk Prediction (Priority 4, 2 weeks)
+### AI-4: Learner Risk Prediction (Priority 4, 2 weeks) — **MVP DONE**
 
 **Goal**: Predict learners at risk of not completing a course or license assignment and suggest interventions.
 
 #### Backend Tasks
-- [ ] **Feature: Get learner risk** — `GET /api/v1/ai/learners/{userId}/risk`
-- [ ] **Feature: Organization risk report** — `GET /api/v1/ai/organizations/{organizationId}/risk-report`
-- [ ] Implement explainable scoring from progress, quiz score, inactivity, attendance, license expiry, and class timeline
-- [ ] Return `riskScore`, `riskLevel`, `reasons`, and `recommendedActions`
+- [x] **Feature: Get learner risk** — `GET /api/v1/ai/learners/{userId}/risk`
+- [x] **Feature: Organization risk report** — `GET /api/v1/ai/organizations/{organizationId}/risk-report`
+- [x] Implement explainable scoring from progress, quiz score, inactivity, and license expiry
+- [x] Return `riskScore`, `riskLevel`, `reasons`, and `recommendedActions`
 - [ ] Add scheduled risk snapshot job for B2B reporting
 - [ ] Tests for scoring thresholds, data isolation, and missing-data behavior
 
 #### Frontend Tasks
-- [ ] Add risk badges to organization learner report
-- [ ] Add risk detail drawer with reasons and recommended actions
+- [x] Add risk badges to organization learner report
+- [x] Add risk detail panel with reasons and recommended actions
 - [ ] Add filter for high-risk learners
 
 **Definition of Done**:
