@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using ELearning.Application.Features.Ai.CourseRecommendations;
+using ELearning.Application.Features.Ai.EssayGrading;
 using ELearning.Application.Features.Ai.QuizQuestionGeneration;
 using ELearning.Core.Common;
 using ELearning.Core.Constants;
@@ -40,6 +41,18 @@ public sealed class AiController(IMediator mediator) : ControllerBase
                 body.QuestionTypes),
             ct);
 
+        return result.IsSuccess ? Ok(result.Value) : ProblemFrom(result.Error);
+    }
+
+    [HttpPost("quizzes/attempts/{attemptId:guid}/grade-suggestions")]
+    [HasPermission(Permissions.Quizzes.Grade)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> SuggestEssayGrades(
+        Guid attemptId,
+        [FromBody] SuggestEssayGradesRequest body,
+        CancellationToken ct)
+    {
+        var result = await mediator.Send(new SuggestEssayGradesCommand(attemptId, body.Rubric), ct);
         return result.IsSuccess ? Ok(result.Value) : ProblemFrom(result.Error);
     }
 
