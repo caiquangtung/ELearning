@@ -561,11 +561,42 @@ export interface GradeAttemptRequest {
    grades: QuestionGradeRequest[];
  }
 
- export interface QuestionGradeRequest {
+export interface QuestionGradeRequest {
    questionId: string;
    score: number;
    isCorrect: boolean | null;
  }
+
+export interface SuggestEssayGradesRequest {
+  rubric: string | null;
+}
+
+export interface EssayGradeSuggestionsDto {
+  attemptId: string;
+  provider: string;
+  model: string;
+  promptVersion: string;
+  inputHash: string;
+  suggestions: EssayGradeSuggestionDto[];
+}
+
+export interface EssayGradeSuggestionDto {
+  questionId: string;
+  questionText: string;
+  answerText: string;
+  maxScore: number;
+  suggestedScore: number;
+  confidence: number;
+  reasoning: string;
+  rubricBreakdown: EssayRubricBreakdownItemDto[];
+}
+
+export interface EssayRubricBreakdownItemDto {
+  criterion: string;
+  score: number;
+  maxScore: number;
+  comment: string;
+}
 
 export interface GenerateQuizQuestionsRequest {
   courseId: string;
@@ -978,6 +1009,13 @@ export class LmsApiService {
 
    gradeAttempt(attemptId: string, body: GradeAttemptRequest): Observable<QuizAttemptDto> {
      return this.http.post<QuizAttemptDto>(`${this.base}/quizzes/attempts/${attemptId}/grade`, body);
+   }
+
+   suggestEssayGrades(attemptId: string, body: SuggestEssayGradesRequest): Observable<EssayGradeSuggestionsDto> {
+     return this.http.post<EssayGradeSuggestionsDto>(
+       `${this.base}/ai/quizzes/attempts/${attemptId}/grade-suggestions`,
+       body,
+     );
    }
 
    getQuizAnalytics(id: string): Observable<QuizAnalyticsDto> {

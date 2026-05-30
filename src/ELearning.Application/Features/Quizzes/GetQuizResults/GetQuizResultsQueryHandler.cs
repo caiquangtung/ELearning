@@ -24,20 +24,26 @@ public sealed class GetQuizResultsQueryHandler(
         if (attempt.Status != AttemptStatus.Submitted && attempt.Status != AttemptStatus.Graded)
             return Result.Failure<QuizResultDto>(Error.Validation("QuizAttempt", "Results are not available yet."));
 
-        var quiz = await quizRepository.GetByIdAsync(attempt.QuizId, ct);
+        var quiz = await quizRepository.GetByIdWithQuestionsAsync(attempt.QuizId, ct);
 
         var quizTitle = quiz?.Title ?? "Unknown";
         var passingScore = quiz?.PassingScore;
         bool passed = attempt.TotalScore.HasValue && passingScore.HasValue && attempt.TotalScore.Value >= passingScore.Value;
+        var questions = quiz?.Questions.Where(q => !q.IsDeleted).ToDictionary(q => q.Id)
+            ?? new Dictionary<Guid, Question>();
 
-        var questionResults = attempt.Answers.Select(a => new QuestionResultDto(
-            a.QuestionId,
-            "", // Question text not stored on answer; could be enriched with a join
-            0,  // Points not stored on answer
-            a.Score,
-            a.IsCorrect,
-            a.TextAnswer,
-            a.SelectedOptionId)).ToList();
+        var questionResults = attempt.Answers.Select(a =>
+        {
+            questions.TryGetValue(a.QuestionId, out var question);
+            return new QuestionResultDto(
+                a.QuestionId,
+                question?.Text ?? "",
+                question?.Points ?? 0,
+                a.Score,
+                a.IsCorrect,
+                a.TextAnswer,
+                a.SelectedOptionId);
+        }).ToList();
 
         return new QuizResultDto(
             attempt.Id,

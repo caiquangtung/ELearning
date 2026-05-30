@@ -51,3 +51,5 @@ public sealed record AnswerSubmissionRequest(
 public sealed record GradeAttemptRequest(List<QuestionGradeRequest>? Grades);
 
 public sealed record QuestionGradeRequest(Guid QuestionId, int Score, bool? IsCorrect);
+
+public sealed record SuggestEssayGradesRequest(string? Rubric);

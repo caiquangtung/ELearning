@@ -84,6 +84,7 @@ public static class DependencyInjection
         services.AddSingleton<ICertificatePdfService, SimpleCertificatePdfService>();
         services.AddSingleton<IEmailService, NoOpEmailService>();
         services.AddSingleton<IAiQuizQuestionGenerator, LocalQuizQuestionGenerator>();
+        services.AddSingleton<IAiEssayGradingService, LocalEssayGradingService>();
         services.AddScoped<IAiCourseRecommendationService, LocalCourseRecommendationService>();
 
         services.AddSingleton<IFileStorage, LocalFileStorage>();
