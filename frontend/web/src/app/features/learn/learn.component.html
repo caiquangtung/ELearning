@@ -1,0 +1,168 @@
+<div class="portal-page learn-portal">
+  <section class="portal-hero">
+    <div>
+      <span class="eyebrow">Learner Portal</span>
+      <h1>Keep learning with an AI-guided path.</h1>
+      <p>
+        Continue courses, review recommendations, and generate a draft learning
+        path from your goal.
+      </p>
+    </div>
+    <button class="primary-action" type="button" (click)="openPathDialog()">
+      <i class="pi pi-sparkles"></i>
+      <span>Create AI path</span>
+    </button>
+  </section>
+
+  @if (error()) {
+    <div class="portal-alert">{{ error() }}</div>
+  }
+
+  <section class="metric-grid">
+    <article class="metric-card">
+      <span>Course purchases</span>
+      <strong>{{ dashboard()?.coursePurchases ?? 0 }}</strong>
+    </article>
+    <article class="metric-card">
+      <span>Class purchases</span>
+      <strong>{{ dashboard()?.classPurchases ?? 0 }}</strong>
+    </article>
+    <article class="metric-card">
+      <span>Certificates</span>
+      <strong>{{ dashboard()?.certificatesIssued ?? 0 }}</strong>
+    </article>
+    <article class="metric-card">
+      <span>Upcoming sessions</span>
+      <strong>{{ dashboard()?.upcomingSessions ?? 0 }}</strong>
+    </article>
+  </section>
+
+  <section class="portal-section">
+    <div class="section-heading">
+      <div>
+        <h2>Recommended for you</h2>
+        <p>Explainable AI recommendations based on your current activity.</p>
+      </div>
+      <a routerLink="/learn/courses">View catalog</a>
+    </div>
+
+    <div class="recommendation-grid">
+      @for (course of recommendations(); track course.courseId) {
+        <article class="course-card">
+          <div class="course-card__top">
+            <span>{{ course.isFallback ? "Popular" : "AI match" }}</span>
+            <strong>{{ course.score | number: "1.0-0" }}</strong>
+          </div>
+          <h3>{{ course.title }}</h3>
+          <p>{{ course.description || "No description yet." }}</p>
+          <div class="course-card__footer">
+            <span>{{ money(course.priceCents, course.currency) }}</span>
+            <a [routerLink]="['/learn/courses', course.courseId]">Open</a>
+          </div>
+          @if (course.reasons.length) {
+            <ul>
+              @for (reason of course.reasons.slice(0, 2); track reason) {
+                <li>{{ reason }}</li>
+              }
+            </ul>
+          }
+        </article>
+      } @empty {
+        <div class="empty-state">
+          No recommendations yet. Explore the catalog or generate an AI path.
+        </div>
+      }
+    </div>
+  </section>
+
+  <p-dialog
+    header="AI Learning Path"
+    [visible]="isPathDialogOpen()"
+    (visibleChange)="isPathDialogOpen.set($event)"
+    appendTo="body"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [dismissableMask]="true"
+    [closable]="true"
+    styleClass="app-dialog app-dialog--md learn-path-dialog"
+    [style]="{ width: 'min(44rem, calc(100vw - 2rem))' }"
+    (onHide)="closePathDialog()"
+  >
+    <div class="path-dialog-body">
+      <div class="path-dialog__eyebrow">Create draft path</div>
+
+      <div class="form-grid">
+        <label>
+          <span>Learning goal</span>
+          <textarea [(ngModel)]="pathForm.goal" rows="3"></textarea>
+        </label>
+        <label>
+          <span>Current skills</span>
+          <input [(ngModel)]="pathForm.currentSkills" />
+        </label>
+        <label>
+          <span>Target role</span>
+          <input [(ngModel)]="pathForm.targetRole" />
+        </label>
+        <label>
+          <span>Max courses</span>
+          <input
+            type="number"
+            min="1"
+            max="12"
+            [(ngModel)]="pathForm.maxCourses"
+          />
+        </label>
+      </div>
+
+      @if (learningPath()) {
+        <div class="path-result">
+          <div class="path-summary">
+            <strong>{{ learningPath()?.estimatedEffort }}</strong>
+            <span
+              >Confidence
+              {{ learningPath()?.confidence | percent: "1.0-0" }}</span
+            >
+          </div>
+          @for (
+            course of learningPath()?.courses ?? [];
+            track course.courseId
+          ) {
+            <article class="path-step">
+              <span>{{ course.order }}</span>
+              <div>
+                <h3>{{ course.title }}</h3>
+                <p>{{ course.reasons.join(" ") }}</p>
+              </div>
+            </article>
+          }
+          @if (learningPath()?.missingSkills?.length) {
+            <div class="missing-skills">
+              Missing skills: {{ learningPath()?.missingSkills?.join(", ") }}
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <ng-template pTemplate="footer">
+      <button
+        class="secondary-action"
+        type="button"
+        (click)="closePathDialog()"
+      >
+        Cancel
+      </button>
+      <button class="primary-action" type="button" (click)="generatePath()">
+        <i
+          class="pi"
+          [class.pi-sparkles]="!isGenerating()"
+          [class.pi-spin]="isGenerating()"
+          [class.pi-spinner]="isGenerating()"
+        ></i>
+        <span>{{ isGenerating() ? "Generating" : "Generate" }}</span>
+      </button>
+    </ng-template>
+  </p-dialog>
+</div>

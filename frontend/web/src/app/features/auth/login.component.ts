@@ -8,6 +8,7 @@ import { Message } from 'primeng/message';
 import { Password } from 'primeng/password';
 import { AuthService } from '../../core/auth/auth.service';
 import { GlobalErrorService } from '../../core/error/global-error.service';
+import { Roles } from '../../core/auth/roles';
 
 @Component({
   selector: 'app-login',
@@ -61,8 +62,14 @@ export class LoginComponent {
     this.auth.login(email, password).subscribe({
       next: () => {
         this.pending.set(false);
-        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/';
-        void this.router.navigateByUrl(returnUrl);
+        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+        const userRoles = this.auth.user()?.roles ?? [];
+        const defaultRoute = userRoles.includes(Roles.Admin)
+          ? '/admin'
+          : userRoles.includes(Roles.Instructor)
+            ? '/teach'
+            : '/learn';
+        void this.router.navigateByUrl(returnUrl || defaultRoute);
       },
       error: () => {
         this.pending.set(false);

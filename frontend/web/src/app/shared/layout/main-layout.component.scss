@@ -62,10 +62,6 @@
   box-shadow: 0 6px 18px rgba(15, 23, 42, 0.13);
 }
 
-:host ::ng-deep .sidebar-slider-toggle .p-button-icon {
-  transition: transform var(--app-motion-fast);
-}
-
 .sidebar-slider-toggle:hover {
   transform: translateX(1px);
 }
@@ -170,6 +166,55 @@
   border-bottom: 1px solid var(--app-border);
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(14px);
+}
+
+.header-portal {
+  position: relative;
+
+  .portal-menu-icon {
+    width: 2.35rem;
+    height: 2.35rem;
+    border: 0;
+    color: #334155;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+  .portal-menu-icon:hover,
+  .portal-menu-icon[aria-expanded="true"] {
+    color: #0f766e;
+  }
+
+  .portal-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.5rem);
+    background: var(--surface, #ffffff);
+    border: 1px solid var(--app-border);
+    border-radius: 8px;
+    padding: 0.5rem;
+    z-index: 1200;
+    min-width: 12rem;
+
+    .portal-cta {
+      border: none;
+      text-align: left;
+      cursor: pointer;
+      width: 100%;
+      border-radius: 8px;
+      font-weight: 700;
+      white-space: nowrap;
+      padding: 0.45rem 0.6rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .portal-cta:hover,
+    .portal-cta.is-active {
+      color: #0f766e;
+    }
+  }
 }
 
 .global-search {

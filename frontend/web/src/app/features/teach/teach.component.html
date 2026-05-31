@@ -1,0 +1,117 @@
+<div class="portal-page teach-portal">
+  <section class="portal-hero">
+    <div>
+      <span class="eyebrow">Teacher Portal</span>
+      <h1>Manage classes, content, quizzes, and AI grading.</h1>
+      <p>
+        A focused workspace for instructors to publish learning content and move
+        assessment work faster.
+      </p>
+    </div>
+    <div class="hero-actions">
+      <a class="primary-action" routerLink="/teach/quizzes/create">
+        <i class="pi pi-sparkles"></i>
+        <span>Generate quiz</span>
+      </a>
+      <a class="secondary-action" routerLink="/teach/quizzes">
+        <i class="pi pi-pen-to-square"></i>
+        <span>Grade essays</span>
+      </a>
+    </div>
+  </section>
+
+  @if (error()) {
+    <div class="portal-alert">{{ error() }}</div>
+  }
+
+  <section class="metric-grid">
+    <article class="metric-card">
+      <span>Assigned classes</span>
+      <strong>{{ dashboard()?.assignedClasses ?? 0 }}</strong>
+    </article>
+    <article class="metric-card">
+      <span>Upcoming sessions</span>
+      <strong>{{ dashboard()?.upcomingSessions ?? 0 }}</strong>
+    </article>
+    <article class="metric-card">
+      <span>Completed sessions</span>
+      <strong>{{ dashboard()?.completedSessions ?? 0 }}</strong>
+    </article>
+    <article class="metric-card">
+      <span>Draft classes</span>
+      <strong>{{ dashboard()?.draftClasses ?? 0 }}</strong>
+    </article>
+  </section>
+
+  <section class="portal-grid">
+    <article class="panel">
+      <div class="panel-heading">
+        <h2>My classes</h2>
+        <a routerLink="/teach/classes">Open</a>
+      </div>
+      @for (item of classes(); track item.id) {
+        <div class="list-row">
+          <div>
+            <strong>{{ item.title }}</strong>
+            <span>{{ item.status }} · {{ item.maxLearners }} learners</span>
+          </div>
+          <i class="pi pi-calendar"></i>
+        </div>
+      } @empty {
+        <div class="empty-state">No classes available.</div>
+      }
+    </article>
+
+    <article class="panel">
+      <div class="panel-heading">
+        <h2>Managed courses</h2>
+        <a routerLink="/teach/courses">Open</a>
+      </div>
+      @for (item of courses(); track item.id) {
+        <div class="list-row">
+          <div>
+            <strong>{{ item.title }}</strong>
+            <span>{{ item.status }}</span>
+          </div>
+          <i class="pi pi-book"></i>
+        </div>
+      } @empty {
+        <div class="empty-state">No courses available.</div>
+      }
+    </article>
+
+    <article class="panel panel--wide">
+      <div class="panel-heading">
+        <h2>Assessment workspace</h2>
+        <a routerLink="/teach/quizzes">Open quizzes</a>
+      </div>
+      <div class="assessment-actions">
+        <a routerLink="/teach/quizzes/create">
+          <i class="pi pi-sparkles"></i>
+          <span>AI quiz generation</span>
+        </a>
+        <a routerLink="/teach/quizzes">
+          <i class="pi pi-pen-to-square"></i>
+          <span>AI essay grading</span>
+        </a>
+        <a routerLink="/teach/quizzes">
+          <i class="pi pi-chart-line"></i>
+          <span>Quiz analytics</span>
+        </a>
+      </div>
+      <div class="quiz-list">
+        @for (quiz of quizzes(); track quiz.id) {
+          <div class="list-row">
+            <div>
+              <strong>{{ quiz.title }}</strong>
+              <span>{{ quiz.status }} · {{ quiz.questionCount }} questions</span>
+            </div>
+            <i class="pi pi-question-circle"></i>
+          </div>
+        } @empty {
+          <div class="empty-state">No quizzes available.</div>
+        }
+      </div>
+    </article>
+  </section>
+</div>

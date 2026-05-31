@@ -1,0 +1,266 @@
+.portal-page {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.portal-hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-end;
+  padding: 1.5rem;
+  border: 1px solid var(--app-border, rgba(15, 23, 42, 0.08));
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(14, 165, 233, 0.12), rgba(34, 197, 94, 0.1)),
+    var(--app-surface-strong, #fff);
+  box-shadow: var(--app-shadow-sm, 0 1px 2px rgba(15, 23, 42, 0.06));
+}
+
+.eyebrow {
+  display: inline-flex;
+  margin-bottom: 0.5rem;
+  color: #0f766e;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+.portal-hero h1 {
+  margin-bottom: 0.5rem;
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  line-height: 1;
+}
+
+.portal-hero p,
+.section-heading p {
+  color: #64748b;
+}
+
+.portal-alert,
+.empty-state,
+.missing-skills {
+  padding: 0.85rem 1rem;
+  border-radius: 8px;
+  background: #fff7ed;
+  color: #9a3412;
+  font-weight: 700;
+}
+
+.metric-grid,
+.recommendation-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.metric-card,
+.course-card,
+.path-dialog,
+.path-step {
+  border: 1px solid var(--app-border, rgba(15, 23, 42, 0.08));
+  border-radius: 8px;
+  background: var(--app-surface-strong, #fff);
+  box-shadow: var(--app-shadow-sm, 0 1px 2px rgba(15, 23, 42, 0.06));
+}
+
+.metric-card {
+  padding: 1rem;
+}
+
+.metric-card span {
+  display: block;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.metric-card strong {
+  display: block;
+  margin-top: 0.6rem;
+  font-size: 2rem;
+}
+
+.portal-section {
+  display: grid;
+  gap: 1rem;
+}
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: end;
+}
+
+.section-heading a,
+.course-card__footer a,
+.primary-action,
+.secondary-action {
+  color: #0369a1;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.primary-action,
+.secondary-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 42px;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.primary-action {
+  background: #0ea5e9;
+  color: #fff;
+}
+
+.secondary-action {
+  background: #f8fafc;
+  color: #334155;
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
+.course-card {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+}
+
+.course-card__top,
+.course-card__footer,
+.path-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
+
+.course-card__top span {
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  background: #ecfeff;
+  color: #155e75;
+  font-weight: 800;
+  font-size: 0.8rem;
+}
+
+.course-card p {
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.course-card ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: #475569;
+}
+
+.learn-path-dialog .p-dialog-header {
+  padding-bottom: 0.5rem;
+}
+
+.path-dialog-body {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.path-dialog__eyebrow {
+  display: inline-flex;
+  width: fit-content;
+  color: #0f766e;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 0;
+  align-items: start;
+}
+
+.form-grid label {
+  display: grid;
+  gap: 0.4rem;
+  font-weight: 800;
+}
+
+.form-grid label:first-child {
+  grid-column: 1 / -1;
+}
+
+.form-grid label:nth-child(2),
+.form-grid label:nth-child(3) {
+  min-width: 0;
+}
+
+.form-grid input,
+.form-grid textarea {
+  width: 100%;
+  border: 1px solid var(--app-border, rgba(15, 23, 42, 0.12));
+  border-radius: 8px;
+  padding: 0.75rem;
+  font: inherit;
+}
+
+.form-grid textarea {
+  min-height: 7rem;
+  resize: vertical;
+}
+
+.path-result {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.path-step {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: 0.75rem;
+  padding: 0.85rem;
+}
+
+.path-step > span {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: #0ea5e9;
+  color: #fff;
+  font-weight: 900;
+}
+
+@media (max-width: 760px) {
+  .portal-hero,
+  .section-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .path-dialog {
+    width: 100%;
+    padding: 1rem;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}

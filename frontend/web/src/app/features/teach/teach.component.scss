@@ -1,0 +1,185 @@
+.portal-page {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.portal-hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-end;
+  padding: 1.5rem;
+  border: 1px solid var(--app-border, rgba(15, 23, 42, 0.08));
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(20, 184, 166, 0.1)),
+    var(--app-surface-strong, #fff);
+  box-shadow: var(--app-shadow-sm, 0 1px 2px rgba(15, 23, 42, 0.06));
+}
+
+.eyebrow {
+  display: inline-flex;
+  margin-bottom: 0.5rem;
+  color: #4338ca;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+.portal-hero h1 {
+  margin-bottom: 0.5rem;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  line-height: 1;
+}
+
+.portal-hero p,
+.list-row span {
+  color: #64748b;
+}
+
+.hero-actions,
+.assessment-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.primary-action,
+.secondary-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 42px;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.primary-action {
+  background: #6366f1;
+  color: #fff;
+}
+
+.secondary-action {
+  background: #f8fafc;
+  color: #334155;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+}
+
+.portal-alert,
+.empty-state {
+  padding: 0.85rem 1rem;
+  border-radius: 8px;
+  background: #fff7ed;
+  color: #9a3412;
+  font-weight: 700;
+}
+
+.metric-grid,
+.portal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.metric-card,
+.panel {
+  border: 1px solid var(--app-border, rgba(15, 23, 42, 0.08));
+  border-radius: 8px;
+  background: var(--app-surface-strong, #fff);
+  box-shadow: var(--app-shadow-sm, 0 1px 2px rgba(15, 23, 42, 0.06));
+}
+
+.metric-card {
+  padding: 1rem;
+}
+
+.metric-card span {
+  display: block;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.metric-card strong {
+  display: block;
+  margin-top: 0.6rem;
+  font-size: 2rem;
+}
+
+.panel {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+}
+
+.panel--wide {
+  grid-column: 1 / -1;
+}
+
+.panel-heading,
+.list-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
+
+.panel-heading h2 {
+  margin-bottom: 0;
+}
+
+.panel-heading a {
+  color: #0369a1;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.list-row {
+  padding: 0.85rem;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.list-row div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.list-row i {
+  color: #6366f1;
+}
+
+.assessment-actions a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 8px;
+  background: #eef2ff;
+  color: #3730a3;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.quiz-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+@media (max-width: 760px) {
+  .portal-hero {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

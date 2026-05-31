@@ -53,6 +53,8 @@ export class QuizListComponent implements OnInit {
 
   readonly page = signal<PagedList<QuizListItemDto> | null>(null);
   readonly isLoading = signal(false);
+  private readonly pendingDeleteTimers = new Map<string, any>();
+  private readonly pendingDeletedItems = new Map<string, QuizListItemDto>();
 
   searchTerm = '';
   statusFilter = '';
@@ -117,30 +119,80 @@ export class QuizListComponent implements OnInit {
       message: 'Are you sure you want to delete this quiz?',
       header: 'Confirm Delete',
       icon: 'pi pi-exclamation-triangle',
-      accept: () => this.deleteQuiz(quizId),
+      accept: () => this.scheduleDelete(quizId),
     });
   }
-
-  deleteQuiz(quizId: string): void {
+  
+  // Schedule an optimistic delete with Undo. If not undone within timeout, perform API delete.
+  scheduleDelete(quizId: string, delayMs = 7000): void {
     this.errors.clear();
 
-    this.api.deleteQuiz(quizId).subscribe({
-      next: () => {
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Success',
-          detail: 'Quiz deleted successfully',
-        });
-        this.loadQuizzes();
-      },
-      error: (err) => {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to delete quiz',
-        });
-      },
+    const current = this.page();
+    if (!current) return;
+
+    const item = current.items.find((q) => q.id === quizId);
+    if (!item) return;
+
+    // remove from UI immediately
+    this.pendingDeletedItems.set(quizId, item);
+    this.page.set({ ...current, items: current.items.filter((q) => q.id !== quizId) });
+
+    // show undo toast
+    this.messageService.add({
+      severity: 'warn',
+      summary: 'Deleted',
+      detail: `Quiz "${item.title}" deleted.`,
+      key: 'undo',
+      life: delayMs,
+      sticky: false,
+      data: { id: quizId },
     });
+
+    const timer = setTimeout(() => {
+      this.api.deleteQuiz(quizId).subscribe({
+        next: () => {
+          this.pendingDeleteTimers.delete(quizId);
+          this.pendingDeletedItems.delete(quizId);
+          this.messageService.add({ severity: 'success', summary: 'Removed', detail: 'Quiz removed permanently' });
+        },
+        error: () => {
+          // restore on error
+          const removed = this.pendingDeletedItems.get(quizId);
+          if (removed) {
+            this.page.update((p) => ({ ...p!, items: [removed, ...p!.items] }));
+            this.pendingDeletedItems.delete(quizId);
+          }
+          this.pendingDeleteTimers.delete(quizId);
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete quiz' });
+        },
+      });
+    }, delayMs);
+
+    this.pendingDeleteTimers.set(quizId, timer);
+  }
+
+  undoDelete(quizId: string): void {
+    const timer = this.pendingDeleteTimers.get(quizId);
+    const removed = this.pendingDeletedItems.get(quizId);
+    if (timer) {
+      clearTimeout(timer);
+      this.pendingDeleteTimers.delete(quizId);
+    }
+    if (removed) {
+      // re-insert item at top
+      this.page.update((p) => ({ ...p!, items: [removed, ...p!.items] }));
+      this.pendingDeletedItems.delete(quizId);
+      this.messageService.add({ severity: 'info', summary: 'Undone', detail: 'Delete undone' });
+    } else {
+      // if no local copy, refresh list
+      this.loadQuizzes();
+    }
+  }
+
+  handleToastClick(event: any): void {
+    const msg = event?.message;
+    const id = msg?.data?.id;
+    if (id) this.undoDelete(id);
   }
 
   navigateToCreate(): void {

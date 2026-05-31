@@ -33,6 +33,16 @@ export interface CourseListItemDto {
   createdAt: string;
 }
 
+export interface PublicFeaturedCourseDto {
+  id: string;
+  title: string;
+  description: string | null;
+  priceCents: number;
+  currency: string;
+  level: string | null;
+  category: string | null;
+}
+
 export interface ListCoursesRequest {
   page: number;
   pageSize: number;
@@ -666,8 +676,6 @@ export interface LearningPathDraftDto {
   courses: LearningPathCourseDto[];
 }
 
-export interface LearningPathCourseDto {
-  order: number;
   courseId: string;
   title: string;
   description: string | null;
@@ -676,6 +684,29 @@ export interface LearningPathCourseDto {
   score: number;
   estimatedEffort: string;
   reasons: string[];
+}
+
+<<<<<<< HEAD
+=======
+export interface CourseRecommendationsDto {
+  provider: string;
+  model: string;
+  promptVersion: string;
+  inputHash: string;
+  items: CourseRecommendationDto[];
+}
+
+export interface CourseRecommendationDto {
+  courseId: string;
+  title: string;
+  description: string | null;
+  priceCents: number;
+  currency: string;
+  createdAt: string;
+  score: number;
+  isFallback: boolean;
+  reasons: string[];
+  signals: Record<string, number>;
 }
 
 export interface GenerateQuizQuestionsRequest {
@@ -813,6 +844,11 @@ export interface WatchProgressDto {
 export class LmsApiService {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/api/v1`;
+
+  listPublicFeaturedCourses(limit = 6): Observable<PublicFeaturedCourseDto[]> {
+    const params = new HttpParams().set('limit', limit);
+    return this.http.get<PublicFeaturedCourseDto[]>(`${this.base}/public/courses/featured`, { params });
+  }
 
   listOrganizations(request: ListOrganizationsRequest): Observable<PagedList<OrganizationDto>> {
     const params = new HttpParams().set('page', request.page).set('pageSize', request.pageSize);
@@ -1116,6 +1152,11 @@ export class LmsApiService {
    generateLearningPath(body: GenerateLearningPathRequest): Observable<LearningPathDraftDto> {
      return this.http.post<LearningPathDraftDto>(`${this.base}/ai/learning-paths/generate`, body);
    }
+
+  getCourseRecommendations(limit = 6): Observable<CourseRecommendationsDto> {
+    const params = new HttpParams().set('limit', limit);
+    return this.http.get<CourseRecommendationsDto>(`${this.base}/ai/recommendations/courses`, { params });
+  }
 
    getQuizAnalytics(id: string): Observable<QuizAnalyticsDto> {
      return this.http.get<QuizAnalyticsDto>(`${this.base}/quizzes/${id}/analytics`);
