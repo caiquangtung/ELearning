@@ -31,7 +31,7 @@ todos:
 
 # ELearning Platform
 
-A modern, large-scale **e-learning system** built with **.NET Clean Architecture** (backend) and **Angular** (frontend).
+A modern, large-scale **e-learning system** built with **.NET Clean Architecture** (backend), **Angular** (frontend), and **AI-assisted learning services**.
 
 ### Core stack
 
@@ -57,12 +57,12 @@ A modern, large-scale **e-learning system** built with **.NET Clean Architecture
 
 ## Main technologies
 
-| Layer | Stack |
-|--------|--------|
-| **Backend** | .NET 8+ · Clean Architecture |
-| **Frontend** | Angular 18+ · feature modules · Signals |
-| **Database** | PostgreSQL |
-| **ORM** | Entity Framework Core |
+| Layer             | Stack                                                   |
+| ----------------- | ------------------------------------------------------- |
+| **Backend**       | .NET 8+ · Clean Architecture                            |
+| **Frontend**      | Angular 18+ · feature modules · Signals                 |
+| **Database**      | PostgreSQL                                              |
+| **ORM**           | Entity Framework Core                                   |
 | **Cross-cutting** | AutoMapper · Serilog · JWT · FluentValidation · MediatR |
 
 ---
@@ -70,7 +70,16 @@ A modern, large-scale **e-learning system** built with **.NET Clean Architecture
 ## Scope
 
 - Full: course management, students, instructors, enrollment, lesson content, quiz, certificates, payments, reports, notifications.
+- AI-enhanced learning services: quiz generation, essay grading suggestions, personalized learning path drafts, semantic course search, and learner risk insights.
 - Empty repo: start architecture and modules from scratch.
+
+## AI-enabled Capabilities
+
+- AI-assisted quiz authoring and question drafting with difficulty, points, explanations, and instructor review.
+- AI essay grading assistant with score suggestions, confidence reasoning, and rubric feedback.
+- Personalized AI learning path generation based on learner goals, skills, and role targets.
+- Semantic course search and recommendations using embeddings and similarity ranking.
+- AI request audit logging and permissioned telemetry for safe AI operations.
 
 ## High-level Architecture
 

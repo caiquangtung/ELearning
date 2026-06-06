@@ -13,12 +13,12 @@ Tài liệu này là source of truth cho rule nghiệp vụ của hệ thống L
 
 ### Platform roles
 
-| Role | Ý nghĩa | Portal mặc định |
-| --- | --- | --- |
-| `Admin` | Quản trị toàn hệ thống | `/admin` |
-| `Instructor` | Giảng viên, quản lý nội dung/lớp/quiz | `/teach` |
-| `Learner` / `Student` | Người học | `/learn` |
-| `OrgAdmin` | Quản trị tổ chức B2B | Chưa tách portal riêng, dùng quyền backend theo permission |
+| Role                  | Ý nghĩa                               | Portal mặc định                                            |
+| --------------------- | ------------------------------------- | ---------------------------------------------------------- |
+| `Admin`               | Quản trị toàn hệ thống                | `/admin`                                                   |
+| `Instructor`          | Giảng viên, quản lý nội dung/lớp/quiz | `/teach`                                                   |
+| `Learner` / `Student` | Người học                             | `/learn`                                                   |
+| `OrgAdmin`            | Quản trị tổ chức B2B                  | Chưa tách portal riêng, dùng quyền backend theo permission |
 
 ### Portal rules
 
@@ -242,6 +242,13 @@ Tài liệu này là source of truth cho rule nghiệp vụ của hệ thống L
 - Max courses nằm trong 1-12.
 - Generated learning path là draft, không auto assign learner.
 - Courses trong path không được trùng.
+
+### RAG Learning Assistant
+
+- Chat responses phải trả lại citations liên kết đến Course/Section/Lesson.
+- Nếu không tìm thấy nội dung phù hợp, trả về: "I don't have enough course material to answer that."
+- Knowledge reindex phải chạy lại khi nội dung khóa học thay đổi.
+- RAG assistant chỉ là support, không tự động thay đổi trạng thái học viên, điểm số, hay đăng ký.
 
 ### Recommendations
 

@@ -14,6 +14,7 @@ status: in-progress
 **Goal**: Build a production-grade B2B+B2C LMS with hybrid learning (Zoom + VOD), organization management, license pooling, commerce, and campaign features.
 
 **Tech Stack**:
+
 - Backend: .NET 10 (`net10.0`), Clean Architecture, EF Core, MediatR, FluentValidation
 - Frontend: Angular 21, RxJS, NgRx (optional)
 - Database: PostgreSQL
@@ -22,6 +23,7 @@ status: in-progress
 - Infrastructure: Docker, Azure/AWS
 
 **Team Structure**:
+
 - 1 Project Manager / Scrum Master
 - 1 Tech Lead / Architect
 - 3-4 Backend Developers (.NET)
@@ -34,6 +36,7 @@ status: in-progress
 ## Current Progress Snapshot (Updated)
 
 ### Overall
+
 - Sprint 0: **Partially Done** (Docker, local dev, baseline CI present; full quality gates / multi-env TBD)
 - Sprint 1: **Done (backend + database + core tests)** — Angular UI tracked separately (see `frontend/README.md`, `docs/sprint1-completion.md`)
 - Sprint 2: **In progress — backend core done** (course CRUD, sections/lessons, assets, migrations `Sprint2_CoursesAndContent`; cloud blob storage, sample seed, course UI **not done**)
@@ -49,9 +52,10 @@ status: in-progress
 - AI-3: **MVP done** — local deterministic essay/code grading assistant, rubric-aware score suggestions, AI audit logging, guardrail that suggestions do not submit final grades, Angular manual grading AI panel (see `docs/ai3-completion.md`).
 - AI-4: **MVP done** — local deterministic learner risk scoring, learner and organization risk APIs, AI audit logging, organization member risk badges/detail panel (see `docs/ai4-completion.md`).
 - AI-5: **MVP done** — local token embedding semantic course search, AI learning path draft generator, Redis cache, AI audit logging, Angular semantic search mode and learning path draft UI (see `docs/ai5-completion.md`).
-- **Sprint 4 polish (optional, 2–4 days)**: recommended before full Sprint 5 — thin `shared/ui` wrappers, pilot screen, global loading, E2E smoke, UX polish (see **Sprint 4b** below and `docs/sprint4-completion.md` *Sprint 4 review*)
+- **Sprint 4 polish (optional, 2–4 days)**: recommended before full Sprint 5 — thin `shared/ui` wrappers, pilot screen, global loading, E2E smoke, UX polish (see **Sprint 4b** below and `docs/sprint4-completion.md` _Sprint 4 review_)
 
 ### Completed Work Checklist
+
 - [x] Backend solution skeleton in `src/` (Domain/Core/Application/Infrastructure/WebApi)
 - [x] Core package setup (MediatR, FluentValidation, EF Core PostgreSQL, JWT, Redis, Hangfire, BCrypt)
 - [x] Base architecture scaffolding (entities, result/error, repository, unit of work, DI)
@@ -79,6 +83,7 @@ status: in-progress
 - [x] **AI-5 (MVP)**: Semantic course search, local embedding abstraction, learning path draft generator, Redis cache, catalog AI UI
 
 ### Remaining Immediate Priorities
+
 - [ ] **Frontend (recommended before Sprint 5)**: Sprint 4b polish — `UiButton` / `PageShell` / `UiDataTable`, pilot list screen, global loading indicator, minimal E2E, doc refresh (`docs/sprint4-completion.md`)
 - [x] **Redis performance layer**: add cache, distributed lock, idempotency, and rate-limit abstractions before broad analytics/search/AI rollout (see **Sprint 15a**)
 - [ ] **Sprint 10 follow-up**: notification templates, background delivery, Redis unread-count cache, realtime notifications, email preference settings
@@ -95,27 +100,29 @@ status: in-progress
 
 ### Execution Board (Owner + ETA)
 
-| Task | Sprint Target | Owner | ETA | Status |
-|---|---|---|---|---|
-| EF migrations + org schema | Sprint 1 | Backend Team | — | **Done** |
-| Seed initial admin (Development) | Sprint 1 | Backend Team | — | **Done** |
-| Domain + application unit tests (baseline) | Sprint 1 | Backend + QA | — | **Done** |
-| Course catalog + content API | Sprint 2 | Backend Team | — | **Done** |
-| Class / session scheduling API | Sprint 3 | Backend Team | — | **Done (MVP)** |
-| Angular SPA MVP (auth + org + courses + classes) | Sprint 4 | Frontend Team | 2 weeks | **MVP done** (see `docs/sprint4-completion.md`) |
-| Sprint 4b — FE polish & wrappers (optional) | Pre–Sprint 5 | Frontend Team | 2–4 days | **Recommended** (see Sprint 4b) |
-| AI-1 — Quiz question generator | AI Sprint Track | Backend + Frontend | 2 weeks | **MVP done** |
-| AI-2 — Course recommendation | AI Sprint Track | Backend + Data | 2 weeks | **Backend MVP done** |
-| AI-3 — Essay grading assistant | AI Sprint Track | Backend + Frontend | 2 weeks | **MVP done** |
-| AI-4 — Learner risk prediction | AI Sprint Track | Backend + Data | 2 weeks | **MVP done** |
-| AI-5 — Semantic search + learning path generator | AI Sprint Track | Backend + Frontend | 2 weeks | **MVP done** |
-| Sprint 15a — Redis performance & consistency layer | Pre–Sprint 15 | Backend + DevOps | 1 week | Done |
-| API integration tests | Sprint 1–2 | Backend + QA | 2-3 days | Planned |
-| API rate limiting + lockout + auth audit log | Sprint 1 | Backend + DevOps | 3-5 days | Planned |
-| CI/CD + code quality pipeline | Sprint 0 (carry-over) | DevOps | 3-4 days | Planned |
-| Serilog structured sink configuration | Sprint 0 (carry-over) | Backend + DevOps | 1-2 days | Planned |
+| Task                                               | Sprint Target         | Owner              | ETA      | Status                                          |
+| -------------------------------------------------- | --------------------- | ------------------ | -------- | ----------------------------------------------- |
+| EF migrations + org schema                         | Sprint 1              | Backend Team       | —        | **Done**                                        |
+| Seed initial admin (Development)                   | Sprint 1              | Backend Team       | —        | **Done**                                        |
+| Domain + application unit tests (baseline)         | Sprint 1              | Backend + QA       | —        | **Done**                                        |
+| Course catalog + content API                       | Sprint 2              | Backend Team       | —        | **Done**                                        |
+| Class / session scheduling API                     | Sprint 3              | Backend Team       | —        | **Done (MVP)**                                  |
+| Angular SPA MVP (auth + org + courses + classes)   | Sprint 4              | Frontend Team      | 2 weeks  | **MVP done** (see `docs/sprint4-completion.md`) |
+| Sprint 4b — FE polish & wrappers (optional)        | Pre–Sprint 5          | Frontend Team      | 2–4 days | **Recommended** (see Sprint 4b)                 |
+| AI-1 — Quiz question generator                     | AI Sprint Track       | Backend + Frontend | 2 weeks  | **MVP done**                                    |
+| AI-2 — Course recommendation                       | AI Sprint Track       | Backend + Data     | 2 weeks  | **Backend MVP done**                            |
+| AI-3 — Essay grading assistant                     | AI Sprint Track       | Backend + Frontend | 2 weeks  | **MVP done**                                    |
+| AI-4 — Learner risk prediction                     | AI Sprint Track       | Backend + Data     | 2 weeks  | **MVP done**                                    |
+| AI-5 — Semantic search + learning path generator   | AI Sprint Track       | Backend + Frontend | 2 weeks  | **MVP done**                                    |
+| AI-6 — RAG learning assistant                      | AI Sprint Track       | Backend + Frontend | 2 weeks  | **MVP done**                                    |
+| Sprint 15a — Redis performance & consistency layer | Pre–Sprint 15         | Backend + DevOps   | 1 week   | Done                                            |
+| API integration tests                              | Sprint 1–2            | Backend + QA       | 2-3 days | Planned                                         |
+| API rate limiting + lockout + auth audit log       | Sprint 1              | Backend + DevOps   | 3-5 days | Planned                                         |
+| CI/CD + code quality pipeline                      | Sprint 0 (carry-over) | DevOps             | 3-4 days | Planned                                         |
+| Serilog structured sink configuration              | Sprint 0 (carry-over) | Backend + DevOps   | 1-2 days | Planned                                         |
 
 ### Sprint Completion %
+
 - Sprint 0: **~70% complete** (core setup done, CI/CD and quality gates pending)
 - Sprint 1: **~95% complete** (backend + DB + unit tests done; Angular UI optional follow-up)
 - Sprint 2: **~75% complete** (backend + DB + unit/smoke tests; blob storage, sample seed, Angular course UI, API integration tests pending)
@@ -126,13 +133,14 @@ status: in-progress
 
 ---
 
-## AI Sprint Track: AI-Assisted Learning Features (5 sprints)
+## AI Sprint Track: AI-Assisted Learning Features (6 sprints)
 
 **Goal**: Add practical AI capabilities that demonstrate NLP, recommendation, prediction, and AI service integration while keeping human review and auditability in the LMS workflow.
 
 **Recommended placement**: Start after Sprint 13, when quiz, course content, analytics/progress, and basic search data are available. AI-1 can start earlier after Sprint 8 if the team wants an early AI demo.
 
 **AI Platform Baseline**
+
 - [ ] Add `IAiService` / `ILlmService` abstraction in Application/Core and provider implementation in Infrastructure.
 - [ ] Configure provider options through environment variables (`Provider`, `ApiKey`, `Model`, timeout, retry policy).
 - [ ] Add prompt templates with version IDs for audit and repeatability.
@@ -145,6 +153,7 @@ status: in-progress
 **Goal**: Let instructors generate draft quiz questions from course/lesson content, then review before saving.
 
 #### Backend Tasks
+
 - [x] **Feature: Generate quiz questions** — `POST /api/v1/ai/quizzes/generate-questions`
 - [x] Input: `courseId`, `lessonId`, `questionCount`, `difficulty`, `questionTypes`
 - [x] Output structured draft questions: text, type, options, correct answers, explanation, difficulty
@@ -154,12 +163,14 @@ status: in-progress
 - [x] Unit tests for provider output, validation, and audit log domain behavior
 
 #### Frontend Tasks
+
 - [x] Add “Generate with AI” action in quiz detail screen
 - [x] Add review panel for generated questions before insertion
 - [x] Allow instructor to discard or accept each generated question
 - [x] Show provider failure as a recoverable UI state
 
 **Definition of Done**:
+
 - Instructor can generate 5-10 draft questions from a lesson
 - Generated questions are never saved until explicitly accepted
 - Invalid provider responses are rejected safely
@@ -170,6 +181,7 @@ status: in-progress
 **Goal**: Recommend courses to learners based on profile, organization context, course history, and semantic similarity.
 
 #### Backend Tasks
+
 - [x] **Feature: Get learner course recommendations** — `GET /api/v1/ai/recommendations/courses`
 - [x] Implement hybrid scoring: organization context, popularity, watch/completion history, quiz performance, and course similarity
 - [x] Add explainable recommendation reasons (`Matches topics...`, `Popular in your organization...`, `Recently added...`)
@@ -177,11 +189,13 @@ status: in-progress
 - [ ] Add tests for score ranking and tenant isolation
 
 #### Frontend Tasks
+
 - [ ] Add “Recommended for you” section to learner dashboard
 - [ ] Add recommendation cards to course catalog
 - [ ] Display concise recommendation reasons
 
 **Definition of Done**:
+
 - Learner receives ranked, explainable course recommendations
 - Recommendations respect organization boundaries and published-course status
 - Empty-history users still receive sensible fallback recommendations
@@ -191,6 +205,7 @@ status: in-progress
 **Goal**: Assist instructors with rubric-based essay grading while keeping final grading human-controlled.
 
 #### Backend Tasks
+
 - [x] **Feature: Suggest essay grades** — `POST /api/v1/ai/quizzes/attempts/{attemptId}/grade-suggestions`
 - [x] Input: essay answers, question text, max score, optional rubric
 - [x] Output: suggested score, confidence, reasoning, rubric breakdown
@@ -199,11 +214,13 @@ status: in-progress
 - [ ] Unit tests for authorization, response parsing, and manual override behavior
 
 #### Frontend Tasks
+
 - [x] Add AI suggestion panel to manual grading screen
 - [x] Let instructor apply, edit, or ignore suggested score before final submission
 - [x] Show rubric explanation without hiding the learner answer
 
 **Definition of Done**:
+
 - Instructor can request AI suggestions for essay answers
 - Final grade is still submitted through the existing grading workflow
 - Accepted vs overridden suggestions are auditable
@@ -213,6 +230,7 @@ status: in-progress
 **Goal**: Predict learners at risk of not completing a course or license assignment and suggest interventions.
 
 #### Backend Tasks
+
 - [x] **Feature: Get learner risk** — `GET /api/v1/ai/learners/{userId}/risk`
 - [x] **Feature: Organization risk report** — `GET /api/v1/ai/organizations/{organizationId}/risk-report`
 - [x] Implement explainable scoring from progress, quiz score, inactivity, and license expiry
@@ -221,11 +239,13 @@ status: in-progress
 - [ ] Tests for scoring thresholds, data isolation, and missing-data behavior
 
 #### Frontend Tasks
+
 - [x] Add risk badges to organization learner report
 - [x] Add risk detail panel with reasons and recommended actions
 - [ ] Add filter for high-risk learners
 
 **Definition of Done**:
+
 - Organization admin can see high-risk learners with reasons
 - Risk model is explainable and deterministic for MVP
 - Missing progress data does not produce misleading high-risk labels
@@ -235,6 +255,7 @@ status: in-progress
 **Goal**: Improve discovery with semantic search and generate draft learning paths from learner goals.
 
 #### Backend Tasks
+
 - [x] **Feature: Semantic course search** — `GET /api/v1/ai/search/courses?q=...`
 - [x] Generate local token embeddings for published courses at query time
 - [x] Implement vector similarity with fallback keyword search
@@ -244,16 +265,19 @@ status: in-progress
 - [ ] Tests for embedding refresh, ranking, fallback, and tenant boundaries
 
 #### Frontend Tasks
+
 - [x] Add semantic search mode to course catalog search
 - [x] Add “Create learning path with AI” entry point
 - [x] Show generated path as draft for review before any assignment workflow
 
 **Definition of Done**:
+
 - Natural-language queries can find semantically related courses
 - AI-generated paths are drafts, not automatically assigned
 - Search and path generation respect published status and organization visibility
 
 ### AI Track Risks & Controls
+
 - [ ] **Cost control**: rate limit AI endpoints, log token/cost estimates, and cache stable outputs where appropriate.
 - [ ] **Reliability**: every AI feature must have a non-AI fallback or recoverable UI state.
 - [ ] **Privacy**: do not send unnecessary PII to the provider; hash or omit learner identifiers in prompts.
@@ -267,6 +291,7 @@ status: in-progress
 **Goal**: Set up infrastructure, tooling, CI/CD, and project skeleton.
 
 ### Backend Tasks
+
 - [x] Create .NET solution structure (Domain, Core, Application, Infrastructure, WebApi)
 - [x] Set up EF Core + PostgreSQL connection
 - [x] Configure Serilog structured logging
@@ -281,17 +306,19 @@ status: in-progress
 - [x] Set up correlation ID middleware
 
 ### Frontend Tasks
+
 - **Status**: deferred / carry-over to **Sprint 4** (Angular workspace is not created yet; `frontend/` currently contains Docker/nginx + scaffold instructions only).
-- [x] Create Angular workspace *(done in Sprint 4 as `frontend/web`; Angular 19 baseline due to local CLI 21 Node peer mismatch — see `docs/sprint4-completion.md`)*
-- [x] Set up folder structure (core, shared, features) *(done in Sprint 4)*
-- [x] Configure routing and lazy loading *(done in Sprint 4)*
-- [x] Set up HTTP interceptors (auth, error) *(done in Sprint 4; loading indicator deferred)*
-- [x] Create authentication service + guards *(done in Sprint 4)*
+- [x] Create Angular workspace _(done in Sprint 4 as `frontend/web`; Angular 19 baseline due to local CLI 21 Node peer mismatch — see `docs/sprint4-completion.md`)_
+- [x] Set up folder structure (core, shared, features) _(done in Sprint 4)_
+- [x] Configure routing and lazy loading _(done in Sprint 4)_
+- [x] Set up HTTP interceptors (auth, error) _(done in Sprint 4; loading indicator deferred)_
+- [x] Create authentication service + guards _(done in Sprint 4)_
 - [x] Set up environment configurations
-- [ ] Create thin shared UI wrappers (e.g. `UiButton`, `PageShell`, `UiDataTable`) *(Sprint 4b; see `docs/spec/angular-frontend-spec.md` §8, `docs/sprint-plan.md` Sprint 4b)*
-- [ ] Configure Tailwind CSS / Angular Material *(not used; PrimeNG adopted instead)*
+- [ ] Create thin shared UI wrappers (e.g. `UiButton`, `PageShell`, `UiDataTable`) _(Sprint 4b; see `docs/spec/angular-frontend-spec.md` §8, `docs/sprint-plan.md` Sprint 4b)_
+- [ ] Configure Tailwind CSS / Angular Material _(not used; PrimeNG adopted instead)_
 
 ### DevOps Tasks
+
 - [ ] Set up Git repository + branching strategy
 - [x] Configure Docker Compose (API, DB, Redis)
 - [x] Set up CI/CD pipeline (GitHub Actions / Azure DevOps)
@@ -299,12 +326,14 @@ status: in-progress
 - [ ] Set up development, staging, production environments
 
 ### Documentation
+
 - [ ] Finalize architecture documentation
 - [x] Create API design guidelines
 - [ ] Set up Swagger documentation
 - [x] Create developer onboarding guide
 
 **Definition of Done**:
+
 - Solution compiles and runs locally via Docker Compose
 - CI/CD pipeline runs successfully
 - Authentication works (login/register)
@@ -318,6 +347,7 @@ status: in-progress
 **Goal**: Implement user management, roles, and organization (tenant) setup.
 
 ### Backend Tasks
+
 - [x] **User aggregate**: Create User entity with roles (Admin, Instructor, Student)
 - [x] **Organization aggregate**: Organization, Department, OrganizationMember entities
 - [x] **Feature: Register user** (command + handler + validator)
@@ -331,34 +361,38 @@ status: in-progress
 - [x] Write unit tests for identity + organization domain + slug helper
 
 ### Frontend Tasks
+
 - **Status**: deferred / carry-over to **Sprint 4** (backend scope closed; FE to integrate Sprint 1 APIs).
-- [x] Create login page *(done in Sprint 4; PrimeNG)*
-- [x] Create registration page *(done in Sprint 4; PrimeNG)*
-- [x] Create user profile page *(done in Sprint 4; PrimeNG)*
-- [x] Create organization management UI (admin) *(done in Sprint 4)*
-- [x] Create member management UI *(done in Sprint 4)*
-- [x] Implement role-based UI rendering *(done in Sprint 4)*
-- [x] Add form validations *(done in Sprint 4)*
+- [x] Create login page _(done in Sprint 4; PrimeNG)_
+- [x] Create registration page _(done in Sprint 4; PrimeNG)_
+- [x] Create user profile page _(done in Sprint 4; PrimeNG)_
+- [x] Create organization management UI (admin) _(done in Sprint 4)_
+- [x] Create member management UI _(done in Sprint 4)_
+- [x] Implement role-based UI rendering _(done in Sprint 4)_
+- [x] Add form validations _(done in Sprint 4)_
 
 ### Database
+
 - [x] Create migrations for User, Organization, Department, OrganizationMember tables (`Sprint1_IdentityAndOrganizations`)
 - [x] Seed initial admin user (Development only — `admin@localhost.local` / `ChangeMe123!` unless overridden)
 
 **Definition of Done**:
+
 - Users can register and login
 - JWT tokens are issued and validated
 - Organizations can be created
 - Members can be added to organizations
 - Role-based access control works
-- All tests pass *(unit tests green; integration/E2E optional follow-up)*
+- All tests pass _(unit tests green; integration/E2E optional follow-up)_
 
 ---
 
-## Sprint 2: Course Catalog & Content Management (2 weeks) — **BACKEND SCOPE DONE** *(follow-ups below)*
+## Sprint 2: Course Catalog & Content Management (2 weeks) — **BACKEND SCOPE DONE** _(follow-ups below)_
 
 **Goal**: Build course catalog with sections, lessons, and content assets.
 
 ### Backend Tasks
+
 - [x] **Course aggregate**: Course, Section, Lesson, ContentAsset entities
 - [x] **Feature: Create course** (draft mode)
 - [x] **Feature: Update course**
@@ -369,38 +403,42 @@ status: in-progress
 - [x] **Feature: Upload content asset** (video, PDF, SCORM)
 - [x] **Feature: Get course details** (with sections/lessons)
 - [x] **Feature: List courses** (paginated, filtered, sorted)
-- [ ] Implement file upload service (S3 / Azure Blob) *(currently Local storage via `IFileStorage`)*
+- [ ] Implement file upload service (S3 / Azure Blob) _(currently Local storage via `IFileStorage`)_
 - [x] Write unit tests (domain + application validators / smoke)
-- [ ] Write API-level integration tests for courses *(not present in `tests/` yet)*
+- [ ] Write API-level integration tests for courses _(not present in `tests/` yet)_
 
 ### Frontend Tasks
+
 - **Status**: deferred / carry-over to **Sprint 4** (backend scope done; FE to integrate Sprint 2 APIs).
-- [x] Create course list page (with filters, search, pagination) *(done in Sprint 4; PrimeNG `p-table`)*
-- [x] Create course detail page *(done in Sprint 4)*
-- [x] Create course creation form *(done in Sprint 4; simplified create draft)*
-- [ ] Create section/lesson management UI *(carry-over → Sprint 4; stretch)*
-- [ ] Implement file upload component *(carry-over → Sprint 4; stretch)*
-- [ ] Create rich text editor for lesson content *(carry-over → Sprint 4; stretch)*
-- [ ] Add course preview mode *(carry-over → Sprint 4; stretch)*
+- [x] Create course list page (with filters, search, pagination) _(done in Sprint 4; PrimeNG `p-table`)_
+- [x] Create course detail page _(done in Sprint 4)_
+- [x] Create course creation form _(done in Sprint 4; simplified create draft)_
+- [ ] Create section/lesson management UI _(carry-over → Sprint 4; stretch)_
+- [ ] Implement file upload component _(carry-over → Sprint 4; stretch)_
+- [ ] Create rich text editor for lesson content _(carry-over → Sprint 4; stretch)_
+- [ ] Add course preview mode _(carry-over → Sprint 4; stretch)_
 
 ### Database
+
 - [x] Create migrations for Course, Section, Lesson, ContentAsset tables
 - [ ] Seed sample courses
 
 **Definition of Done**:
+
 - [x] Courses can be created, updated, deleted
 - [x] Sections and lessons can be managed
 - [x] Content assets can be uploaded
-- [x] Course catalog is browsable *(via API; Angular UI pending)*
-- [x] Unit tests pass *(integration tests optional follow-up)*
+- [x] Course catalog is browsable _(via API; Angular UI pending)_
+- [x] Unit tests pass _(integration tests optional follow-up)_
 
 ---
 
-## Sprint 3: Class Scheduling & Session Management (2 weeks) — **BACKEND MVP DONE** *(Zoom prod + UI + tests follow-up)*
+## Sprint 3: Class Scheduling & Session Management (2 weeks) — **BACKEND MVP DONE** _(Zoom prod + UI + tests follow-up)_
 
 **Goal**: Implement class (cohort) scheduling with Zoom and offline sessions.
 
 ### Backend Tasks
+
 - [x] **Training class aggregate** (`TrainingClass`, `ClassSession`, `ClassInstructor` — tên tránh xung đột với keyword `class` trong C#)
 - [x] **Feature: Create class** from published course — `POST /api/v1/training-classes`
 - [x] **Feature: Schedule session** (Zoom/Offline/VOD) — `POST .../training-classes/{id}/sessions`
@@ -415,29 +453,33 @@ status: in-progress
 - [ ] API integration tests for training classes
 
 ### Frontend Tasks
+
 - **Status**: deferred / carry-over to **Sprint 4** (backend MVP done; FE to integrate Sprint 3 APIs).
-- [x] Create class list page *(done in Sprint 4)*
-- [x] Create class creation form *(done in Sprint 4)*
-- [x] Create session scheduling UI *(done in Sprint 4 as a simple form + table)*
-- [x] Create instructor assignment UI *(done in Sprint 4; minimal form)*
-- [x] Display Zoom meeting links *(done in Sprint 4 when present)*
-- [x] Create class detail page with schedule *(done in Sprint 4)*
-- [x] Add conflict detection warnings *(done in Sprint 4; API errors surfaced in global banner)*
+- [x] Create class list page _(done in Sprint 4)_
+- [x] Create class creation form _(done in Sprint 4)_
+- [x] Create session scheduling UI _(done in Sprint 4 as a simple form + table)_
+- [x] Create instructor assignment UI _(done in Sprint 4; minimal form)_
+- [x] Display Zoom meeting links _(done in Sprint 4 when present)_
+- [x] Create class detail page with schedule _(done in Sprint 4)_
+- [x] Add conflict detection warnings _(done in Sprint 4; API errors surfaced in global banner)_
 
 ### Infrastructure
-- [ ] Set up Zoom OAuth app *(required for production Zoom; not needed for `NoOp` stub)*
-- [ ] Configure Zoom webhook endpoints *(attendance / meetings — often Sprint 4+)*
+
+- [ ] Set up Zoom OAuth app _(required for production Zoom; not needed for `NoOp` stub)_
+- [ ] Configure Zoom webhook endpoints _(attendance / meetings — often Sprint 4+)_
 
 ### Database
+
 - [x] Migration `Sprint3_TrainingClassesAndSessions`: `training_classes`, `class_sessions`, `class_instructors`
 
 **Definition of Done**:
+
 - [x] Classes can be created from **published** courses
 - [x] Sessions can be scheduled (Zoom/Offline/VOD)
 - [x] Instructors can be assigned
-- [x] Zoom-style meeting id/URL populated when type is Zoom *(dev: stub; prod: replace service)*
+- [x] Zoom-style meeting id/URL populated when type is Zoom _(dev: stub; prod: replace service)_
 - [x] Schedule conflicts are detected for instructors
-- [x] Unit tests pass *(integration tests optional follow-up)*
+- [x] Unit tests pass _(integration tests optional follow-up)_
 
 ---
 
@@ -446,6 +488,7 @@ status: in-progress
 **Goal**: Deliver the first usable Angular SPA that integrates with **already-delivered** backend APIs from Sprint 1–3 (identity/orgs/courses/training classes). Enrollment/attendance remains a follow-up sprint (see Sprint 5+).
 
 ### Scope (must-have)
+
 - **Scaffold Angular app** under `frontend/web` and make it runnable locally (Angular **19** baseline; Angular 21 upgrade optional).
 - **API integration** with the WebApi (base URL config, auth token handling, error handling).
 - **Core user flows**:
@@ -456,15 +499,16 @@ status: in-progress
   - Training class list + detail (sessions) + schedule/update/cancel session (based on permissions)
 
 ### Frontend Tasks (checklist)
+
 - [x] Scaffold Angular workspace + app (`frontend/web/`) — **Angular 19** baseline (CLI 21 upgrade optional; see `docs/sprint4-completion.md`)
 - [x] App structure: `core/`, `shared/`, `features/` (standalone components, lazy routes)
 - [x] Environment configuration: dev `apiUrl` → `http://localhost:5000`; prod empty → same-origin `/api` via nginx
-- [x] PrimeNG UI baseline (PrimeNG 19 + PrimeIcons + animations) *(MVP UI library choice)*
-- [x] PrimeNG theming via `definePreset` (`ELearningPreset` on Aura) *(theme tokens foundation; see `shared/ui/theme/elearning-preset.ts`)*
+- [x] PrimeNG UI baseline (PrimeNG 19 + PrimeIcons + animations) _(MVP UI library choice)_
+- [x] PrimeNG theming via `definePreset` (`ELearningPreset` on Aura) _(theme tokens foundation; see `shared/ui/theme/elearning-preset.ts`)_
 - [x] HTTP layer:
   - [x] Auth interceptor (attach JWT)
   - [x] Error interceptor (map Problem Details → global banner)
-  - [x] Loading indicator (global) *(done in Sprint 4b: `loadingInterceptor` + top progress bar)*
+  - [x] Loading indicator (global) _(done in Sprint 4b: `loadingInterceptor` + top progress bar)_
 - [x] Auth & session:
   - [x] Login + register + token persistence (`sessionStorage`)
   - [x] Route guards (`authGuard`, `guestGuard`)
@@ -487,14 +531,16 @@ status: in-progress
 - [x] UX/quality:
   - [x] Basic layout + navigation
   - [x] Form validation + server error copy
-  - [x] Canonical Angular/PrimeNG spec updated in `docs/spec/angular-frontend-spec.md` *(and `docs/angular-frontend-spec.md` stub redirect)*
-  - [x] Minimal e2e smoke *(done in Sprint 4b: Playwright smoke test)*
+  - [x] Canonical Angular/PrimeNG spec updated in `docs/spec/angular-frontend-spec.md` _(and `docs/angular-frontend-spec.md` stub redirect)_
+  - [x] Minimal e2e smoke _(done in Sprint 4b: Playwright smoke test)_
 
 ### Backend/Infra Tasks (supporting, not the main deliverable)
+
 - [x] CORS + API base URL: dev → `http://localhost:5000`; Docker UI → relative `/api` + nginx proxy (see `frontend/nginx.conf`)
-- [ ] Ensure Swagger describes error shapes used by FE (validation/conflict/not found) *(carry-over)*
+- [ ] Ensure Swagger describes error shapes used by FE (validation/conflict/not found) _(carry-over)_
 
 **Definition of Done**:
+
 - [x] Angular app builds and runs locally (`frontend/web`).
 - [x] Users can login and navigate core modules (orgs/courses/classes).
 - [x] Training class sessions can be scheduled/updated/cancelled from the UI (given permissions); API errors shown in global banner.
@@ -517,14 +563,14 @@ status: in-progress
 
 - [x] Implement **`UiButton`**, **`PageShell`**, **`UiDataTable`** (table + paginator) in `shared/ui/`
 - [x] Apply wrappers on **one pilot screen** (Course list)
-- [x] **Global loading indicator** (HTTP activity) *(interceptor + top progress bar)*
+- [x] **Global loading indicator** (HTTP activity) _(interceptor + top progress bar)_
 - [ ] Minor **UX polish** on existing MVP pages (spacing, empty states, copy)
-- [x] **Minimal E2E smoke** (login → courses) *(Playwright)*
+- [x] **Minimal E2E smoke** (login → courses) _(Playwright)_
 - [x] Update **`docs/sprint4-completion.md`** when Sprint 4b items ship
 
 **Explicitly still stretch / later** (not required for Sprint 4b): full **section/lesson management** UI, rich editor, file upload (see Sprint 2 FE stretch list).
 
-**Sprint 5 entry**: Start Sprint 5 backend/FE work once Sprint 4b is done *or* explicitly skipped by team decision (record in sprint retro or this file).
+**Sprint 5 entry**: Start Sprint 5 backend/FE work once Sprint 4b is done _or_ explicitly skipped by team decision (record in sprint retro or this file).
 
 ---
 
@@ -533,28 +579,32 @@ status: in-progress
 **Goal**: Implement B2B license pooling and seat management.
 
 ### Backend Tasks
+
 - [x] **LicensePool aggregate**: LicensePool, LicenseAssignment entities
 - [x] **Feature: Create license pool** (org buys seats)
 - [x] **Feature: Assign license to member**
 - [x] **Feature: Revoke license**
 - [x] **Feature: Get license usage report**
-- [x] Enforce quota (prevent over-assignment) *(domain enforces seat availability)*
-- [x] License expiry constraint *(domain prevents assignment if expired; expiry enforcement beyond that is follow-up)*
+- [x] Enforce quota (prevent over-assignment) _(domain enforces seat availability)_
+- [x] License expiry constraint _(domain prevents assignment if expired; expiry enforcement beyond that is follow-up)_
 - [ ] **Feature: Bulk enroll via license**
 - [ ] Create private class for organization
 - [ ] Write unit + integration tests
 
 ### Frontend Tasks
-- [x] Create license pool management UI (org admin) *(list + create)*
-- [x] Create license assignment UI *(assign/revoke by user id in pool detail)*
-- [x] Display license usage dashboard *(basic: seats used/available on detail screen)*
+
+- [x] Create license pool management UI (org admin) _(list + create)_
+- [x] Create license assignment UI _(assign/revoke by user id in pool detail)_
+- [x] Display license usage dashboard _(basic: seats used/available on detail screen)_
 - [ ] Create member enrollment UI (org admin)
 - [ ] Add license expiry warnings
 
 ### Database
-- [ ] Create migrations for LicensePool, LicenseAssignment tables *(pending: EF tooling currently timing out in environment; schema defined via EF configurations)*
+
+- [ ] Create migrations for LicensePool, LicenseAssignment tables _(pending: EF tooling currently timing out in environment; schema defined via EF configurations)_
 
 **Definition of Done**:
+
 - Organizations can purchase license pools
 - Licenses can be assigned to members
 - Quota is enforced
@@ -568,40 +618,45 @@ status: in-progress
 **Goal**: Implement order, payment, and pricing engine.
 
 ### Backend Tasks
+
 - [x] **Order aggregate**: Order, OrderItem + checkout expiry
 - [x] **Feature: Create order** (cart → priced checkout server-side)
-- [x] **Feature: Calculate price** *(MVP: prices on Course / TrainingClass / LicensePool + migration `Sprint6_PricingFields`)*
+- [x] **Feature: Calculate price** _(MVP: prices on Course / TrainingClass / LicensePool + migration `Sprint6_PricingFields`)_
 - [x] **Feature: Apply discount** (manual)
-- [x] **Feature: Process payment** *(MVP: `IPaymentService` + `NoOpPaymentService`; Stripe/VNPay = provider swap + infra account)*
-- [x] **Feature: Handle payment webhook** *(MVP: `/payments/webhook` + optional shared secret header)*
-- [x] **Feature: Generate invoice** *(MVP: `invoices` row on successful payment)*
-- [x] **Feature: Get order history** *(MVP: list buyer orders)*
-- [x] Implement reservation pattern *(MVP: `checkout_reservations` for TrainingClass line items + capacity check vs other pending checkouts)*
-- [x] Implement payment timeout *(MVP: `checkout_expires_at` + cancel on expiry during pay/webhook completion; 15 minutes)*
-- [x] Write unit tests (domain) *(integration tests still deferred)*
+- [x] **Feature: Process payment** _(MVP: `IPaymentService` + `NoOpPaymentService`; Stripe/VNPay = provider swap + infra account)_
+- [x] **Feature: Handle payment webhook** _(MVP: `/payments/webhook` + optional shared secret header)_
+- [x] **Feature: Generate invoice** _(MVP: `invoices` row on successful payment)_
+- [x] **Feature: Get order history** _(MVP: list buyer orders)_
+- [x] Implement reservation pattern _(MVP: `checkout_reservations` for TrainingClass line items + capacity check vs other pending checkouts)_
+- [x] Implement payment timeout _(MVP: `checkout_expires_at` + cancel on expiry during pay/webhook completion; 15 minutes)_
+- [x] Write unit tests (domain) _(integration tests still deferred)_
 
 ### Frontend Tasks
-- [x] Create course purchase flow *(published course / priced class / pool detail → `/checkout`; see `docs/sprint6-completion.md`)*
+
+- [x] Create course purchase flow _(published course / priced class / pool detail → `/checkout`; see `docs/sprint6-completion.md`)_
 - [x] Create checkout page
-- [ ] Integrate payment gateway UI *(prod: Stripe/VNPay; dev: NoOp “Pay now” on order detail)*
-- [x] Create order confirmation *(order detail after place order; optional `?pay=1` auto-pay)*
+- [ ] Integrate payment gateway UI _(prod: Stripe/VNPay; dev: NoOp “Pay now” on order detail)_
+- [x] Create order confirmation _(order detail after place order; optional `?pay=1` auto-pay)_
 - [x] Create order history page
-- [x] Display invoice *(summary on order detail when status is Paid)*
+- [x] Display invoice _(summary on order detail when status is Paid)_
 
 ### Infrastructure
-- [ ] Set up Stripe/VNPay account *(production follow-up)*
-- [x] Configure payment webhook endpoints *(MVP: `/api/v1/payments/webhook` + `Payments:WebhookSecret`)*
+
+- [ ] Set up Stripe/VNPay account _(production follow-up)_
+- [x] Configure payment webhook endpoints _(MVP: `/api/v1/payments/webhook` + `Payments:WebhookSecret`)_
 
 ### Database
-- [x] Create migrations for Order, OrderItem, pricing columns, payments, invoices, reservations *(see `Sprint6_*` migrations)*
+
+- [x] Create migrations for Order, OrderItem, pricing columns, payments, invoices, reservations _(see `Sprint6\__` migrations)\*
 
 **Definition of Done**:
-- Users can purchase courses/classes *(Angular: detail pages → checkout → orders; API still authoritative)*
-- Pricing is calculated correctly *(server reads catalog prices; ignores client-supplied unit prices)*
-- Payments are processed *(NoOp MVP; replace provider for prod gateways)*
-- Invoices are generated *(persisted invoice row)*
-- Seat reservation works *(training-class checkout holds + timeout release)*
-- All tests pass *(unit tests; integration tests optional follow-up)*
+
+- Users can purchase courses/classes _(Angular: detail pages → checkout → orders; API still authoritative)_
+- Pricing is calculated correctly _(server reads catalog prices; ignores client-supplied unit prices)_
+- Payments are processed _(NoOp MVP; replace provider for prod gateways)_
+- Invoices are generated _(persisted invoice row)_
+- Seat reservation works _(training-class checkout holds + timeout release)_
+- All tests pass _(unit tests; integration tests optional follow-up)_
 
 ---
 
@@ -610,29 +665,33 @@ status: in-progress
 **Goal**: Implement campaign, coupon, and promotion rules.
 
 ### Backend Tasks
-- [x] **Campaign aggregate**: Campaign, PromotionRule, Coupon entities *(see `docs/sprint7-completion.md`)*
+
+- [x] **Campaign aggregate**: Campaign, PromotionRule, Coupon entities _(see `docs/sprint7-completion.md`)_
 - [x] **Feature: Create campaign**
 - [x] **Feature: Apply campaign to order** (pricing engine integration)
-- [x] **Feature: Generate coupon codes** *(manual code creation in MVP)*
-- [x] **Feature: Validate coupon** *(checkout quote endpoint)*
-- [x] **Feature: Track campaign usage** *(coupon redemptions + analytics endpoint)*
-- [x] Implement campaign eligibility rules *(MVP: window + scope)*
-- [x] Implement stacking rules (campaign + coupon) *(MVP: best discount across eligible global/org + coupon campaign)*
-- [x] Implement volume discount (B2B) *(MVP: license pool quantity tiers)*
-- [x] Implement usage limits (atomic update) *(coupon usage reservations with TTL)*
-- [x] Write unit + integration tests *(unit tests added; integration tests deferred)*
+- [x] **Feature: Generate coupon codes** _(manual code creation in MVP)_
+- [x] **Feature: Validate coupon** _(checkout quote endpoint)_
+- [x] **Feature: Track campaign usage** _(coupon redemptions + analytics endpoint)_
+- [x] Implement campaign eligibility rules _(MVP: window + scope)_
+- [x] Implement stacking rules (campaign + coupon) _(MVP: best discount across eligible global/org + coupon campaign)_
+- [x] Implement volume discount (B2B) _(MVP: license pool quantity tiers)_
+- [x] Implement usage limits (atomic update) _(coupon usage reservations with TTL)_
+- [x] Write unit + integration tests _(unit tests added; integration tests deferred)_
 
 ### Frontend Tasks
+
 - [x] Create campaign management UI (admin)
 - [x] Create coupon input field (checkout)
-- [x] Display applied discounts *(checkout quote summary)*
-- [x] Create campaign analytics dashboard *(MVP: analytics panel on campaign detail)*
-- [x] Add campaign preview *(admin: campaign detail “Preview (quote)” panel)*
+- [x] Display applied discounts _(checkout quote summary)_
+- [x] Create campaign analytics dashboard _(MVP: analytics panel on campaign detail)_
+- [x] Add campaign preview _(admin: campaign detail “Preview (quote)” panel)_
 
 ### Database
+
 - [x] Create migrations for Campaign, PromotionRule, Coupon tables
 
 **Definition of Done**:
+
 - Campaigns can be created and managed
 - Coupons can be generated and validated
 - Discounts are applied correctly
@@ -647,6 +706,7 @@ status: in-progress
 **Goal**: Implement quiz, questions, attempts, and grading.
 
 ### Backend Tasks
+
 - [x] **Quiz aggregate**: Quiz, Question, QuestionOption, Attempt, Score entities
 - [ ] **Feature: Create quiz**
 - [ ] **Feature: Add questions to quiz**
@@ -659,6 +719,7 @@ status: in-progress
 - [ ] Write unit + integration tests
 
 ### Frontend Tasks
+
 - [ ] Create quiz creation UI (instructor)
 - [ ] Create quiz-taking UI (student)
 - [ ] Create grading UI (instructor, for essays)
@@ -666,9 +727,11 @@ status: in-progress
 - [ ] Create quiz analytics page
 
 ### Database
+
 - [ ] Create migrations for Quiz, Question, Attempt, Score tables
 
 **Definition of Done**:
+
 - Quizzes can be created and assigned
 - Students can take quizzes
 - Auto-grading works for MCQ
@@ -678,11 +741,12 @@ status: in-progress
 
 ---
 
-## Sprint 9: Certificate & Completion (2 weeks) — **BACKEND MVP DONE** *(PDF + UI follow-up)*
+## Sprint 9: Certificate & Completion (2 weeks) — **BACKEND MVP DONE** _(PDF + UI follow-up)_
 
 **Goal**: Implement certificate issuance and course completion logic.
 
 ### Backend Tasks
+
 - [x] **Certificate aggregate**: Certificate, CertificateTemplate entities
 - [x] **Feature: Issue certificate** (on completion)
 - [x] **Feature: Get certificate**
@@ -693,6 +757,7 @@ status: in-progress
 - [ ] Write integration tests
 
 ### Frontend Tasks
+
 - [ ] Create certificate template editor (admin)
 - [ ] Display certificate (student)
 - [ ] Create certificate download UI
@@ -700,12 +765,15 @@ status: in-progress
 - [ ] Display completion status
 
 ### Infrastructure
+
 - [x] Set up PDF generation service
 
 ### Database
+
 - [x] Create migrations for Certificate, CertificateTemplate tables
 
 **Definition of Done**:
+
 - Certificates are issued on completion
 - Certificates can be downloaded
 - Certificates can be verified publicly
@@ -718,6 +786,7 @@ status: in-progress
 **Goal**: Implement in-app notifications, email, and messaging.
 
 ### Backend Tasks
+
 - [x] **Notification aggregate**: Notification, Message entities
 - [x] **Feature: Send notification** (in-app)
 - [x] **Feature: Send email** (via service)
@@ -733,6 +802,7 @@ status: in-progress
 - [ ] Write integration tests
 
 ### Frontend Tasks
+
 - [x] Create notification bell UI
 - [x] Create notification list page
 - [x] Create announcement UI (instructor)
@@ -740,13 +810,16 @@ status: in-progress
 - [ ] Create email preference settings
 
 ### Infrastructure
+
 - [ ] Set up email service (SendGrid / AWS SES)
 - [ ] Configure background job scheduler (Hangfire)
 
 ### Database
+
 - [x] Create migrations for Notification, Message tables
 
 **Definition of Done**:
+
 - In-app notifications work
 - Emails are sent
 - Announcements can be posted
@@ -761,6 +834,7 @@ status: in-progress
 **Goal**: Implement dashboards and reports for admin, instructor, student.
 
 ### Backend Tasks
+
 - [x] **Feature: Get student dashboard** (MVP: paid orders, purchases, certificates, upcoming purchased-class sessions)
 - [x] **Feature: Get instructor dashboard** (MVP: assigned classes and scheduled/past sessions)
 - [x] **Feature: Get admin dashboard** (MVP: revenue, users, courses, classes, certificates, checkout)
@@ -773,6 +847,7 @@ status: in-progress
 - [ ] Write unit + integration tests
 
 ### Frontend Tasks
+
 - [x] Create student dashboard
 - [x] Create instructor dashboard
 - [x] Create admin dashboard
@@ -782,9 +857,11 @@ status: in-progress
 - [ ] Implement report export
 
 ### Database
+
 - [ ] Optimize queries for analytics (indexes, views)
 
 **Definition of Done**:
+
 - Dashboards are functional
 - Analytics are accurate
 - Reports can be exported
@@ -798,9 +875,10 @@ status: in-progress
 **Goal**: Implement video streaming, watch tracking, and completion logic.
 
 ### Backend Tasks
+
 - [x] **Video aggregate**: VideoAsset, WatchEvent entities
-- [x] **Feature: Upload video** *(MVP: local storage via existing `IFileStorage`; S3/Azure/Mux deferred)*
-- [x] **Feature: Get video URL** *(MVP: local asset URL with range support; signed CDN URL deferred)*
+- [x] **Feature: Upload video** _(MVP: local storage via existing `IFileStorage`; S3/Azure/Mux deferred)_
+- [x] **Feature: Get video URL** _(MVP: local asset URL with range support; signed CDN URL deferred)_
 - [x] **Feature: Track watch progress** (heartbeat)
 - [x] **Feature: Mark lesson complete** (watch threshold)
 - [ ] Implement video transcoding (optional)
@@ -808,20 +886,24 @@ status: in-progress
 - [ ] Write integration tests
 
 ### Frontend Tasks
-- [x] Integrate video player *(MVP: native HTML5 player)*
+
+- [x] Integrate video player _(MVP: native HTML5 player)_
 - [x] Implement watch tracking (heartbeat every 30s)
 - [x] Display video progress indicator
 - [x] Auto-mark lesson complete at 80% watched
 - [x] Create video upload UI (instructor)
 
 ### Infrastructure
+
 - [ ] Set up video storage (S3 / Azure Blob / Mux)
 - [ ] Configure CDN for video delivery
 
 ### Database
+
 - [x] Create migrations for VideoAsset, WatchEvent tables
 
 **Definition of Done**:
+
 - Videos can be uploaded
 - Videos are streamed via CDN
 - Watch progress is tracked
@@ -835,27 +917,31 @@ status: in-progress
 **Goal**: Implement full-text search and advanced filtering.
 
 ### Backend Tasks
-- [x] **Feature: Search courses** *(MVP: title, description, lesson title/content using database query; full-text index deferred)*
-- [x] **Feature: Filter courses** *(MVP: status + price range; category/level/instructor metadata deferred)*
-- [x] **Feature: Sort courses** *(MVP: newest, oldest, title, price; popularity/rating deferred)*
+
+- [x] **Feature: Search courses** _(MVP: title, description, lesson title/content using database query; full-text index deferred)_
+- [x] **Feature: Filter courses** _(MVP: status + price range; category/level/instructor metadata deferred)_
+- [x] **Feature: Sort courses** _(MVP: newest, oldest, title, price; popularity/rating deferred)_
 - [ ] Use Redis cache for published course catalog, course detail, filter metadata, and frequent search results
 - [ ] Invalidate catalog cache on course create/update/publish/delete and review/rating changes
 - [ ] Implement Elasticsearch integration (optional)
-- [x] Optimize search queries *(MVP: server-side filtering/sorting/pagination; DB full-text indexes deferred)*
+- [x] Optimize search queries _(MVP: server-side filtering/sorting/pagination; DB full-text indexes deferred)_
 - [x] Write unit tests
 - [ ] Write integration tests
 
 ### Frontend Tasks
+
 - [x] Create search bar (global)
 - [x] Create advanced filter UI
-- [x] Create search results page *(MVP: Courses page with query params)*
-- [x] Implement faceted search *(MVP: status + price + sort controls)*
+- [x] Create search results page _(MVP: Courses page with query params)_
+- [x] Implement faceted search _(MVP: status + price + sort controls)_
 - [ ] Add search suggestions (autocomplete)
 
 ### Infrastructure
+
 - [ ] Set up Elasticsearch (optional)
 
 **Definition of Done**:
+
 - Search works across courses
 - Filters work correctly
 - Search is performant
@@ -869,6 +955,7 @@ status: in-progress
 **Goal**: Implement course reviews and ratings.
 
 ### Backend Tasks
+
 - [x] **Review aggregate**: Review/rating fields and moderation status
 - [x] **Feature: Submit review** (after completion)
 - [x] **Feature: Get course reviews** (paginated)
@@ -877,15 +964,18 @@ status: in-progress
 - [x] Write unit + integration tests
 
 ### Frontend Tasks
+
 - [x] Create review submission form
 - [x] Display course reviews
 - [x] Display average rating (stars)
 - [x] Create review moderation UI (admin)
 
 ### Database
+
 - [x] Create migration for Review/rating data
 
 **Definition of Done**:
+
 - Reviews can be submitted
 - Ratings are displayed
 - Average rating is calculated
@@ -899,6 +989,7 @@ status: in-progress
 **Goal**: Add reusable Redis-backed infrastructure for high-read paths, concurrency control, idempotency, and rate limiting before broad optimization work.
 
 ### Backend Tasks
+
 - [x] Add `ICacheService` abstraction with get/set/remove/get-or-create helpers and JSON serialization.
 - [x] Add cache key conventions and tenant-safe key builder.
 - [x] Add `IDistributedLockService` for short-lived locks around checkout, seat reservation, coupon usage, license assignment, and background jobs.
@@ -910,6 +1001,7 @@ status: in-progress
 - [x] Unit tests for key generation, TTL behavior, idempotency duplicate detection, and lock failure behavior.
 
 ### Application Integration Targets
+
 - [x] Course catalog/detail cache: `courses:list:{hash}`, `courses:detail:{courseId}`.
 - [x] Dashboard analytics cache: `analytics:{scope}:{id}:{hash}`.
 - [x] Payment webhook idempotency: `payment:webhook:{gateway}:{eventId}`.
@@ -920,11 +1012,13 @@ status: in-progress
 - [ ] AI cost/rate cache: `rate:ai:{userId}`, `ai:recommendations:{userId}`, `ai:semantic-search:{queryHash}`.
 
 ### Infrastructure Tasks
+
 - [x] Verify local Redis in `docker-compose.yml` is production-like enough for development.
 - [x] Add environment variables for Redis connection, default TTLs, lock TTLs, and rate-limit windows.
 - [x] Document Redis key naming, TTL policy, and invalidation strategy.
 
 **Definition of Done**:
+
 - Shared Redis abstractions are available to Application/Infrastructure without leaking provider-specific APIs into feature handlers.
 - Payment webhooks are idempotent across retries.
 - Checkout/license/coupon operations can use short-lived distributed locks while keeping database constraints as the source of truth.
@@ -938,6 +1032,7 @@ status: in-progress
 **Goal**: Optimize performance, add caching, and improve scalability.
 
 ### Backend Tasks
+
 - [x] Implement Redis caching for frequent queries
 - [x] Add response caching for public endpoints
 - [x] Optimize database queries (indexes, query analysis)
@@ -948,18 +1043,21 @@ status: in-progress
 - [x] Write performance tests
 
 ### Frontend Tasks
-- [x] Implement lazy loading for images *(no current catalog image grids; covered by static asset cache/PWA policy until image-heavy screens are added)*
+
+- [x] Implement lazy loading for images _(no current catalog image grids; covered by static asset cache/PWA policy until image-heavy screens are added)_
 - [x] Add virtual scrolling for long lists
-- [x] Optimize bundle size (tree shaking, code splitting) *(existing route-level lazy loading verified; no new PWA package dependency added)*
+- [x] Optimize bundle size (tree shaking, code splitting) _(existing route-level lazy loading verified; no new PWA package dependency added)_
 - [x] Add service worker for caching (PWA)
 - [x] Implement skeleton loaders
 
 ### Infrastructure
-- [x] Set up Redis cluster *(runbook/template added; actual environment provisioning remains deployment work)*
-- [x] Configure CDN for static assets *(runbook/template added)*
-- [x] Set up load balancer *(Nginx template added)*
+
+- [x] Set up Redis cluster _(runbook/template added; actual environment provisioning remains deployment work)_
+- [x] Configure CDN for static assets _(runbook/template added)_
+- [x] Set up load balancer _(Nginx template added)_
 
 **Definition of Done**:
+
 - API response time < 200ms (p95)
 - Frontend load time < 3s
 - Caching works correctly
@@ -972,6 +1070,7 @@ status: in-progress
 **Goal**: Implement security best practices and vulnerability fixes.
 
 ### Backend Tasks
+
 - [x] Implement CORS policy
 - [x] Add rate limiting per user/IP
 - [x] Implement request validation (anti-XSS, SQL injection)
@@ -979,10 +1078,11 @@ status: in-progress
 - [x] Implement API key authentication (for webhooks)
 - [x] Add security headers (HSTS, CSP, X-Frame-Options)
 - [x] Implement audit logging for sensitive actions
-- [x] Run security scan (OWASP ZAP, SonarQube) *(local/CI script added; ZAP runs when target is configured)*
-- [x] Fix identified vulnerabilities *(non-breaking runtime fixes applied; dev-tooling residuals documented where Angular CLI 21 would be required)*
+- [x] Run security scan (OWASP ZAP, SonarQube) _(local/CI script added; ZAP runs when target is configured)_
+- [x] Fix identified vulnerabilities _(non-breaking runtime fixes applied; dev-tooling residuals documented where Angular CLI 21 would be required)_
 
 ### Frontend Tasks
+
 - [x] Implement CSP headers
 - [x] Sanitize user inputs
 - [x] Add CSRF protection
@@ -990,11 +1090,13 @@ status: in-progress
 - [x] Add security headers
 
 ### Infrastructure
-- [x] Set up WAF (Web Application Firewall) *(runbook/template added)*
-- [x] Configure SSL/TLS certificates *(runbook/template added)*
-- [x] Set up secret management (Azure Key Vault / AWS Secrets Manager) *(runbook/template added)*
+
+- [x] Set up WAF (Web Application Firewall) _(runbook/template added)_
+- [x] Configure SSL/TLS certificates _(runbook/template added)_
+- [x] Set up secret management (Azure Key Vault / AWS Secrets Manager) _(runbook/template added)_
 
 **Definition of Done**:
+
 - Security scan passes
 - All vulnerabilities fixed
 - Security headers configured
@@ -1008,6 +1110,7 @@ status: in-progress
 **Goal**: Ensure mobile-friendly UI and WCAG 2.1 AA compliance.
 
 ### Frontend Tasks
+
 - [ ] Audit all pages for mobile responsiveness
 - [ ] Fix mobile UI issues
 - [ ] Implement responsive navigation
@@ -1018,6 +1121,7 @@ status: in-progress
 - [ ] Test on multiple devices/browsers
 
 **Definition of Done**:
+
 - All pages are mobile-responsive
 - Accessibility score > 90 (Lighthouse)
 - WCAG 2.1 AA compliant
@@ -1030,6 +1134,7 @@ status: in-progress
 **Goal**: End-to-end testing and bug fixing.
 
 ### Tasks
+
 - [ ] Write E2E tests for critical user flows
 - [ ] Run full regression testing
 - [ ] Fix identified bugs
@@ -1038,6 +1143,7 @@ status: in-progress
 - [ ] Update documentation
 
 **Definition of Done**:
+
 - All E2E tests pass
 - No critical/high bugs
 - Load test passes (1000 concurrent users)
@@ -1050,6 +1156,7 @@ status: in-progress
 **Goal**: Conduct UAT with stakeholders and fix feedback.
 
 ### Tasks
+
 - [ ] Deploy to staging environment
 - [ ] Conduct UAT sessions with stakeholders
 - [ ] Collect feedback
@@ -1058,6 +1165,7 @@ status: in-progress
 - [ ] Re-test
 
 **Definition of Done**:
+
 - UAT sign-off received
 - Critical feedback addressed
 - System stable on staging
@@ -1069,6 +1177,7 @@ status: in-progress
 **Goal**: Deploy to production and launch.
 
 ### Tasks
+
 - [ ] Finalize production environment setup
 - [ ] Run final security audit
 - [ ] Create deployment runbook
@@ -1081,6 +1190,7 @@ status: in-progress
 - [ ] Monitor user feedback
 
 **Definition of Done**:
+
 - System live in production
 - No critical issues
 - Monitoring in place
@@ -1092,6 +1202,7 @@ status: in-progress
 ## Post-Launch: Maintenance & Iteration
 
 ### Ongoing Tasks
+
 - Monitor system health (uptime, performance, errors)
 - Collect user feedback
 - Prioritize feature requests
@@ -1104,15 +1215,15 @@ status: in-progress
 
 ## Risk Management
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| Zoom API changes | High | Monitor Zoom API changelog, implement adapter pattern |
-| Payment gateway downtime | High | Implement fallback provider, queue payments |
-| Database performance issues | Medium | Regular query optimization, add indexes, consider read replicas |
-| Team member unavailability | Medium | Cross-train team, maintain documentation |
-| Scope creep | Medium | Strict change control, prioritize MVP features |
-| Security vulnerabilities | High | Regular security audits, automated scanning, bug bounty program |
-| Third-party service failures | Medium | Implement circuit breakers, fallback mechanisms |
+| Risk                         | Impact | Mitigation                                                      |
+| ---------------------------- | ------ | --------------------------------------------------------------- |
+| Zoom API changes             | High   | Monitor Zoom API changelog, implement adapter pattern           |
+| Payment gateway downtime     | High   | Implement fallback provider, queue payments                     |
+| Database performance issues  | Medium | Regular query optimization, add indexes, consider read replicas |
+| Team member unavailability   | Medium | Cross-train team, maintain documentation                        |
+| Scope creep                  | Medium | Strict change control, prioritize MVP features                  |
+| Security vulnerabilities     | High   | Regular security audits, automated scanning, bug bounty program |
+| Third-party service failures | Medium | Implement circuit breakers, fallback mechanisms                 |
 
 ---
 
