@@ -41,8 +41,10 @@ public sealed partial class LocalQuizQuestionGenerator(IOptions<AiOptions> optio
 
         var tokenEstimate = Math.Max(1, source.Length / 4);
         return Task.FromResult(new AiQuizQuestionGenerationResult(
-            string.IsNullOrWhiteSpace(config.Provider) ? "Local" : config.Provider,
-            string.IsNullOrWhiteSpace(config.Model) ? "local-deterministic-v1" : config.Model,
+            "Local",
+            config.UsesOpenAiCompatibleProvider() || string.IsNullOrWhiteSpace(config.Model)
+                ? "local-deterministic-v1"
+                : config.Model,
             string.IsNullOrWhiteSpace(config.QuizQuestionPromptVersion)
                 ? "quiz-question-generator-v1"
                 : config.QuizQuestionPromptVersion,

@@ -121,8 +121,8 @@ public sealed class SuggestEssayGradesCommandHandler(
             aiRequestLogRepository.Add(AiRequestLog.Failed(
                 currentUserService.UserId,
                 "EssayGradingSuggestion",
-                "Local",
-                "local-essay-grader-v1",
+                "AI",
+                "unknown",
                 "essay-grading-v1",
                 inputHash,
                 message));

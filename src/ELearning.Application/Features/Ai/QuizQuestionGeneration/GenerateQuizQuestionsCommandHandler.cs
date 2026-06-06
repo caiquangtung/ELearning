@@ -94,8 +94,8 @@ public sealed class GenerateQuizQuestionsCommandHandler(
             aiRequestLogRepository.Add(AiRequestLog.Failed(
                 currentUserService.UserId,
                 "QuizQuestionGeneration",
-                "Local",
-                "local-deterministic-v1",
+                "AI",
+                "unknown",
                 "quiz-question-generator-v1",
                 inputHash,
                 message));
