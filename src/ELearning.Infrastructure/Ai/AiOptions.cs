@@ -16,6 +16,9 @@ public sealed class AiOptions
     public string QuizQuestionPromptVersion { get; init; } = "quiz-question-generator-v1";
     public string EssayGradingPromptVersion { get; init; } = "essay-grading-v1";
     public string LearningPathPromptVersion { get; init; } = "learning-path-generator-v1";
+    public string RagChatPromptVersion { get; init; } = "rag-learning-assistant-v1";
+    public int RagMaxRetrievedChunks { get; init; } = 4;
+    public decimal RagMinSimilarity { get; init; } = 0.05m;
     public int MaxSourceCharacters { get; init; } = 12000;
 
     public bool UsesOpenAiCompatibleProvider() =>

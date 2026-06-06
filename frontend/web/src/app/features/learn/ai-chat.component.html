@@ -1,0 +1,107 @@
+<div class="ai-chat-page">
+  <section class="ai-chat-hero">
+    <div>
+      <span class="eyebrow">AI Tutor</span>
+      <h1>Ask questions from your course material.</h1>
+      <p>
+        Answers are grounded in indexed course and lesson content. Source cards
+        show where each answer came from.
+      </p>
+    </div>
+    <button class="primary-action" type="button" (click)="createSession()">
+      <i class="pi pi-plus"></i>
+      <span>New chat</span>
+    </button>
+  </section>
+
+  @if (error()) {
+    <div class="chat-alert">{{ error() }}</div>
+  }
+
+  <section class="chat-shell">
+    <aside class="session-list" aria-label="AI tutor sessions">
+      <div class="session-list__header">
+        <h2>Sessions</h2>
+        <button type="button" (click)="loadSessions()" aria-label="Refresh sessions">
+          <i class="pi pi-refresh"></i>
+        </button>
+      </div>
+
+      @if (isLoading()) {
+        <div class="session-empty">Loading sessions...</div>
+      } @else {
+        @for (session of sessions(); track session.id) {
+          <button
+            type="button"
+            class="session-item"
+            [class.session-item--active]="activeSession()?.id === session.id"
+            (click)="selectSession(session)"
+          >
+            <span>{{ session.title }}</span>
+            <small>{{ session.updatedAt || session.createdAt | date: "mediumDate" }}</small>
+          </button>
+        } @empty {
+          <div class="session-empty">Start a chat to ask about course content.</div>
+        }
+      }
+    </aside>
+
+    <main class="chat-panel">
+      <div class="message-thread" aria-live="polite">
+        @for (message of messages(); track message.id) {
+          <article class="message" [class.message--user]="message.role === 'User'">
+            <div class="message__bubble">
+              <div class="message__meta">
+                <span>{{ message.role === "User" ? "You" : "AI Tutor" }}</span>
+                @if (message.provider) {
+                  <small>{{ message.provider }} · {{ message.confidence | percent: "1.0-0" }}</small>
+                }
+              </div>
+              <p>{{ message.content }}</p>
+            </div>
+
+            @if (message.citations.length) {
+              <div class="citation-grid">
+                @for (citation of message.citations; track citation.chunkId) {
+                  <a
+                    class="citation-card"
+                    [routerLink]="['/learn/courses', citation.courseId]"
+                  >
+                    <strong>{{ citation.lessonTitle || citation.courseTitle }}</strong>
+                    <span>{{ citation.sectionTitle || citation.courseTitle }}</span>
+                    <p>{{ citation.snippet }}</p>
+                  </a>
+                }
+              </div>
+            }
+          </article>
+        } @empty {
+          <div class="thread-empty">
+            <i class="pi pi-sparkles"></i>
+            <h2>Ask about a lesson, topic, or concept.</h2>
+            <p>The tutor will answer from indexed course material and cite sources.</p>
+          </div>
+        }
+      </div>
+
+      <form class="composer" (ngSubmit)="send()">
+        <textarea
+          name="message"
+          [(ngModel)]="draft"
+          rows="3"
+          maxlength="1000"
+          placeholder="Ask: What does JWT validation mean in this course?"
+        ></textarea>
+        <button class="primary-action" type="submit" [disabled]="isSending() || !draft.trim()">
+          <i
+            class="pi"
+            [class.pi-send]="!isSending()"
+            [class.pi-spinner]="isSending()"
+            [class.pi-spin]="isSending()"
+          ></i>
+          <span>{{ isSending() ? "Thinking" : "Send" }}</span>
+        </button>
+      </form>
+    </main>
+  </section>
+</div>

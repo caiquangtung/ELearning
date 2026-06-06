@@ -743,6 +743,68 @@ export interface GeneratedQuizQuestionOptionDto {
   sortOrder: number;
 }
 
+export interface AiChatSessionDto {
+  id: string;
+  title: string;
+  courseId: string | null;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export interface AiChatCitationDto {
+  chunkId: string;
+  courseId: string;
+  sectionId: string | null;
+  lessonId: string | null;
+  courseTitle: string;
+  sectionTitle: string | null;
+  lessonTitle: string | null;
+  snippet: string;
+  score: number;
+}
+
+export interface AiChatMessageDto {
+  id: string;
+  role: string;
+  content: string;
+  citations: AiChatCitationDto[];
+  provider: string | null;
+  model: string | null;
+  promptVersion: string | null;
+  confidence: number | null;
+  usedContext: boolean;
+  createdAt: string;
+}
+
+export interface AiChatAnswerDto {
+  messageId: string;
+  answer: string;
+  citations: AiChatCitationDto[];
+  confidence: number;
+  usedContext: boolean;
+  provider: string;
+  model: string;
+}
+
+export interface CreateAiChatSessionRequest {
+  courseId: string | null;
+  title: string | null;
+}
+
+export interface SendAiChatMessageRequest {
+  message: string;
+}
+
+export interface ReindexAiKnowledgeRequest {
+  courseId: string | null;
+}
+
+export interface ReindexAiKnowledgeDto {
+  indexedCourses: number;
+  indexedChunks: number;
+  deletedStaleChunks: number;
+}
+
 export interface NotificationDto {
   id: string;
   userId: string;
@@ -1165,6 +1227,26 @@ export class LmsApiService {
    generateQuizQuestions(body: GenerateQuizQuestionsRequest): Observable<GeneratedQuizQuestionsDto> {
      return this.http.post<GeneratedQuizQuestionsDto>(`${this.base}/ai/quizzes/generate-questions`, body);
    }
+
+  createAiChatSession(body: CreateAiChatSessionRequest): Observable<AiChatSessionDto> {
+    return this.http.post<AiChatSessionDto>(`${this.base}/ai/chat/sessions`, body);
+  }
+
+  listAiChatSessions(): Observable<AiChatSessionDto[]> {
+    return this.http.get<AiChatSessionDto[]>(`${this.base}/ai/chat/sessions`);
+  }
+
+  getAiChatMessages(sessionId: string): Observable<AiChatMessageDto[]> {
+    return this.http.get<AiChatMessageDto[]>(`${this.base}/ai/chat/sessions/${sessionId}/messages`);
+  }
+
+  sendAiChatMessage(sessionId: string, body: SendAiChatMessageRequest): Observable<AiChatAnswerDto> {
+    return this.http.post<AiChatAnswerDto>(`${this.base}/ai/chat/sessions/${sessionId}/messages`, body);
+  }
+
+  reindexAiKnowledge(body: ReindexAiKnowledgeRequest): Observable<ReindexAiKnowledgeDto> {
+    return this.http.post<ReindexAiKnowledgeDto>(`${this.base}/ai/knowledge/reindex`, body);
+  }
 
   listNotifications(request: ListNotificationsRequest = {}): Observable<PagedList<NotificationDto>> {
     const params = new HttpParams()

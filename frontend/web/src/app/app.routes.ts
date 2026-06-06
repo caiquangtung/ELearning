@@ -152,6 +152,14 @@ export const routes: Routes = [
                 (m) => m.LearnComponent,
               ),
           },
+          {
+            path: 'ai-chat',
+            data: routeData('learn', 'AI Tutor'),
+            loadComponent: () =>
+              import('./features/learn/ai-chat.component').then(
+                (m) => m.AiChatComponent,
+              ),
+          },
         ],
       },
 

@@ -1,6 +1,8 @@
 using Asp.Versioning;
 using ELearning.Application.Features.Ai.CourseRecommendations;
 using ELearning.Application.Features.Ai.EssayGrading;
+using ELearning.Application.Features.Ai.Chat;
+using ELearning.Application.Features.Ai.Knowledge;
 using ELearning.Application.Features.Ai.LearnerRisk;
 using ELearning.Application.Features.Ai.LearningPaths;
 using ELearning.Application.Features.Ai.QuizQuestionGeneration;
@@ -52,6 +54,51 @@ public sealed class AiController(IMediator mediator) : ControllerBase
                 body.OrganizationId,
                 body.MaxCourses),
             ct);
+        return result.IsSuccess ? Ok(result.Value) : ProblemFrom(result.Error);
+    }
+
+    [HttpPost("chat/sessions")]
+    [HasPermission(Permissions.Courses.Read)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> CreateChatSession([FromBody] CreateAiChatSessionRequest body, CancellationToken ct)
+    {
+        var result = await mediator.Send(new CreateAiChatSessionCommand(body.CourseId, body.Title), ct);
+        return result.IsSuccess ? Ok(result.Value) : ProblemFrom(result.Error);
+    }
+
+    [HttpGet("chat/sessions")]
+    [HasPermission(Permissions.Courses.Read)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> ListChatSessions(CancellationToken ct)
+    {
+        var result = await mediator.Send(new ListAiChatSessionsQuery(), ct);
+        return result.IsSuccess ? Ok(result.Value) : ProblemFrom(result.Error);
+    }
+
+    [HttpGet("chat/sessions/{sessionId:guid}/messages")]
+    [HasPermission(Permissions.Courses.Read)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetChatMessages(Guid sessionId, CancellationToken ct)
+    {
+        var result = await mediator.Send(new GetAiChatMessagesQuery(sessionId), ct);
+        return result.IsSuccess ? Ok(result.Value) : ProblemFrom(result.Error);
+    }
+
+    [HttpPost("chat/sessions/{sessionId:guid}/messages")]
+    [HasPermission(Permissions.Courses.Read)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> SendChatMessage(Guid sessionId, [FromBody] SendAiChatMessageRequest body, CancellationToken ct)
+    {
+        var result = await mediator.Send(new SendAiChatMessageCommand(sessionId, body.Message), ct);
+        return result.IsSuccess ? Ok(result.Value) : ProblemFrom(result.Error);
+    }
+
+    [HttpPost("knowledge/reindex")]
+    [HasPermission(Permissions.Ai.Manage)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> ReindexKnowledge([FromBody] ReindexAiKnowledgeRequest body, CancellationToken ct)
+    {
+        var result = await mediator.Send(new ReindexAiKnowledgeCommand(body.CourseId), ct);
         return result.IsSuccess ? Ok(result.Value) : ProblemFrom(result.Error);
     }
 
