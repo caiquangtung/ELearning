@@ -162,18 +162,7 @@ public sealed class AiRagChatService(
             : config.RagChatPromptVersion;
 
         if (citations.Count == 0)
-        {
-            return new AiChatAnswer(
-                Guid.Empty,
-                "I don't have enough course material to answer that.",
-                [],
-                0m,
-                false,
-                "Local",
-                "extractive-rag-v1",
-                promptVersion,
-                OpenAiCompatibleJson.EstimateTokens(question));
-        }
+            return BuildNoContextAnswer(question, promptVersion);
 
         if (config.UsesOpenAiCompatibleProvider() &&
             !string.IsNullOrWhiteSpace(config.ApiKey) &&
@@ -211,6 +200,18 @@ public sealed class AiRagChatService(
 
         return BuildExtractiveAnswer(question, citations, promptVersion);
     }
+
+    internal static AiChatAnswer BuildNoContextAnswer(string question, string promptVersion) =>
+        new(
+            Guid.Empty,
+            "I don't have enough course material to answer that.",
+            [],
+            0m,
+            false,
+            "Local",
+            "extractive-rag-v1",
+            promptVersion,
+            OpenAiCompatibleJson.EstimateTokens(question));
 
     private static AiChatAnswer BuildExtractiveAnswer(
         string question,
