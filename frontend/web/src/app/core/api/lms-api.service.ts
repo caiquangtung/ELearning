@@ -676,6 +676,8 @@ export interface LearningPathDraftDto {
   courses: LearningPathCourseDto[];
 }
 
+export interface LearningPathCourseDto {
+  order: number;
   courseId: string;
   title: string;
   description: string | null;
@@ -686,8 +688,6 @@ export interface LearningPathDraftDto {
   reasons: string[];
 }
 
-<<<<<<< HEAD
-=======
 export interface CourseRecommendationsDto {
   provider: string;
   model: string;
