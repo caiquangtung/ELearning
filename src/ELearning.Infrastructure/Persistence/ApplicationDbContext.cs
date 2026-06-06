@@ -49,6 +49,9 @@ public class ApplicationDbContext(
     public DbSet<Review> Reviews => Set<Review>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<AiRequestLog> AiRequestLogs => Set<AiRequestLog>();
+    public DbSet<AiKnowledgeChunk> AiKnowledgeChunks => Set<AiKnowledgeChunk>();
+    public DbSet<AiChatSession> AiChatSessions => Set<AiChatSession>();
+    public DbSet<AiChatMessage> AiChatMessages => Set<AiChatMessage>();
 
     public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
     {

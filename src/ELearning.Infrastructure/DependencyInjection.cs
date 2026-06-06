@@ -91,6 +91,9 @@ public static class DependencyInjection
         services.AddScoped<OpenAiCompatibleQuizQuestionGenerator>();
         services.AddScoped<OpenAiCompatibleEssayGradingService>();
         services.AddScoped<OpenAiCompatibleLearningPathService>();
+        services.AddScoped<AiKnowledgeChunker>();
+        services.AddScoped<IAiKnowledgeIndexingService, AiKnowledgeIndexingService>();
+        services.AddScoped<IAiRagChatService, AiRagChatService>();
         services.AddScoped<IAiQuizQuestionGenerator, ConfigurableAiQuizQuestionGenerator>();
         services.AddScoped<IAiEssayGradingService, ConfigurableAiEssayGradingService>();
         services.AddSingleton<IAiEmbeddingService, LocalEmbeddingService>();
