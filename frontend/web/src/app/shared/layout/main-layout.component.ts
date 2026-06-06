@@ -309,6 +309,11 @@ export class MainLayoutComponent {
             routerLink: '/learn/ai-path',
           },
           {
+            label: 'AI Tutor',
+            icon: 'pi pi-comments',
+            routerLink: '/learn/ai-chat',
+          },
+          {
             label: 'Orders',
             icon: 'pi pi-shopping-bag',
             routerLink: '/learn/orders',
