@@ -2,16 +2,35 @@ using ELearning.Application.Common.Interfaces;
 using ELearning.Domain.Aggregates.CourseAggregate;
 using ELearning.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace ELearning.Infrastructure.Ai;
 
 public sealed class LocalLearningPathService(
     ApplicationDbContext context,
-    IAiEmbeddingService embeddingService)
+    IAiEmbeddingService embeddingService,
+    IOptions<AiOptions> options)
     : IAiLearningPathService
 {
+    public string CacheVariant
+    {
+        get
+        {
+            var config = options.Value;
+            var model = config.UsesOpenAiCompatibleProvider() || string.IsNullOrWhiteSpace(config.Model)
+                ? "local-learning-path-v1"
+                : config.Model;
+            var promptVersion = string.IsNullOrWhiteSpace(config.LearningPathPromptVersion)
+                ? "learning-path-generator-v1"
+                : config.LearningPathPromptVersion;
+
+            return $"local:{model}:{promptVersion}";
+        }
+    }
+
     public async Task<AiLearningPathDraft> GenerateAsync(AiLearningPathRequest request, CancellationToken ct = default)
     {
+        var config = options.Value;
         var maxCourses = Math.Clamp(request.MaxCourses, 1, 12);
         var intentText = string.Join(' ', request.Goal, request.CurrentSkills, request.TargetRole);
         var intentEmbedding = embeddingService.Embed(intentText);
@@ -42,6 +61,14 @@ public sealed class LocalLearningPathService(
             : Math.Round(Math.Min(0.95m, ranked.Average(x => x.Score) / 100m), 2);
 
         return new AiLearningPathDraft(
+            "Local",
+            config.UsesOpenAiCompatibleProvider() || string.IsNullOrWhiteSpace(config.Model)
+                ? "local-learning-path-v1"
+                : config.Model,
+            string.IsNullOrWhiteSpace(config.LearningPathPromptVersion)
+                ? "learning-path-generator-v1"
+                : config.LearningPathPromptVersion,
+            EstimateTokens(intentText),
             request.Goal,
             request.TargetRole,
             confidence,
@@ -49,6 +76,8 @@ public sealed class LocalLearningPathService(
             missingSkills,
             ranked);
     }
+
+    private static int EstimateTokens(string text) => Math.Max(1, (int)Math.Ceiling(text.Length / 4m));
 
     private AiLearningPathCourse ScoreCourse(
         Course course,

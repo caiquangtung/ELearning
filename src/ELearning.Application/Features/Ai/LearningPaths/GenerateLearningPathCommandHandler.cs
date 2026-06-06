@@ -17,10 +17,6 @@ public sealed class GenerateLearningPathCommandHandler(
     IUnitOfWork unitOfWork)
     : IRequestHandler<GenerateLearningPathCommand, Result<LearningPathDraftDto>>
 {
-    private const string Provider = "Local";
-    private const string Model = "local-learning-path-v1";
-    private const string PromptVersion = "learning-path-generator-v1";
-
     public async Task<Result<LearningPathDraftDto>> Handle(GenerateLearningPathCommand request, CancellationToken ct)
     {
         var input = new AiLearningPathRequest(
@@ -31,7 +27,7 @@ public sealed class GenerateLearningPathCommandHandler(
             Math.Clamp(request.MaxCourses, 1, 12));
 
         var inputHash = ComputeInputHash(input);
-        var cacheKey = cacheKeyBuilder.Build("ai", "learning-path", inputHash);
+        var cacheKey = cacheKeyBuilder.Build("ai", "learning-path", learningPathService.CacheVariant, inputHash);
 
         try
         {
@@ -44,17 +40,17 @@ public sealed class GenerateLearningPathCommandHandler(
             aiRequestLogRepository.Add(AiRequestLog.Succeeded(
                 currentUserService.UserId,
                 "LearningPathGeneration",
-                Provider,
-                Model,
-                PromptVersion,
+                draft.Provider,
+                draft.Model,
+                draft.PromptVersion,
                 inputHash,
-                EstimateTokens(input.Goal + " " + input.CurrentSkills + " " + input.TargetRole)));
+                draft.TokenEstimate));
             await unitOfWork.SaveChangesAsync(ct);
 
             return new LearningPathDraftDto(
-                Provider,
-                Model,
-                PromptVersion,
+                draft.Provider,
+                draft.Model,
+                draft.PromptVersion,
                 inputHash,
                 draft.Goal,
                 draft.TargetRole,
@@ -77,9 +73,9 @@ public sealed class GenerateLearningPathCommandHandler(
             aiRequestLogRepository.Add(AiRequestLog.Failed(
                 currentUserService.UserId,
                 "LearningPathGeneration",
-                Provider,
-                Model,
-                PromptVersion,
+                "AI",
+                "unknown",
+                "learning-path-generator-v1",
                 inputHash,
                 ex.Message));
             await unitOfWork.SaveChangesAsync(ct);
@@ -89,10 +85,8 @@ public sealed class GenerateLearningPathCommandHandler(
 
     private static string ComputeInputHash(AiLearningPathRequest input)
     {
-        var raw = string.Join('|', input.Goal, input.CurrentSkills, input.TargetRole, input.OrganizationId, input.MaxCourses, PromptVersion);
+        var raw = string.Join('|', input.Goal, input.CurrentSkills, input.TargetRole, input.OrganizationId, input.MaxCourses);
         var hash = SHA256.HashData(Encoding.UTF8.GetBytes(raw));
         return Convert.ToHexString(hash).ToLowerInvariant();
     }
-
-    private static int EstimateTokens(string text) => Math.Max(1, (int)Math.Ceiling(text.Length / 4m));
 }

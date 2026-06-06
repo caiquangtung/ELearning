@@ -83,13 +83,21 @@ public static class DependencyInjection
         services.AddSingleton<IPaymentService, NoOpPaymentService>();
         services.AddSingleton<ICertificatePdfService, SimpleCertificatePdfService>();
         services.AddSingleton<IEmailService, NoOpEmailService>();
-        services.AddSingleton<IAiQuizQuestionGenerator, LocalQuizQuestionGenerator>();
-        services.AddSingleton<IAiEssayGradingService, LocalEssayGradingService>();
+        services.AddSingleton<HttpClient>();
+        services.AddScoped<OpenAiCompatibleChatClient>();
+        services.AddSingleton<LocalQuizQuestionGenerator>();
+        services.AddSingleton<LocalEssayGradingService>();
+        services.AddScoped<LocalLearningPathService>();
+        services.AddScoped<OpenAiCompatibleQuizQuestionGenerator>();
+        services.AddScoped<OpenAiCompatibleEssayGradingService>();
+        services.AddScoped<OpenAiCompatibleLearningPathService>();
+        services.AddScoped<IAiQuizQuestionGenerator, ConfigurableAiQuizQuestionGenerator>();
+        services.AddScoped<IAiEssayGradingService, ConfigurableAiEssayGradingService>();
         services.AddSingleton<IAiEmbeddingService, LocalEmbeddingService>();
         services.AddScoped<IAiCourseRecommendationService, LocalCourseRecommendationService>();
         services.AddScoped<IAiLearnerRiskService, LocalLearnerRiskService>();
         services.AddScoped<IAiSemanticSearchService, LocalSemanticSearchService>();
-        services.AddScoped<IAiLearningPathService, LocalLearningPathService>();
+        services.AddScoped<IAiLearningPathService, ConfigurableAiLearningPathService>();
 
         services.AddSingleton<IFileStorage, LocalFileStorage>();
         services.AddSingleton<IZoomMeetingService, NoOpZoomMeetingService>();

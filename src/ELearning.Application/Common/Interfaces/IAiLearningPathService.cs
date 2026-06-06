@@ -2,6 +2,7 @@ namespace ELearning.Application.Common.Interfaces;
 
 public interface IAiLearningPathService
 {
+    string CacheVariant { get; }
     Task<AiLearningPathDraft> GenerateAsync(AiLearningPathRequest request, CancellationToken ct = default);
 }
 
@@ -13,6 +14,10 @@ public sealed record AiLearningPathRequest(
     int MaxCourses);
 
 public sealed record AiLearningPathDraft(
+    string Provider,
+    string Model,
+    string PromptVersion,
+    int? TokenEstimate,
     string Goal,
     string? TargetRole,
     decimal Confidence,

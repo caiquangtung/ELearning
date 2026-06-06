@@ -554,10 +554,11 @@ internal sealed record SeedProfile(
     public static SeedProfile Get(string name) =>
         name.ToLowerInvariant() switch
         {
+            "demo" => new("demo", 36, 2, 10, 10, 3, 4, 8, 3, 8, 5, 40, 4, 80, 16, 160),
             "small" => new("small", 50, 3, 12, 12, 3, 4, 18, 3, 12, 5, 60, 5, 150, 24, 300),
             "medium" => new("medium", 500, 12, 35, 80, 4, 5, 140, 4, 80, 8, 800, 10, 3_000, 250, 8_000),
             "large" => new("large", 4_000, 80, 80, 500, 5, 6, 1_000, 5, 500, 10, 5_000, 10, 30_000, 2_000, 80_000),
-            _ => throw new ArgumentException($"Unknown profile '{name}'. Use small, medium, or large.")
+            _ => throw new ArgumentException($"Unknown profile '{name}'. Use demo, small, medium, or large.")
         };
 }
 

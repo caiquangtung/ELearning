@@ -5,10 +5,9 @@ namespace ELearning.Infrastructure.Ai;
 
 public sealed class LocalEssayGradingService(IOptions<AiOptions> options) : IAiEssayGradingService
 {
-    private const string PromptVersion = "essay-grading-v1";
-
     public Task<AiEssayGradingResult> SuggestAsync(AiEssayGradingRequest request, CancellationToken ct = default)
     {
+        var config = options.Value;
         var suggestions = request.Answers
             .Select(answer =>
             {
@@ -45,9 +44,13 @@ public sealed class LocalEssayGradingService(IOptions<AiOptions> options) : IAiE
         var tokenEstimate = request.Answers.Sum(a => EstimateTokens(a.QuestionText) + EstimateTokens(a.AnswerText) + 20);
 
         return Task.FromResult(new AiEssayGradingResult(
-            options.Value.Provider,
-            string.IsNullOrWhiteSpace(options.Value.Model) ? "local-essay-grader-v1" : options.Value.Model,
-            PromptVersion,
+            "Local",
+            config.UsesOpenAiCompatibleProvider() || string.IsNullOrWhiteSpace(config.Model)
+                ? "local-essay-grader-v1"
+                : config.Model,
+            string.IsNullOrWhiteSpace(config.EssayGradingPromptVersion)
+                ? "essay-grading-v1"
+                : config.EssayGradingPromptVersion,
             tokenEstimate,
             suggestions));
     }
