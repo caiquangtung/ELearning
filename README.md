@@ -79,7 +79,15 @@ A modern, large-scale **e-learning system** built with **.NET Clean Architecture
 - AI essay grading assistant with score suggestions, confidence reasoning, and rubric feedback.
 - Personalized AI learning path generation based on learner goals, skills, and role targets.
 - Semantic course search and recommendations using embeddings and similarity ranking.
+- RAG AI Tutor for learner questions grounded in published course material with citations.
 - AI request audit logging and permissioned telemetry for safe AI operations.
+
+AI/RAG docs:
+
+- [`docs/ai-architecture.md`](docs/ai-architecture.md): deployed AI architecture, diagrams, flows, data model, and guardrails.
+- [`docs/ai-rag-foundation.md`](docs/ai-rag-foundation.md): RAG, chunking, embeddings, cosine similarity, grounding, citations, hallucination controls.
+- [`docs/ai-rag-runbook.md`](docs/ai-rag-runbook.md): provider config, reindexing, smoke tests, troubleshooting.
+- [`docs/ai-quality-evaluation.md`](docs/ai-quality-evaluation.md): quality checklist, RAG rubric, regression process.
 
 ## High-level Architecture
 

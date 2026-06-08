@@ -1,3 +1,4 @@
+using ELearning.Application.Common.Interfaces;
 using ELearning.Core.Abstractions;
 using ELearning.Core.Common;
 using MediatR;
@@ -8,7 +9,8 @@ public sealed class DeleteCourseCommandHandler(
     ICourseRepository courseRepository,
     IUnitOfWork unitOfWork,
     ICacheService cache,
-    ICacheKeyBuilder cacheKeyBuilder)
+    ICacheKeyBuilder cacheKeyBuilder,
+    IAiKnowledgeReindexQueue knowledgeReindexQueue)
     : IRequestHandler<DeleteCourseCommand, Result>
 {
     public async Task<Result> Handle(DeleteCourseCommand request, CancellationToken ct)
@@ -21,6 +23,7 @@ public sealed class DeleteCourseCommandHandler(
         await unitOfWork.SaveChangesAsync(ct);
         await cache.RemoveByPrefixAsync("courses:list", ct);
         await cache.RemoveAsync(cacheKeyBuilder.Build("courses", "detail", course.Id.ToString("N")), ct);
+        await knowledgeReindexQueue.EnqueueAsync(course.Id, ct);
 
         return Result.Success();
     }

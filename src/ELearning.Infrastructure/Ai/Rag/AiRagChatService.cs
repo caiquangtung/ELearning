@@ -11,7 +11,7 @@ namespace ELearning.Infrastructure.Ai;
 
 public sealed class AiRagChatService(
     ApplicationDbContext context,
-    IAiEmbeddingService embeddingService,
+    IAiKnowledgeRetriever knowledgeRetriever,
     OpenAiCompatibleChatClient chatClient,
     IOptions<AiOptions> options,
     ILogger<AiRagChatService> logger)
@@ -24,6 +24,7 @@ public sealed class AiRagChatService(
 
     public async Task<AiChatSessionSummary> CreateSessionAsync(
         Guid userId,
+        IReadOnlyCollection<string> userRoles,
         Guid? courseId,
         string? title,
         CancellationToken ct = default)
@@ -31,9 +32,18 @@ public sealed class AiRagChatService(
         Course? course = null;
         if (courseId.HasValue)
         {
+            var accessibleCourseIds = await AiKnowledgeAccessPolicy.GetAccessiblePublishedCourseIdsAsync(
+                context,
+                userId,
+                userRoles,
+                courseId,
+                ct);
+            if (!accessibleCourseIds.Contains(courseId.Value))
+                throw new KeyNotFoundException("Published course not found.");
+
             course = await context.Courses
                 .AsNoTracking()
-                .FirstOrDefaultAsync(c => c.Id == courseId.Value && c.Status == CourseStatus.Published, ct);
+                .FirstOrDefaultAsync(c => c.Id == courseId.Value && !c.IsDeleted && c.Status == CourseStatus.Published, ct);
             if (course is null)
                 throw new KeyNotFoundException("Published course not found.");
         }
@@ -81,6 +91,7 @@ public sealed class AiRagChatService(
 
     public async Task<AiChatAnswer> SendMessageAsync(
         Guid userId,
+        IReadOnlyCollection<string> userRoles,
         Guid sessionId,
         string message,
         CancellationToken ct = default)
@@ -93,7 +104,9 @@ public sealed class AiRagChatService(
         var userMessage = AiChatMessage.User(session.Id, message);
         await context.AiChatMessages.AddAsync(userMessage, ct);
 
-        var citations = await RetrieveAsync(message, session.CourseId, ct);
+        var citations = await knowledgeRetriever.RetrieveAsync(
+            new AiKnowledgeRetrievalRequest(userId, userRoles, message, session.CourseId),
+            ct);
         var answer = await GenerateAnswerAsync(message, citations, ct);
         var citationsJson = JsonSerializer.Serialize(answer.Citations, JsonOptions);
         var assistantMessage = AiChatMessage.Assistant(
@@ -111,44 +124,6 @@ public sealed class AiRagChatService(
         await context.SaveChangesAsync(ct);
 
         return answer with { MessageId = assistantMessage.Id };
-    }
-
-    private async Task<IReadOnlyList<AiChatCitation>> RetrieveAsync(
-        string question,
-        Guid? courseId,
-        CancellationToken ct)
-    {
-        var config = options.Value;
-        var maxChunks = Math.Clamp(config.RagMaxRetrievedChunks, 1, 8);
-        var minSimilarity = Math.Clamp(config.RagMinSimilarity, 0m, 1m);
-        var queryEmbedding = embeddingService.Embed(question);
-
-        var publishedCourseIds = await context.Courses
-            .Where(c => c.Status == CourseStatus.Published)
-            .Where(c => !courseId.HasValue || c.Id == courseId.Value)
-            .Select(c => c.Id)
-            .ToListAsync(ct);
-
-        if (publishedCourseIds.Count == 0)
-            return [];
-
-        var chunks = await context.AiKnowledgeChunks
-            .AsNoTracking()
-            .Where(x => publishedCourseIds.Contains(x.CourseId))
-            .ToListAsync(ct);
-
-        return chunks
-            .Select(chunk => new
-            {
-                Chunk = chunk,
-                Score = embeddingService.CosineSimilarity(queryEmbedding, DeserializeEmbedding(chunk.EmbeddingJson))
-            })
-            .Where(x => x.Score >= minSimilarity)
-            .OrderByDescending(x => x.Score)
-            .ThenBy(x => x.Chunk.CourseTitle)
-            .Take(maxChunks)
-            .Select(x => ToCitation(x.Chunk, x.Score))
-            .ToList();
     }
 
     private async Task<AiChatAnswer> GenerateAnswerAsync(
@@ -213,7 +188,7 @@ public sealed class AiRagChatService(
             promptVersion,
             OpenAiCompatibleJson.EstimateTokens(question));
 
-    private static AiChatAnswer BuildExtractiveAnswer(
+    internal static AiChatAnswer BuildExtractiveAnswer(
         string question,
         IReadOnlyList<AiChatCitation> citations,
         string promptVersion)
@@ -260,10 +235,6 @@ public sealed class AiRagChatService(
         return JsonSerializer.Serialize(payload, JsonOptions);
     }
 
-    private static IReadOnlyDictionary<string, decimal> DeserializeEmbedding(string embeddingJson) =>
-        JsonSerializer.Deserialize<Dictionary<string, decimal>>(embeddingJson, JsonOptions) ??
-        new Dictionary<string, decimal>();
-
     private static AiChatSessionSummary ToSummary(AiChatSession session) =>
         new(session.Id, session.Title, session.CourseId, session.CreatedAt, session.UpdatedAt);
 
@@ -282,24 +253,6 @@ public sealed class AiRagChatService(
 
     private static IReadOnlyList<AiChatCitation> DeserializeCitations(string citationsJson) =>
         JsonSerializer.Deserialize<IReadOnlyList<AiChatCitation>>(citationsJson, JsonOptions) ?? [];
-
-    private static AiChatCitation ToCitation(AiKnowledgeChunk chunk, decimal score) =>
-        new(
-            chunk.Id,
-            chunk.CourseId,
-            chunk.SectionId,
-            chunk.LessonId,
-            chunk.CourseTitle,
-            chunk.SectionTitle,
-            chunk.LessonTitle,
-            TrimSnippet(chunk.Text),
-            Math.Round(score, 4));
-
-    private static string TrimSnippet(string text)
-    {
-        var normalized = text.ReplaceLineEndings(" ").Trim();
-        return normalized.Length <= 420 ? normalized : normalized[..420].TrimEnd() + "...";
-    }
 
     private sealed record RagProviderAnswer(string? Answer, decimal Confidence);
 }

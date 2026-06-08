@@ -19,10 +19,15 @@ MVP completed.
   - `AiKnowledgeIndexingService` for embedding creation, deduplication, and chunk persistence
 - Added RAG retrieval pipeline:
   - question embedding via `IAiEmbeddingService`
-  - citation retrieval from `AiKnowledgeChunks`
-  - prompt assembly and provider call in `AiRagChatService`
+  - access-scoped citation retrieval from `AiKnowledgeChunks` through `IAiKnowledgeRetriever`
+  - chat orchestration and provider fallback in `AiRagChatService`
 - Added OpenAI-compatible provider integration with extractive fallback.
 - Added Angular learner chat UI and API bindings in `frontend/web/src/app/features/learn/ai-chat.component.ts`.
+- Added AI/RAG architecture, foundation, runbook, and quality evaluation docs:
+  - `docs/ai-architecture.md`
+  - `docs/ai-rag-foundation.md`
+  - `docs/ai-rag-runbook.md`
+  - `docs/ai-quality-evaluation.md`
 
 ## Design Notes
 
@@ -42,5 +47,5 @@ MVP completed.
 
 - Add frontend acceptance tests for chat session creation, message send, and citation rendering.
 - Add provider-quality checks for external OpenAI-compatible chat responses.
-- Add scheduled knowledge reindexing when course content changes.
+- Replace in-memory background reindex queue with durable distributed jobs before horizontal scaling.
 - Add an admin screen for RAG usage, citations, and audit logs.

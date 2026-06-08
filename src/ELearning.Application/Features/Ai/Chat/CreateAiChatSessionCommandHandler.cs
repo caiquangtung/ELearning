@@ -19,6 +19,7 @@ public sealed class CreateAiChatSessionCommandHandler(
         {
             var session = await chatService.CreateSessionAsync(
                 currentUserService.UserId.Value,
+                currentUserService.Roles.ToArray(),
                 request.CourseId,
                 request.Title,
                 ct);

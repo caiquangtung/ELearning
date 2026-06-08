@@ -30,6 +30,7 @@ public sealed class SendAiChatMessageCommandHandler(
         {
             var answer = await chatService.SendMessageAsync(
                 currentUserService.UserId.Value,
+                currentUserService.Roles.ToArray(),
                 request.SessionId,
                 request.Message,
                 ct);

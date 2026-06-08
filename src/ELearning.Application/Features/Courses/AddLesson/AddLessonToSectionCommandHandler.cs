@@ -1,6 +1,8 @@
+using ELearning.Application.Common.Interfaces;
 using ELearning.Application.Features.Courses.Common;
 using ELearning.Core.Abstractions;
 using ELearning.Core.Common;
+using ELearning.Domain.Aggregates.CourseAggregate;
 using ELearning.Domain.Exceptions;
 using MediatR;
 
@@ -8,7 +10,8 @@ namespace ELearning.Application.Features.Courses.AddLesson;
 
 public sealed class AddLessonToSectionCommandHandler(
     ICourseRepository courseRepository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IAiKnowledgeReindexQueue knowledgeReindexQueue)
     : IRequestHandler<AddLessonToSectionCommand, Result<LessonDto>>
 {
     public async Task<Result<LessonDto>> Handle(AddLessonToSectionCommand request, CancellationToken ct)
@@ -26,6 +29,8 @@ public sealed class AddLessonToSectionCommandHandler(
             var lesson = section.AddLesson(request.Title);
             courseRepository.Update(course);
             await unitOfWork.SaveChangesAsync(ct);
+            if (course.Status == CourseStatus.Published)
+                await knowledgeReindexQueue.EnqueueAsync(course.Id, ct);
             return new LessonDto(lesson.Id, lesson.Title, lesson.SortOrder, lesson.Content);
         }
         catch (DomainException ex)
@@ -34,4 +39,3 @@ public sealed class AddLessonToSectionCommandHandler(
         }
     }
 }
-

@@ -93,7 +93,11 @@ public static class DependencyInjection
         services.AddScoped<OpenAiCompatibleLearningPathService>();
         services.AddScoped<AiKnowledgeChunker>();
         services.AddScoped<IAiKnowledgeIndexingService, AiKnowledgeIndexingService>();
+        services.AddScoped<IAiKnowledgeRetriever, AiKnowledgeRetriever>();
         services.AddScoped<IAiRagChatService, AiRagChatService>();
+        services.AddSingleton<InMemoryAiKnowledgeReindexQueue>();
+        services.AddSingleton<IAiKnowledgeReindexQueue>(sp => sp.GetRequiredService<InMemoryAiKnowledgeReindexQueue>());
+        services.AddHostedService<AiKnowledgeReindexWorker>();
         services.AddScoped<IAiQuizQuestionGenerator, ConfigurableAiQuizQuestionGenerator>();
         services.AddScoped<IAiEssayGradingService, ConfigurableAiEssayGradingService>();
         services.AddSingleton<IAiEmbeddingService, LocalEmbeddingService>();

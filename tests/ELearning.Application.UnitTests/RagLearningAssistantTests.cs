@@ -1,3 +1,5 @@
+using ELearning.Application.Common.Interfaces;
+using ELearning.Core.Constants;
 using ELearning.Domain.Aggregates.AiAggregate;
 using ELearning.Domain.Aggregates.CourseAggregate;
 using ELearning.Infrastructure.Ai;
@@ -38,6 +40,59 @@ public class RagLearningAssistantTests
         answer.Citations.Should().BeEmpty();
         answer.Confidence.Should().Be(0);
         answer.Answer.Should().Contain("don't have enough course material");
+    }
+
+    [Fact]
+    public void Extractive_answer_returns_only_retrieved_citations()
+    {
+        var citation = new AiChatCitation(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            "Secure API Development",
+            "Authentication",
+            "JWT validation",
+            "JWT validation checks signatures and expiry.",
+            0.91m);
+
+        var answer = AiRagChatService.BuildExtractiveAnswer(
+            "How should JWT validation work?",
+            [citation],
+            "rag-learning-assistant-v1");
+
+        answer.UsedContext.Should().BeTrue();
+        answer.Citations.Should().ContainSingle().Which.Should().Be(citation);
+        answer.Answer.Should().Contain(citation.Snippet);
+        answer.Provider.Should().Be("Local");
+    }
+
+    [Theory]
+    [InlineData(Roles.Admin, true)]
+    [InlineData(Roles.Instructor, true)]
+    [InlineData(Roles.OrgAdmin, true)]
+    [InlineData(Roles.Learner, false)]
+    public void Knowledge_access_policy_keeps_privileged_scope_explicit(string role, bool expected)
+    {
+        AiKnowledgeAccessPolicy.HasPrivilegedKnowledgeAccess([role]).Should().Be(expected);
+    }
+
+    [Fact]
+    public async Task Knowledge_reindex_queue_preserves_course_scope()
+    {
+        var queue = new InMemoryAiKnowledgeReindexQueue();
+        var courseId = Guid.NewGuid();
+
+        await queue.EnqueueAsync(courseId);
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+        await foreach (var queuedCourseId in queue.ReadAllAsync(cts.Token))
+        {
+            queuedCourseId.Should().Be(courseId);
+            return;
+        }
+
+        throw new InvalidOperationException("AI knowledge reindex queue did not yield an item.");
     }
 
     [Fact]

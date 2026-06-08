@@ -1,3 +1,4 @@
+using ELearning.Application.Common.Interfaces;
 using ELearning.Core.Abstractions;
 using ELearning.Core.Common;
 using ELearning.Domain.Exceptions;
@@ -9,7 +10,8 @@ public sealed class PublishCourseCommandHandler(
     ICourseRepository courseRepository,
     IUnitOfWork unitOfWork,
     ICacheService cache,
-    ICacheKeyBuilder cacheKeyBuilder)
+    ICacheKeyBuilder cacheKeyBuilder,
+    IAiKnowledgeReindexQueue knowledgeReindexQueue)
     : IRequestHandler<PublishCourseCommand, Result>
 {
     public async Task<Result> Handle(PublishCourseCommand request, CancellationToken ct)
@@ -31,6 +33,7 @@ public sealed class PublishCourseCommandHandler(
         await unitOfWork.SaveChangesAsync(ct);
         await cache.RemoveByPrefixAsync("courses:list", ct);
         await cache.RemoveAsync(cacheKeyBuilder.Build("courses", "detail", course.Id.ToString("N")), ct);
+        await knowledgeReindexQueue.EnqueueAsync(course.Id, ct);
         return Result.Success();
     }
 }

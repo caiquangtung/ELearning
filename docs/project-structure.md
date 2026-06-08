@@ -406,6 +406,10 @@ frontend/
 docs/
 ├── project-management-plan.md
 ├── advanced-architecture-notes.md
+├── ai-architecture.md
+├── ai-rag-foundation.md
+├── ai-rag-runbook.md
+├── ai-quality-evaluation.md
 ├── erd.md
 └── project-structure.md
 ```

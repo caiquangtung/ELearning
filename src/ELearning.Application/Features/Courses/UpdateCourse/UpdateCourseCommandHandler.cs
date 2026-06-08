@@ -1,6 +1,8 @@
 using ELearning.Application.Features.Courses.Common;
+using ELearning.Application.Common.Interfaces;
 using ELearning.Core.Abstractions;
 using ELearning.Core.Common;
+using ELearning.Domain.Aggregates.CourseAggregate;
 using ELearning.Domain.Exceptions;
 using MediatR;
 
@@ -10,7 +12,8 @@ public sealed class UpdateCourseCommandHandler(
     ICourseRepository courseRepository,
     IUnitOfWork unitOfWork,
     ICacheService cache,
-    ICacheKeyBuilder cacheKeyBuilder)
+    ICacheKeyBuilder cacheKeyBuilder,
+    IAiKnowledgeReindexQueue knowledgeReindexQueue)
     : IRequestHandler<UpdateCourseCommand, Result<CourseDto>>
 {
     public async Task<Result<CourseDto>> Handle(UpdateCourseCommand request, CancellationToken ct)
@@ -32,6 +35,8 @@ public sealed class UpdateCourseCommandHandler(
         await unitOfWork.SaveChangesAsync(ct);
         await cache.RemoveByPrefixAsync("courses:list", ct);
         await cache.RemoveAsync(cacheKeyBuilder.Build("courses", "detail", course.Id.ToString("N")), ct);
+        if (course.Status == CourseStatus.Published)
+            await knowledgeReindexQueue.EnqueueAsync(course.Id, ct);
 
         return new CourseDto(
             course.Id,

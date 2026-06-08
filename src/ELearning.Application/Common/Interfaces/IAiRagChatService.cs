@@ -2,10 +2,21 @@ namespace ELearning.Application.Common.Interfaces;
 
 public interface IAiRagChatService
 {
-    Task<AiChatSessionSummary> CreateSessionAsync(Guid userId, Guid? courseId, string? title, CancellationToken ct = default);
+    Task<AiChatSessionSummary> CreateSessionAsync(
+        Guid userId,
+        IReadOnlyCollection<string> userRoles,
+        Guid? courseId,
+        string? title,
+        CancellationToken ct = default);
+
     Task<IReadOnlyList<AiChatSessionSummary>> ListSessionsAsync(Guid userId, CancellationToken ct = default);
     Task<IReadOnlyList<AiChatMessageItem>> GetMessagesAsync(Guid userId, Guid sessionId, CancellationToken ct = default);
-    Task<AiChatAnswer> SendMessageAsync(Guid userId, Guid sessionId, string message, CancellationToken ct = default);
+    Task<AiChatAnswer> SendMessageAsync(
+        Guid userId,
+        IReadOnlyCollection<string> userRoles,
+        Guid sessionId,
+        string message,
+        CancellationToken ct = default);
 }
 
 public sealed record AiChatSessionSummary(

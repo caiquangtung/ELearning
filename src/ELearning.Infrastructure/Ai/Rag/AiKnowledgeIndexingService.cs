@@ -22,14 +22,14 @@ public sealed class AiKnowledgeIndexingService(
         var courses = await context.Courses
             .Include(c => c.Sections)
                 .ThenInclude(s => s.Lessons)
-            .Where(c => c.Status == CourseStatus.Published)
+            .Where(c => !c.IsDeleted && c.Status == CourseStatus.Published)
             .Where(c => !courseId.HasValue || c.Id == courseId.Value)
             .OrderBy(c => c.Title)
             .ToListAsync(ct);
 
         var scopeCourseIds = courseId.HasValue
             ? [courseId.Value]
-            : await context.Courses.Select(c => c.Id).ToListAsync(ct);
+            : await context.Courses.IgnoreQueryFilters().Select(c => c.Id).ToListAsync(ct);
 
         var existing = await context.AiKnowledgeChunks
             .Where(x => scopeCourseIds.Contains(x.CourseId))

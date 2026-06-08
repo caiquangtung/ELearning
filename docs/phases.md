@@ -581,4 +581,8 @@ WebApi Controller
 | [`advanced-architecture-notes.md`](./advanced-architecture-notes.md) | Pricing engine, reservation pattern, Zoom events, seat management |
 | [`sprint-plan.md`](./sprint-plan.md) | Sprint-by-sprint task breakdown (Scrum, 2-week sprints) |
 | [`project-structure.md`](./project-structure.md) | Folder layout for .NET Clean Architecture + Angular |
+| [`ai-architecture.md`](./ai-architecture.md) | Deployed AI/RAG architecture, diagrams, flows, provider strategy, and guardrails |
+| [`ai-rag-foundation.md`](./ai-rag-foundation.md) | Foundation concepts for RAG, chunking, embeddings, grounding, citations, and hallucination control |
+| [`ai-rag-runbook.md`](./ai-rag-runbook.md) | AI/RAG configuration, reindexing, smoke tests, and troubleshooting |
+| [`ai-quality-evaluation.md`](./ai-quality-evaluation.md) | AI quality checklist, RAG rubric, golden dataset guidance, and release gates |
 | [`src/README.md`](../src/README.md) | High-level build plan and technology choices |

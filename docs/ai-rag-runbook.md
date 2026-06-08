@@ -1,0 +1,312 @@
+# AI/RAG Runbook
+
+This runbook covers setup, reindexing, operational checks, and troubleshooting for the AI/RAG features.
+
+## Quick Status
+
+| Area | Current state |
+| --- | --- |
+| Default provider | `Local` |
+| External provider | OpenAI-compatible chat HTTP |
+| RAG embeddings | Local deterministic sparse vectors |
+| RAG vector store | Postgres JSON vectors in `AiKnowledgeChunks` |
+| RAG reindex endpoint | `POST /api/v1/ai/knowledge/reindex` |
+| RAG background queue | In-memory queue + hosted worker |
+| RAG fallback | Local extractive answer from retrieved snippets |
+| Required RAG manage permission | `AI.Manage` |
+
+## Configuration
+
+Use environment variables or user-secrets. Do not commit provider secrets to appsettings.
+
+### Local Provider
+
+No secret is required.
+
+```bash
+Ai__Provider=Local
+Ai__FallbackToLocal=true
+```
+
+### OpenAI-Compatible Provider
+
+```bash
+Ai__Provider=OpenAiCompatible
+Ai__BaseUrl=https://api.openai.com/v1
+Ai__ApiKey=<secret>
+Ai__ChatModel=<chat-model>
+Ai__TimeoutSeconds=30
+Ai__MaxOutputTokens=1200
+Ai__MaxRetries=2
+Ai__FallbackToLocal=true
+```
+
+For local OpenAI-compatible gateways, set `Ai__BaseUrl` to the gateway's `/v1` base URL and set `Ai__ChatModel` to the served model name.
+
+## RAG Tuning Options
+
+```bash
+Ai__RagChatPromptVersion=rag-learning-assistant-v1
+Ai__RagMaxRetrievedChunks=4
+Ai__RagMinSimilarity=0.05
+Ai__MaxSourceCharacters=12000
+```
+
+Guidance:
+
+- Increase `RagMaxRetrievedChunks` if answers miss context.
+- Decrease `RagMaxRetrievedChunks` if answers include noisy references.
+- Increase `RagMinSimilarity` if irrelevant citations appear.
+- Decrease `RagMinSimilarity` if the assistant refuses too often.
+
+## Reindex Knowledge
+
+Reindex all published course content:
+
+```http
+POST /api/v1/ai/knowledge/reindex
+Authorization: Bearer <admin-token>
+Content-Type: application/json
+
+{ "courseId": null }
+```
+
+Reindex one course:
+
+```http
+POST /api/v1/ai/knowledge/reindex
+Authorization: Bearer <admin-token>
+Content-Type: application/json
+
+{ "courseId": "00000000-0000-0000-0000-000000000000" }
+```
+
+Expected response:
+
+```json
+{
+  "indexedCourses": 1,
+  "indexedChunks": 12,
+  "deletedStaleChunks": 2
+}
+```
+
+## Automatic Reindex Triggers
+
+The app enqueues background reindex after:
+
+- course publish
+- update of a published course
+- add section to a published course
+- add lesson to a published course
+- course delete
+
+The background queue is in-memory. If the process restarts before queued work runs, trigger manual reindex.
+
+## Learner Chat Smoke Test
+
+Prerequisites:
+
+- published course with lesson content
+- knowledge reindexed
+- learner has access to the course, or the course is free
+
+Flow:
+
+1. Create session:
+
+```http
+POST /api/v1/ai/chat/sessions
+Authorization: Bearer <learner-token>
+Content-Type: application/json
+
+{ "courseId": null, "title": "AI Tutor" }
+```
+
+2. Send question:
+
+```http
+POST /api/v1/ai/chat/sessions/{sessionId}/messages
+Authorization: Bearer <learner-token>
+Content-Type: application/json
+
+{ "message": "What does this course say about JWT validation?" }
+```
+
+3. Check response:
+
+```json
+{
+  "answer": "Based on the course material: ...",
+  "citations": [
+    {
+      "courseTitle": "Secure API Development",
+      "lessonTitle": "JWT validation",
+      "snippet": "...",
+      "score": 0.91
+    }
+  ],
+  "confidence": 0.85,
+  "usedContext": true,
+  "provider": "Local",
+  "model": "extractive-rag-v1"
+}
+```
+
+## Expected Refusal
+
+For out-of-scope questions, the assistant should refuse:
+
+```json
+{
+  "answer": "I don't have enough course material to answer that.",
+  "citations": [],
+  "confidence": 0,
+  "usedContext": false
+}
+```
+
+## Operational Checks
+
+### Check Knowledge Chunks
+
+Use DB inspection to verify `AiKnowledgeChunks` has rows for published courses.
+
+Minimum fields to inspect:
+
+- `course_id`
+- `source_type`
+- `course_title`
+- `lesson_title`
+- `chunk_index`
+- `content_hash`
+- `text`
+- `embedding_json`
+
+### Check Chat Persistence
+
+For a sent message, verify:
+
+- one user `AiChatMessage`
+- one assistant `AiChatMessage`
+- assistant `citations_json`
+- assistant `provider`
+- assistant `model`
+- assistant `prompt_version`
+- assistant `confidence`
+- assistant `used_context`
+
+### Check AI Request Log
+
+For RAG chat, inspect `AiRequestLog`:
+
+- `feature=RagLearningAssistant`
+- provider/model
+- prompt version
+- status
+- token estimate
+- error message if failed
+
+## Troubleshooting
+
+### Assistant Always Refuses
+
+Likely causes:
+
+- knowledge was not reindexed
+- course is not published
+- learner does not have access to the course
+- question does not overlap with local sparse embeddings
+- `RagMinSimilarity` is too high
+- lesson content is empty or not included in chunks
+
+Actions:
+
+1. Reindex knowledge manually.
+2. Confirm published course has lessons/content.
+3. Confirm learner course access.
+4. Lower `Ai__RagMinSimilarity`.
+5. Ask a more course-specific question using terms from the lesson.
+
+### Citations Are Irrelevant
+
+Likely causes:
+
+- local sparse embeddings are too shallow for semantic matching
+- `RagMinSimilarity` is too low
+- chunks are too broad
+- course content has repeated generic terms
+
+Actions:
+
+1. Increase `Ai__RagMinSimilarity`.
+2. Reduce `Ai__RagMaxRetrievedChunks`.
+3. Improve course/lesson text quality.
+4. Consider real embedding provider or `pgvector` follow-up.
+
+### Provider Fails But Local Works
+
+Likely causes:
+
+- missing `Ai__ApiKey`
+- missing `Ai__ChatModel`
+- invalid `Ai__BaseUrl`
+- provider timeout
+- provider response is not valid JSON
+
+Actions:
+
+1. Confirm env/user-secret values.
+2. Check provider logs.
+3. Keep `Ai__FallbackToLocal=true` for demo/internal usage.
+4. Review `AiRequestLog` failed records.
+
+### Provider Answers Without Enough Grounding
+
+Expected behavior should prevent this because citations come from retrieval, not from the provider.
+
+Actions:
+
+1. Inspect `citations_json` on assistant message.
+2. Confirm answer text is supported by cited snippets.
+3. If unsupported answer text appears, tighten the RAG prompt and increment `RagChatPromptVersion`.
+4. Add evaluation cases for this scenario.
+
+### Reindex Does Not Delete Stale Chunks
+
+Check:
+
+- Was reindex scoped to the right `courseId`?
+- Was the course soft-deleted and full reindex not run?
+- Did background queue run before process shutdown?
+
+Actions:
+
+1. Run manual full reindex.
+2. Inspect `deletedStaleChunks`.
+3. Confirm old content hashes are no longer desired.
+
+## Deployment Notes
+
+- Keep `Provider=Local` as default for local/dev environments.
+- Use user-secrets or environment variables for provider credentials.
+- Run manual full reindex after seed/demo data changes.
+- Run manual full reindex after bulk import/migration of course content.
+- For multiple API instances, replace in-memory queue with a durable distributed job system before relying on background reindex.
+
+## Verification Commands
+
+Backend:
+
+```bash
+dotnet test src/ELearning.sln --no-restore -m:1 /nr:false
+```
+
+Frontend:
+
+```bash
+cd frontend/web
+npm run build
+```
+
+Playwright smoke requires the API to be running on the configured base URL before RAG tests can pass.
