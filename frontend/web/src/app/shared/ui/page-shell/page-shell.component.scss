@@ -4,7 +4,7 @@
 
 .page-shell__header {
   display: block;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1rem;
 }
 
 .page-shell__title-block {
@@ -13,17 +13,17 @@
 
 .page-shell__title-block h1 {
   color: #111827;
-  font-size: clamp(1.65rem, 1.25rem + 1vw, 2.35rem);
+  font-size: 1.6rem;
   font-weight: 800;
-  line-height: 1.08;
+  line-height: 1.18;
   margin: 0;
 }
 
 .page-shell__title-block p {
   color: #64748b;
-  font-size: 0.98rem;
+  font-size: 0.92rem;
   line-height: 1.5;
-  margin: 0.5rem 0 0;
+  margin: 0.4rem 0 0;
   max-width: 56rem;
 }
 
@@ -37,15 +37,13 @@
   right: 0;
   top: 50dvh;
   z-index: 45;
-  padding: 0.55rem 0.45rem;
-  border: 1px solid color-mix(in srgb, var(--app-border) 70%, transparent);
+  padding: 0.45rem 0.35rem;
+  border: 1px solid var(--app-border);
   border-right: 0;
-  border-radius: 18px 0 0 18px;
-  background: rgba(226, 232, 240, 0.84);
-  box-shadow: -16px 18px 38px rgba(15, 23, 42, 0.16);
+  border-radius: var(--app-radius) 0 0 var(--app-radius);
+  background: #fff;
+  box-shadow: var(--app-shadow-sm);
   transform: translateY(-50%);
-  backdrop-filter: blur(14px);
-  animation: action-rail-enter var(--app-motion) both;
 }
 
 .page-shell__actions:empty {
@@ -57,13 +55,13 @@
 }
 
 :host ::ng-deep .page-shell__actions .p-button {
-  width: 2.65rem !important;
-  height: 2.65rem !important;
-  min-width: 2.65rem !important;
-  min-height: 2.65rem !important;
+  width: 2.35rem !important;
+  height: 2.35rem !important;
+  min-width: 2.35rem !important;
+  min-height: 2.35rem !important;
   padding: 0 !important;
-  border-radius: 999px !important;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14) !important;
+  border-radius: var(--app-radius) !important;
+  box-shadow: none !important;
 }
 
 :host ::ng-deep .page-shell__actions .p-button .p-button-label {
@@ -76,8 +74,8 @@
 
 @media (max-width: 760px) {
   .page-shell__actions {
-    padding: 0.45rem 0.35rem;
-    border-radius: 16px 0 0 16px;
+    padding: 0.35rem 0.3rem;
+    border-radius: var(--app-radius) 0 0 var(--app-radius);
   }
 
   :host ::ng-deep .page-shell__actions .p-button {
@@ -85,16 +83,5 @@
     height: 2.35rem !important;
     min-width: 2.35rem !important;
     min-height: 2.35rem !important;
-  }
-}
-
-@keyframes action-rail-enter {
-  from {
-    opacity: 0;
-    transform: translate(100%, -50%);
-  }
-  to {
-    opacity: 1;
-    transform: translate(0, -50%);
   }
 }

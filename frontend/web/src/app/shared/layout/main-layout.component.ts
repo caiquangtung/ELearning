@@ -87,7 +87,6 @@ type PortalOption = {
         class="sidebar-slider-toggle"
         [icon]="isSidebarCollapsed() ? 'pi pi-angle-right' : 'pi pi-angle-left'"
         severity="secondary"
-        [rounded]="true"
         [text]="true"
         [ariaLabel]="isSidebarCollapsed() ? 'Show sidebar' : 'Hide sidebar'"
         (onClick)="toggleSidebar()"

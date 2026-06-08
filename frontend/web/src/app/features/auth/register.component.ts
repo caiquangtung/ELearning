@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Button } from 'primeng/button';
 import { Card } from 'primeng/card';
 import { FloatLabel } from 'primeng/floatlabel';
@@ -29,6 +29,7 @@ export class RegisterComponent {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly errors = inject(GlobalErrorService);
 
   readonly form = this.fb.nonNullable.group({
@@ -41,6 +42,10 @@ export class RegisterComponent {
   readonly pending = signal(false);
   readonly localError = signal<string | null>(null);
 
+  returnUrl(): string | null {
+    return this.route.snapshot.queryParamMap.get('returnUrl');
+  }
+
   submit(): void {
     if (this.form.invalid) return;
     this.localError.set(null);
@@ -50,7 +55,8 @@ export class RegisterComponent {
     this.auth.register(v).subscribe({
       next: () => {
         this.pending.set(false);
-        void this.router.navigateByUrl('/');
+        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+        void this.router.navigateByUrl(returnUrl || '/learn');
       },
       error: () => {
         this.pending.set(false);

@@ -10,64 +10,26 @@
 }
 
 .course-summary__item {
-  position: relative;
-  overflow: hidden;
-  min-height: 5.25rem;
-  padding: 1rem;
+  min-height: 4.75rem;
+  padding: 0.9rem;
   border: 1px solid var(--app-border);
-  border-radius: 8px;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+  border-radius: var(--app-radius);
+  background: #fff;
   box-shadow: var(--app-shadow-sm);
-  animation: course-card-enter var(--app-motion) both;
   transition:
     border-color var(--app-motion-fast),
-    box-shadow var(--app-motion-fast),
-    transform var(--app-motion-fast);
-}
-
-.course-summary__item::after {
-  content: "";
-  position: absolute;
-  inset: auto -2rem -2.25rem auto;
-  width: 6rem;
-  height: 6rem;
-  border-radius: 999px;
-  background: color-mix(
-    in srgb,
-    var(--primary-color, #0f766e) 12%,
-    transparent
-  );
-  transition:
-    opacity var(--app-motion-fast),
-    transform var(--app-motion-fast);
-}
-
-.course-summary__item:nth-child(2) {
-  animation-delay: 60ms;
-}
-
-.course-summary__item:nth-child(3) {
-  animation-delay: 120ms;
+    box-shadow var(--app-motion-fast);
 }
 
 .course-summary__item:hover {
-  border-color: color-mix(
-    in srgb,
-    var(--primary-color, #0f766e) 22%,
-    var(--app-border)
-  );
-  box-shadow: var(--app-shadow-md);
-  transform: translateY(-2px);
-}
-
-.course-summary__item:hover::after {
-  transform: scale(1.14);
+  border-color: var(--app-border-strong);
+  box-shadow: var(--app-shadow-sm);
 }
 
 .course-summary__item strong {
   display: block;
   margin-top: 0.35rem;
-  font-size: clamp(1.35rem, 2vw, 1.85rem);
+  font-size: 1.55rem;
   line-height: 1.1;
 }
 
@@ -85,10 +47,9 @@
 
 :host ::ng-deep .course-filter-bar {
   position: sticky;
-  top: 3.9rem;
+  top: 3.45rem;
   z-index: 9;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(12px);
+  background: #fff;
 }
 
 :host ::ng-deep .course-filter-bar .p-toolbar-group-start,
@@ -121,14 +82,9 @@
   gap: 0.55rem;
   padding: 0.8rem;
   border: 1px solid var(--app-border);
-  border-radius: 8px;
+  border-radius: var(--app-radius);
   background: #fff;
   box-shadow: var(--app-shadow-sm);
-}
-
-:host ::ng-deep .course-row {
-  animation: row-enter 260ms both;
-  animation-delay: calc(var(--row-index, 0) * 24ms);
 }
 
 :host ::ng-deep .course-row td {
@@ -142,7 +98,7 @@
 }
 
 .course-title-link:hover {
-  color: #0f766e;
+  color: var(--app-primary);
 }
 
 .semantic-results,
@@ -155,7 +111,7 @@
 .learning-path-course,
 .semantic-empty {
   border: 1px solid var(--app-border);
-  border-radius: 8px;
+  border-radius: var(--app-radius);
   background: #fff;
   box-shadow: var(--app-shadow-sm);
 }
@@ -166,7 +122,6 @@
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 1rem;
   padding: 1rem;
-  animation: course-card-enter var(--app-motion) both;
 }
 
 .semantic-result a,
@@ -230,26 +185,15 @@
   justify-content: center;
   width: 2rem;
   height: 2rem;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--primary-color, #0f766e) 12%, #fff);
-  color: #0f766e;
+  border-radius: var(--app-radius);
+  background: var(--app-primary-muted);
+  color: var(--app-primary);
   font-weight: 800;
 }
 
 .learning-path-course__meta span {
   color: #64748b;
   font-size: 0.82rem;
-}
-
-@keyframes course-card-enter {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 @media (max-width: 900px) {

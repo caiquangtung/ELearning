@@ -86,7 +86,7 @@
 
           <p class="signup-copy">
             No account?
-            <a routerLink="/register">Register</a>
+            <a routerLink="/register" [queryParams]="{ returnUrl: returnUrl() }">Register</a>
           </p>
         </div>
       </section>

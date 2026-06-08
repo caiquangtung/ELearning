@@ -41,6 +41,49 @@ export interface PublicFeaturedCourseDto {
   currency: string;
   level: string | null;
   category: string | null;
+  thumbnailUrl: string;
+  lessonCount: number;
+  sectionCount: number;
+  durationMinutes: number;
+}
+
+export interface PublicCourseListRequest {
+  page: number;
+  pageSize: number;
+  search?: string | null;
+  category?: string | null;
+  level?: string | null;
+  minPriceCents?: number | null;
+  maxPriceCents?: number | null;
+  sort?: string | null;
+}
+
+export interface PublicCourseLessonDto {
+  id: string;
+  title: string;
+  sortOrder: number;
+}
+
+export interface PublicCourseSectionDto {
+  id: string;
+  title: string;
+  sortOrder: number;
+  lessons: PublicCourseLessonDto[];
+}
+
+export interface PublicCourseReviewDto {
+  id: string;
+  rating: number;
+  comment: string;
+  submittedAt: string;
+}
+
+export interface PublicCourseDetailDto extends PublicFeaturedCourseDto {
+  outcomes: string[];
+  averageRating: number;
+  reviewCount: number;
+  sections: PublicCourseSectionDto[];
+  reviews: PublicCourseReviewDto[];
 }
 
 export interface ListCoursesRequest {
@@ -910,6 +953,35 @@ export class LmsApiService {
   listPublicFeaturedCourses(limit = 6): Observable<PublicFeaturedCourseDto[]> {
     const params = new HttpParams().set('limit', limit);
     return this.http.get<PublicFeaturedCourseDto[]>(`${this.base}/public/courses/featured`, { params });
+  }
+
+  listPublicCourses(request: PublicCourseListRequest): Observable<PagedList<PublicFeaturedCourseDto>> {
+    let params = new HttpParams()
+      .set('page', request.page)
+      .set('pageSize', request.pageSize);
+    if (request.search?.trim()) {
+      params = params.set('search', request.search.trim());
+    }
+    if (request.category?.trim()) {
+      params = params.set('category', request.category.trim());
+    }
+    if (request.level?.trim()) {
+      params = params.set('level', request.level.trim());
+    }
+    if (request.minPriceCents !== null && request.minPriceCents !== undefined) {
+      params = params.set('minPriceCents', request.minPriceCents);
+    }
+    if (request.maxPriceCents !== null && request.maxPriceCents !== undefined) {
+      params = params.set('maxPriceCents', request.maxPriceCents);
+    }
+    if (request.sort?.trim()) {
+      params = params.set('sort', request.sort.trim());
+    }
+    return this.http.get<PagedList<PublicFeaturedCourseDto>>(`${this.base}/public/courses`, { params });
+  }
+
+  getPublicCourse(id: string): Observable<PublicCourseDetailDto> {
+    return this.http.get<PublicCourseDetailDto>(`${this.base}/public/courses/${id}`);
   }
 
   listOrganizations(request: ListOrganizationsRequest): Observable<PagedList<OrganizationDto>> {

@@ -1,0 +1,164 @@
+<div class="public-page">
+  <header class="public-header">
+    <a class="brand" routerLink="/">ELearning</a>
+    <nav aria-label="Public navigation">
+      <a routerLink="/catalog">Catalog</a>
+      <a routerLink="/login">Sign in</a>
+      <a class="nav-cta" routerLink="/register">Start free</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="catalog-hero">
+      <div>
+        <span class="eyebrow">Course catalog</span>
+        <h1>Find the right course before you commit.</h1>
+        <p>
+          Browse published learning paths, preview the syllabus, and continue
+          into checkout only when the course matches your goal.
+        </p>
+      </div>
+      <form class="search-panel" (ngSubmit)="applyFilters()">
+        <label>
+          <span>Search</span>
+          <input
+            name="search"
+            [(ngModel)]="search"
+            placeholder="Try AI, cloud, analytics..."
+          />
+        </label>
+        <button type="submit">
+          <i class="pi pi-search"></i>
+          <span>Search courses</span>
+        </button>
+      </form>
+    </section>
+
+    <section class="catalog-layout">
+      <aside class="filters" aria-label="Catalog filters">
+        <div class="filter-heading">
+          <h2>Refine</h2>
+          <button type="button" (click)="clearFilters()">Clear</button>
+        </div>
+
+        <label>
+          <span>Category</span>
+          <select [(ngModel)]="category" name="category" (change)="applyFilters()">
+            @for (item of categories; track item) {
+              <option [ngValue]="item">{{ item || 'All categories' }}</option>
+            }
+          </select>
+        </label>
+
+        <label>
+          <span>Level</span>
+          <select [(ngModel)]="level" name="level" (change)="applyFilters()">
+            @for (item of levels; track item) {
+              <option [ngValue]="item">{{ item || 'All levels' }}</option>
+            }
+          </select>
+        </label>
+
+        <label>
+          <span>Price</span>
+          <select [(ngModel)]="price" name="price" (change)="applyFilters()">
+            <option value="">Any price</option>
+            <option value="free">Free</option>
+            <option value="paid">Paid</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Sort</span>
+          <select [(ngModel)]="sort" name="sort" (change)="applyFilters()">
+            @for (item of sortOptions; track item.value) {
+              <option [ngValue]="item.value">{{ item.label }}</option>
+            }
+          </select>
+        </label>
+      </aside>
+
+      <section class="results" aria-label="Course results">
+        <div class="results-heading">
+          <div>
+            <span class="eyebrow">Published courses</span>
+            <h2>{{ page()?.totalCount ?? 0 }} courses available</h2>
+          </div>
+        </div>
+
+        @if (error()) {
+          <div class="state state--error">{{ error() }}</div>
+        } @else if (loading()) {
+          <div class="course-grid" aria-label="Loading courses">
+            @for (item of [1, 2, 3, 4, 5, 6]; track item) {
+              <article class="course-card course-card--loading">
+                <div></div>
+                <span></span>
+                <span></span>
+                <span></span>
+              </article>
+            }
+          </div>
+        } @else if ((page()?.items?.length ?? 0) === 0) {
+          <div class="state">
+            <i class="pi pi-search"></i>
+            <h3>No matching courses</h3>
+            <p>Try removing a filter or searching for a broader topic.</p>
+          </div>
+        } @else {
+          <div class="course-grid">
+            @for (course of page()?.items ?? []; track course.id) {
+              <article class="course-card">
+                <a [routerLink]="['/catalog', course.id]" class="course-image">
+                  <img [src]="course.thumbnailUrl" [alt]="course.title" />
+                </a>
+                <div class="course-body">
+                  <div class="course-meta">
+                    <span>{{ course.category }}</span>
+                    <span>{{ course.level }}</span>
+                  </div>
+                  <h3>
+                    <a [routerLink]="['/catalog', course.id]">{{ course.title }}</a>
+                  </h3>
+                  <p>{{ course.description || 'Preview the syllabus and learning outcomes.' }}</p>
+                  <div class="course-facts">
+                    <span>{{ course.lessonCount }} lessons</span>
+                    <span>{{ durationLabel(course.durationMinutes) }}</span>
+                  </div>
+                  <div class="course-badges" aria-label="Course support">
+                    <span>AI Tutor</span>
+                    <span>Certificate-ready</span>
+                  </div>
+                  <div class="course-actions">
+                    <strong>{{ priceLabel(course) }}</strong>
+                    <a [routerLink]="['/catalog', course.id]">Preview syllabus</a>
+                  </div>
+                </div>
+              </article>
+            }
+          </div>
+
+          <div class="pager" *ngIf="page() as currentPage">
+            <button
+              type="button"
+              [disabled]="!currentPage.hasPreviousPage"
+              (click)="goToPage(currentPage.page - 1)"
+            >
+              <i class="pi pi-arrow-left"></i>
+              <span>Previous</span>
+            </button>
+            <span>Page {{ currentPage.page }} of {{ currentPage.totalPages || 1 }}</span>
+            <button
+              type="button"
+              [disabled]="!currentPage.hasNextPage"
+              (click)="goToPage(currentPage.page + 1)"
+            >
+              <span>Next</span>
+              <i class="pi pi-arrow-right"></i>
+            </button>
+          </div>
+        }
+      </section>
+    </section>
+  </main>
+</div>

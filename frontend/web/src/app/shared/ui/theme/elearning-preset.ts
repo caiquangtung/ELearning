@@ -9,17 +9,17 @@ import Aura from '@primeuix/themes/aura';
 export const ELearningPreset = definePreset(Aura, {
   semantic: {
     primary: {
-      50: '{sky.50}',
-      100: '{sky.100}',
-      200: '{sky.200}',
-      300: '{sky.300}',
-      400: '{sky.400}',
-      500: '{sky.500}',
-      600: '{sky.600}',
-      700: '{sky.700}',
-      800: '{sky.800}',
-      900: '{sky.900}',
-      950: '{sky.950}',
+      50: '#f4f7fb',
+      100: '#e7edf5',
+      200: '#cfdbea',
+      300: '#a9bfd6',
+      400: '#789aba',
+      500: '#4f789e',
+      600: '#365f85',
+      700: '#294a69',
+      800: '#213b55',
+      900: '#172a40',
+      950: '#0d1b2a',
     },
   },
 });

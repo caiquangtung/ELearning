@@ -1,195 +1,141 @@
 <div class="landing">
-  <!-- Lightweight public header -->
   <header class="public-header">
-    <div class="container">
-      <a class="logo" routerLink="/">eL<span>earning</span></a>
-      <div class="header-actions">
-        <div class="portal-area header-portal">
-          <button
-            class="portal-menu-icon"
-            type="button"
-            aria-label="Open portals"
-            (click)="togglePortalMenu()"
-          >
-            <span class="pi pi-th-large"></span>
-          </button>
-
-          <div class="portal-menu" *ngIf="showPortalMenu()">
-            <button
-              class="portal-cta"
-              type="button"
-              (click)="enterPortal('Student')"
-            >
-              <span class="pi pi-user" aria-hidden="true"></span>
-              <div class="portal-cta-label">Student Portal</div>
-            </button>
-            <button
-              class="portal-cta"
-              type="button"
-              (click)="enterPortal('Instructor')"
-            >
-              <span class="pi pi-briefcase" aria-hidden="true"></span>
-              <div class="portal-cta-label">Instructor Deck</div>
-            </button>
-            <button
-              class="portal-cta"
-              type="button"
-              (click)="enterPortal('Admin')"
-            >
-              <span class="pi pi-shield" aria-hidden="true"></span>
-              <div class="portal-cta-label">Admin Portal</div>
-            </button>
-          </div>
-        </div>
-        <ng-container *ngIf="isAuthenticated(); else anonActions">
-          <a class="btn" routerLink="/dashboard">Go to workspace</a>
-        </ng-container>
-        <ng-template #anonActions>
-          <button
-            class="login-icon-btn"
-            type="button"
-            aria-label="Open login menu"
-            (click)="toggleLoginMenu()"
-          >
-            <span class="pi pi-user" aria-hidden="true"></span>
-          </button>
-
-          <div class="login-panel" *ngIf="showLoginMenu()">
-            <div class="login-panel-inner">
-              <div class="portal-icons">
-                <button class="portal-btn" (click)="loginAs('Student')">
-                  <span class="pi pi-user" aria-hidden="true"></span>
-                  <div class="portal-label">Student</div>
-                </button>
-                <button
-                  class="portal-cta"
-                  type="button"
-                  (click)="enterPortal('Instructor')"
-                >
-                  <span class="pi pi-briefcase" aria-hidden="true"></span>
-                  <div class="portal-cta-label">Instructor Deck</div>
-                </button>
-                <button
-                  class="portal-cta"
-                  type="button"
-                  (click)="enterPortal('Admin')"
-                >
-                  <span class="pi pi-shield" aria-hidden="true"></span>
-                  <div class="portal-cta-label">Admin Portal</div>
-                </button>
-              </div>
-              <div class="login-actions">
-                <a class="btn" routerLink="/login">Sign In</a>
-                <a class="btn" routerLink="/register">Register</a>
-              </div>
-            </div>
-          </div>
-        </ng-template>
-      </div>
-    </div>
+    <a class="logo" routerLink="/">ELearning</a>
+    <nav aria-label="Public navigation">
+      <a routerLink="/catalog">Catalog</a>
+      <a routerLink="/login">Sign in</a>
+      <a class="nav-cta" routerLink="/register">Start free</a>
+    </nav>
   </header>
 
-  <section class="hero hero--public">
-    <div class="hero-inner container">
+  <main>
+    <section class="hero">
       <div class="hero-copy">
-        <div class="badge">eLearning Platform</div>
-        <h1>
-          Learn with confidence.
-          <span class="accent">Built for modern teams.</span>
-        </h1>
-        <p class="lead">
-          Discover curated courses, role-based learning spaces, and a clean path
-          from public discovery to your workspace.
+        <span class="eyebrow">AI-assisted LMS</span>
+        <h1>Job-ready learning for modern teams.</h1>
+        <p>
+          Discover structured courses, preview the syllabus before you enroll,
+          and continue with AI Tutor support once you start learning.
         </p>
-
         <div class="hero-ctas">
-          <button class="cta-primary" type="button" (click)="loginAs('Student')">
-            Start learning
+          <a class="cta-primary" routerLink="/catalog">
+            <span>Explore courses</span>
+            <i class="pi pi-arrow-right"></i>
+          </a>
+          <button class="cta-secondary" type="button" (click)="openAiPath()">
+            <i class="pi pi-sparkles"></i>
+            <span>Start with AI learning path</span>
           </button>
-          <button class="cta-secondary" type="button" (click)="loginAs('Student')">
-            Explore courses
-          </button>
         </div>
       </div>
-      <!-- close hero-copy -->
-      <div class="hero-visual">
-        <div class="visual-card">
-          <div class="status">Featured learning paths</div>
-          <ul class="service-list">
-            <li>Student portal for guided study</li>
-            <li>Instructor workspace for authoring</li>
-            <li>Featured courses from the catalog</li>
-          </ul>
+      <div class="hero-visual" aria-hidden="true">
+        <img src="/assets/public/hero-learning-lab.png" alt="" />
+      </div>
+    </section>
+
+    <section class="trust-strip" aria-label="Platform outcomes">
+      <article>
+        <strong>Course-first</strong>
+        <span>Preview syllabus, price, level, and outcomes before login.</span>
+      </article>
+      <article>
+        <strong>AI-guided</strong>
+        <span>AI Tutor answers from indexed lesson material with citations.</span>
+      </article>
+      <article>
+        <strong>Team-ready</strong>
+        <span>Supports individual learners, instructors, cohorts, and organizations.</span>
+      </article>
+    </section>
+
+    <section class="featured-section">
+      <div class="section-heading">
+        <span class="eyebrow">Featured catalog</span>
+        <div>
+          <h2>Start with a course that has a clear next step.</h2>
+          <p>Each public course page shows what you will learn before asking you to sign in.</p>
         </div>
+        <a routerLink="/catalog">View all courses</a>
       </div>
-    </div>
-    <!-- close hero-inner container -->
-  </section>
 
-  <section class="campaigns container">
-    <h2>Highlights & Campaigns</h2>
-    <div class="campaign-grid">
-      <div class="campaign-card">
-        <h3>Spring Enrollment</h3>
-        <p>Get 30% off selected professional courses. Limited time.</p>
-        <button class="cta-primary" type="button" (click)="loginAs('Student')">
-          Explore
-        </button>
-      </div>
-      <div class="campaign-card">
-        <h3>New Instructor Tools</h3>
-        <p>Author, publish, and manage cohorts with the new Instructor Deck.</p>
-        <button class="cta-primary" type="button" (click)="enterPortal('Instructor')">
-          Learn more
-        </button>
-      </div>
-      <div class="campaign-card">
-        <h3>Enterprise Training</h3>
-        <p>Custom learning paths and licensing for teams and organizations.</p>
-        <button class="cta-primary" type="button" (click)="enterPortal('Admin')">
-          Contact sales
-        </button>
-      </div>
-    </div>
-  </section>
-
-  <section class="featured container">
-    <div class="featured-header">
-      <h2>Featured courses</h2>
-      <div class="fetch-hint">
-        Fetched via: <strong>/api/v1/public/courses/featured</strong>
-      </div>
-    </div>
-
-    <div *ngIf="isLoadingCourses()" class="loading-placeholder">
-      Synchronizing course catalog…
-    </div>
-
-    <div class="grid cards" *ngIf="!isLoadingCourses()">
-      <div class="course" *ngFor="let course of courses()">
-        <img
-          [src]="courseImage(course)"
-          alt="{{ course.title }}"
-        />
-        <div class="info">
-          <div class="meta">
-            <span class="level">{{ course.level || course.category || "General" }}</span>
-            <span class="price">{{ price(course) }}</span>
-          </div>
-          <h3>{{ course.title }}</h3>
-          <p class="desc">{{ course.description }}</p>
-          <div class="actions">
-            <button
-              pButton
-              type="button"
-              class="enroll-btn"
-              (click)="loginAs('Student')"
-            >
-              Enroll
-            </button>
-          </div>
+      @if (isLoadingCourses()) {
+        <div class="course-grid">
+          @for (item of [1, 2, 3]; track item) {
+            <article class="course-card course-card--loading">
+              <div></div>
+              <span></span>
+              <span></span>
+              <span></span>
+            </article>
+          }
         </div>
+      } @else {
+        <div class="course-grid">
+          @for (course of courses(); track course.id) {
+            <article class="course-card">
+              <button type="button" class="course-image" (click)="startCourse(course)">
+                <img [src]="courseImage(course)" [alt]="course.title" />
+              </button>
+              <div class="course-body">
+                <div class="course-meta">
+                  <span>{{ course.category || 'Technology' }}</span>
+                  <span>{{ course.level || 'Intermediate' }}</span>
+                </div>
+                <h3>{{ course.title }}</h3>
+                <p>{{ course.description || 'Preview the syllabus and choose your next step.' }}</p>
+                <div class="course-badges" aria-label="Course support">
+                  <span>AI Tutor</span>
+                  <span>Certificate-ready</span>
+                </div>
+                <div class="course-footer">
+                  <div>
+                    <strong>{{ price(course) }}</strong>
+                    <span>{{ course.lessonCount }} lessons · {{ duration(course) }}</span>
+                  </div>
+                  <button type="button" (click)="startCourse(course)">Preview syllabus</button>
+                </div>
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </section>
+
+    <section class="ai-section">
+      <div>
+        <span class="eyebrow">Why AI matters here</span>
+        <h2>AI features are connected to learning tasks, not just chat.</h2>
       </div>
-    </div>
-  </section>
+      <div class="ai-grid">
+        <article>
+          <i class="pi pi-comments"></i>
+          <h3>Grounded AI Tutor</h3>
+          <p>Answers only from indexed course material and returns citations for follow-up.</p>
+        </article>
+        <article>
+          <i class="pi pi-sparkles"></i>
+          <h3>Learning path drafts</h3>
+          <p>Turns learner goals and current skills into a practical course sequence.</p>
+        </article>
+        <article>
+          <i class="pi pi-chart-line"></i>
+          <h3>Recommendations</h3>
+          <p>Uses activity and course similarity to surface a better next course.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="outcome-band">
+      <div>
+        <span class="eyebrow">For organizations</span>
+        <h2>Launch role-based learning without losing operational control.</h2>
+      </div>
+      <p>
+        ELearning combines public course discovery, learner workspaces,
+        instructor authoring, cohorts, checkout, reviews, certificates, and AI
+        assistance in one product surface.
+      </p>
+      <a routerLink="/register">Create a learner account</a>
+    </section>
+  </main>
 </div>

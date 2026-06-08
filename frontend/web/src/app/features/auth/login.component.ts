@@ -50,6 +50,10 @@ export class LoginComponent {
     return field.invalid && (field.dirty || field.touched);
   }
 
+  returnUrl(): string | null {
+    return this.route.snapshot.queryParamMap.get('returnUrl');
+  }
+
   submit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();

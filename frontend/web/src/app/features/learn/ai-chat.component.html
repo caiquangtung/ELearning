@@ -4,8 +4,8 @@
       <span class="eyebrow">AI Tutor</span>
       <h1>Ask questions from your course material.</h1>
       <p>
-        Answers are grounded in indexed course and lesson content. Source cards
-        show where each answer came from.
+        Answers are grounded in indexed course and lesson content. References
+        below each answer show where the response came from.
       </p>
     </div>
     <button class="primary-action" type="button" (click)="createSession()">
@@ -57,19 +57,28 @@
                   <small>{{ message.provider }} · {{ message.confidence | percent: "1.0-0" }}</small>
                 }
               </div>
+              @if (message.role !== "User") {
+                <div class="message__labels">
+                  <span>AI-generated suggestion</span>
+                  <span>Grounded in course material</span>
+                </div>
+              }
               <p>{{ message.content }}</p>
             </div>
 
             @if (message.citations.length) {
               <div class="citation-grid">
-                @for (citation of message.citations; track citation.chunkId) {
+                @for (citation of message.citations; track citation.chunkId; let citationIndex = $index) {
                   <a
                     class="citation-card"
                     [routerLink]="['/learn/courses', citation.courseId]"
                   >
-                    <strong>{{ citation.lessonTitle || citation.courseTitle }}</strong>
-                    <span>{{ citation.sectionTitle || citation.courseTitle }}</span>
-                    <p>{{ citation.snippet }}</p>
+                    <span class="citation-index">[{{ citationIndex + 1 }}]</span>
+                    <span class="citation-content">
+                      <strong>{{ citation.lessonTitle || citation.courseTitle }}</strong>
+                      <span>{{ citation.sectionTitle || citation.courseTitle }}</span>
+                      <p>{{ citation.snippet }}</p>
+                    </span>
                   </a>
                 }
               </div>
@@ -77,7 +86,7 @@
           </article>
         } @empty {
           <div class="thread-empty">
-            <i class="pi pi-sparkles"></i>
+            <i class="pi pi-comments"></i>
             <h2>Ask about a lesson, topic, or concept.</h2>
             <p>The tutor will answer from indexed course material and cite sources.</p>
           </div>

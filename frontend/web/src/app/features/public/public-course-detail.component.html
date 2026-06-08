@@ -1,0 +1,134 @@
+<div class="public-detail-page">
+  <header class="public-header">
+    <a class="brand" routerLink="/">ELearning</a>
+    <nav aria-label="Public navigation">
+      <a routerLink="/catalog">Catalog</a>
+      <a routerLink="/login">Sign in</a>
+      <a class="nav-cta" routerLink="/register">Start free</a>
+    </nav>
+  </header>
+
+  @if (loading()) {
+    <main class="state">
+      <p>Loading course preview...</p>
+    </main>
+  } @else if (error()) {
+    <main class="state state--error">
+      <h1>Course unavailable</h1>
+      <p>{{ error() }}</p>
+      <a routerLink="/catalog">Back to catalog</a>
+    </main>
+  } @else {
+    @if (course(); as c) {
+      <main>
+        <section class="course-hero">
+          <div class="hero-copy">
+            <a class="back-link" routerLink="/catalog">
+              <i class="pi pi-arrow-left"></i>
+              <span>Catalog</span>
+            </a>
+            <div class="course-tags">
+              <span>{{ c.category }}</span>
+              <span>{{ c.level }}</span>
+            </div>
+            <h1>{{ c.title }}</h1>
+            <p>{{ c.description || 'Preview this course syllabus and decide whether it fits your learning goal.' }}</p>
+            <div class="hero-stats">
+              <span>{{ c.lessonCount }} lessons</span>
+              <span>{{ c.sectionCount }} modules</span>
+              <span>{{ durationLabel(c.durationMinutes) }}</span>
+            </div>
+          </div>
+
+          <aside class="enroll-panel" aria-label="Course enrollment">
+            <img [src]="c.thumbnailUrl" [alt]="c.title" />
+            <div class="enroll-panel__body">
+              <span class="price">{{ priceLabel(c) }}</span>
+              <button type="button" class="primary-action" (click)="continuePrimary(c)">
+                {{ primaryLabel(c) }}
+              </button>
+              <button type="button" class="secondary-action" (click)="registerForCourse(c)">
+                Create account first
+              </button>
+              <small>Login keeps this course selected for checkout or learning.</small>
+            </div>
+          </aside>
+        </section>
+
+        <section class="detail-grid">
+          <div class="main-column">
+            <section class="panel outcomes">
+              <div class="section-heading">
+                <span class="eyebrow">Outcomes</span>
+                <h2>What you will be able to do</h2>
+              </div>
+              <div class="outcome-list">
+                @for (outcome of c.outcomes; track outcome) {
+                  <article>
+                    <i class="pi pi-check"></i>
+                    <p>{{ outcome }}</p>
+                  </article>
+                }
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="section-heading">
+                <span class="eyebrow">Syllabus preview</span>
+                <h2>Course structure</h2>
+              </div>
+              <div class="syllabus">
+                @for (section of c.sections; track section.id) {
+                  <article class="module">
+                    <div class="module-header">
+                      <span>Module {{ section.sortOrder }}</span>
+                      <h3>{{ section.title }}</h3>
+                    </div>
+                    <ol>
+                      @for (lesson of section.lessons; track lesson.id) {
+                        <li>{{ lesson.title }}</li>
+                      }
+                    </ol>
+                  </article>
+                }
+              </div>
+            </section>
+          </div>
+
+          <aside class="side-column">
+            <section class="panel ai-panel">
+              <span class="eyebrow">AI-assisted learning</span>
+              <h2>Guidance after you enroll</h2>
+              <ul>
+                <li>AI Tutor answers from indexed course material with citations.</li>
+                <li>AI Learning Path helps choose the next course after this one.</li>
+                <li>Recommendations adapt to your current activity.</li>
+              </ul>
+            </section>
+
+            <section class="panel rating-panel">
+              <span class="eyebrow">Learner signal</span>
+              <div class="rating-score">
+                <strong>{{ (c.averageRating || 0).toFixed(1) }}</strong>
+                <span>{{ stars(c.averageRating || 0) }}</span>
+              </div>
+              <p>{{ c.reviewCount }} published reviews</p>
+              @if (c.reviews.length) {
+                <div class="review-list">
+                  @for (review of c.reviews; track review.id) {
+                    <article>
+                      <span>{{ stars(review.rating) }}</span>
+                      <p>{{ review.comment }}</p>
+                    </article>
+                  }
+                </div>
+              } @else {
+                <p class="muted">Reviews will appear here once learners publish feedback.</p>
+              }
+            </section>
+          </aside>
+        </section>
+      </main>
+    }
+  }
+</div>

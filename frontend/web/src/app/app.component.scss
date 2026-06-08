@@ -17,17 +17,17 @@
 .global-loading__panel {
   display: grid;
   place-items: center;
-  width: 4rem;
-  height: 4rem;
-  border: 1px solid color-mix(in srgb, var(--app-border) 80%, transparent);
-  border-radius: 999px;
+  width: 3.25rem;
+  height: 3.25rem;
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius);
   background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 18px 46px rgba(15, 23, 42, 0.18);
+  box-shadow: var(--app-shadow-sm);
 }
 
 .global-loading__panel i {
-  color: var(--primary-color, #0f766e);
-  font-size: 1.7rem;
+  color: var(--app-primary);
+  font-size: 1.45rem;
 }
 
 @keyframes global-loading-fade {

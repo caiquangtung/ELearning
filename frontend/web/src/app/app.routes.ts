@@ -47,6 +47,20 @@ export const routes: Routes = [
   },
   { path: 'landing', pathMatch: 'full', redirectTo: '' },
   {
+    path: 'catalog',
+    loadComponent: () =>
+      import('./features/public/public-catalog.component').then(
+        (m) => m.PublicCatalogComponent,
+      ),
+  },
+  {
+    path: 'catalog/:id',
+    loadComponent: () =>
+      import('./features/public/public-course-detail.component').then(
+        (m) => m.PublicCourseDetailComponent,
+      ),
+  },
+  {
     path: '',
     component: MainLayoutComponent,
     canActivate: [authGuard],

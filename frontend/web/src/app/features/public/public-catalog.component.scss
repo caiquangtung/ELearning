@@ -1,0 +1,368 @@
+.public-page {
+  min-height: 100vh;
+  background: var(--app-surface);
+  color: #172033;
+}
+
+main {
+  padding-bottom: 2.5rem;
+}
+
+.catalog-hero {
+  min-height: 260px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(300px, 0.72fr);
+  gap: 1.25rem;
+  align-items: end;
+  padding: 1.75rem;
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius);
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.8)),
+    url('/assets/public/catalog-discovery.png') right center/contain no-repeat,
+    #fff;
+  box-shadow: var(--app-shadow-sm);
+}
+
+.eyebrow {
+  display: inline-flex;
+  margin-bottom: 0.5rem;
+  color: var(--app-primary);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.catalog-hero h1 {
+  max-width: 17ch;
+  margin: 0;
+  font-size: clamp(2rem, 3.8vw, 3.35rem);
+  line-height: 1.05;
+  font-weight: 850;
+}
+
+.catalog-hero p {
+  max-width: 40rem;
+  margin: 0.9rem 0 0;
+  color: #475569;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.search-panel {
+  display: grid;
+  gap: 0.8rem;
+  padding: 0.9rem;
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius);
+  background: #fff;
+  color: #172033;
+  box-shadow: var(--app-shadow-sm);
+}
+
+label {
+  display: grid;
+  gap: 0.35rem;
+  font-weight: 750;
+}
+
+label span {
+  color: #475569;
+  font-size: 0.8rem;
+}
+
+input,
+select {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid var(--app-border-strong);
+  border-radius: var(--app-radius);
+  padding: 0.55rem 0.65rem;
+  background: #fff;
+  color: #172033;
+  font: inherit;
+}
+
+button,
+.course-actions a {
+  border-radius: var(--app-radius);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 750;
+}
+
+.search-panel button {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border: 1px solid var(--app-primary);
+  background: var(--app-primary);
+  color: #fff;
+}
+
+.catalog-layout {
+  display: grid;
+  grid-template-columns: 244px minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+  margin-top: 1rem;
+}
+
+.filters,
+.course-card,
+.state {
+  background: #fff;
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius);
+  box-shadow: var(--app-shadow-sm);
+}
+
+.filters {
+  position: sticky;
+  top: 1rem;
+  display: grid;
+  gap: 0.85rem;
+  padding: 0.9rem;
+}
+
+.filter-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.filter-heading h2,
+.results-heading h2 {
+  margin: 0;
+}
+
+.filter-heading h2 {
+  font-size: 1rem;
+}
+
+.filter-heading button {
+  padding: 0.35rem 0.55rem;
+  border: 1px solid var(--app-border);
+  background: #fff;
+  color: #334155;
+}
+
+.results-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0.2rem 0 0.9rem;
+}
+
+.course-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.course-card {
+  overflow: hidden;
+}
+
+.course-image {
+  display: block;
+  background: #e2e8f0;
+}
+
+.course-image img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.course-body {
+  padding: 0.9rem;
+}
+
+.course-meta,
+.course-facts,
+.course-actions,
+.course-badges {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.course-meta span,
+.course-facts span {
+  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 750;
+}
+
+.course-meta span:first-child {
+  color: var(--app-primary);
+}
+
+.course-body h3 {
+  min-height: 2.75rem;
+  margin: 0.55rem 0 0.45rem;
+  font-size: 1.02rem;
+  line-height: 1.36;
+}
+
+.course-body h3 a {
+  color: #172033;
+  text-decoration: none;
+}
+
+.course-body h3 a:hover {
+  color: var(--app-primary);
+}
+
+.course-body p {
+  min-height: 4.2rem;
+  margin: 0 0 0.75rem;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.course-badges {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+}
+
+.course-badges span {
+  padding: 0.2rem 0.45rem;
+  border-radius: var(--app-radius-sm);
+  background: var(--app-primary-muted);
+  color: var(--app-primary);
+  font-size: 0.75rem;
+  font-weight: 750;
+}
+
+.course-actions {
+  margin-top: 0.9rem;
+}
+
+.course-actions strong {
+  font-size: 1rem;
+}
+
+.course-actions a {
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--app-primary);
+  background: var(--app-primary);
+  color: #fff;
+  text-decoration: none;
+}
+
+.state {
+  display: grid;
+  place-items: center;
+  min-height: 260px;
+  padding: 1.5rem;
+  color: #475569;
+  text-align: center;
+}
+
+.state i {
+  margin-bottom: 0.5rem;
+  color: var(--app-primary);
+  font-size: 1.6rem;
+}
+
+.state h3 {
+  margin: 0;
+  color: #172033;
+}
+
+.state--error {
+  color: #991b1b;
+  background: #fff1f2;
+  border-color: #fecdd3;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.pager button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--app-border-strong);
+  background: #fff;
+  color: #172033;
+}
+
+.pager button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.course-card--loading {
+  min-height: 320px;
+}
+
+.course-card--loading div,
+.course-card--loading span {
+  display: block;
+  margin: 0.9rem;
+  border-radius: var(--app-radius-sm);
+  background: #e2e8f0;
+}
+
+.course-card--loading div {
+  height: 145px;
+  margin: 0;
+}
+
+.course-card--loading span {
+  height: 1rem;
+}
+
+@media (max-width: 980px) {
+  .catalog-hero,
+  .catalog-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .filters {
+    position: static;
+  }
+
+  .course-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .catalog-hero {
+    min-height: auto;
+    padding: 1.1rem;
+    background:
+      linear-gradient(rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.94)),
+      url('/assets/public/catalog-discovery.png') center/cover,
+      #fff;
+  }
+
+  .catalog-hero h1 {
+    font-size: 2.25rem;
+  }
+
+  .course-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pager {
+    flex-wrap: wrap;
+  }
+}

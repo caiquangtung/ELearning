@@ -39,7 +39,11 @@
         </form>
         <p class="text-sm text-color-secondary mt-3 mb-0">
           Already have an account?
-          <a routerLink="/login" class="text-primary font-medium">Sign in</a>
+          <a
+            routerLink="/login"
+            [queryParams]="{ returnUrl: returnUrl() }"
+            class="text-primary font-medium"
+          >Sign in</a>
         </p>
       </p-card>
     </div>
