@@ -17,7 +17,7 @@ public sealed class ReindexAiKnowledgeCommandHandler(
 {
     private const string Feature = "RagKnowledgeReindex";
     private const string Provider = "Local";
-    private const string Model = "local-token-embedding-v1";
+    private const string Model = "local-dense-hash-384-v1";
     private const string PromptVersion = "rag-knowledge-index-v1";
 
     public async Task<Result<ReindexAiKnowledgeDto>> Handle(ReindexAiKnowledgeCommand request, CancellationToken ct)
@@ -26,7 +26,11 @@ public sealed class ReindexAiKnowledgeCommandHandler(
 
         try
         {
-            var result = await indexingService.ReindexAsync(request.CourseId, ct);
+            var result = await indexingService.ReindexAsync(
+                request.CourseId,
+                currentUserService.UserId,
+                null,
+                ct);
             aiRequestLogRepository.Add(AiRequestLog.Succeeded(
                 currentUserService.UserId,
                 Feature,
@@ -38,6 +42,7 @@ public sealed class ReindexAiKnowledgeCommandHandler(
             await unitOfWork.SaveChangesAsync(ct);
 
             return new ReindexAiKnowledgeDto(
+                result.JobId,
                 result.IndexedCourses,
                 result.IndexedChunks,
                 result.DeletedStaleChunks);

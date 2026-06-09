@@ -104,9 +104,10 @@ public sealed class AiRagChatService(
         var userMessage = AiChatMessage.User(session.Id, message);
         await context.AiChatMessages.AddAsync(userMessage, ct);
 
-        var citations = await knowledgeRetriever.RetrieveAsync(
+        var retrieval = await knowledgeRetriever.RetrieveAsync(
             new AiKnowledgeRetrievalRequest(userId, userRoles, message, session.CourseId),
             ct);
+        var citations = retrieval.Citations;
         var answer = await GenerateAnswerAsync(message, citations, ct);
         var citationsJson = JsonSerializer.Serialize(answer.Citations, JsonOptions);
         var assistantMessage = AiChatMessage.Assistant(

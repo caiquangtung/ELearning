@@ -102,6 +102,15 @@ public sealed class AiController(IMediator mediator) : ControllerBase
         return result.IsSuccess ? Ok(result.Value) : ProblemFrom(result.Error);
     }
 
+    [HttpGet("knowledge/status")]
+    [HasPermission(Permissions.Ai.Manage)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetKnowledgeStatus(CancellationToken ct)
+    {
+        var result = await mediator.Send(new GetAiKnowledgeStatusQuery(), ct);
+        return result.IsSuccess ? Ok(result.Value) : ProblemFrom(result.Error);
+    }
+
     [HttpPost("quizzes/generate-questions")]
     [HasPermission(Permissions.Ai.Use)]
     [ProducesResponseType(StatusCodes.Status200OK)]

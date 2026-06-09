@@ -78,21 +78,57 @@ public class RagLearningAssistantTests
     }
 
     [Fact]
-    public async Task Knowledge_reindex_queue_preserves_course_scope()
+    public void Local_dense_embedding_is_deterministic_fixed_size_and_normalized()
     {
-        var queue = new InMemoryAiKnowledgeReindexQueue();
-        var courseId = Guid.NewGuid();
+        var service = new LocalDenseTextEmbeddingService();
 
-        await queue.EnqueueAsync(courseId);
+        var first = service.Embed("JWT validation checks signatures, issuer, audience, and expiry.");
+        var second = service.Embed("JWT validation checks signatures, issuer, audience, and expiry.");
+
+        first.Vector.Should().HaveCount(LocalDenseTextEmbeddingService.EmbeddingDimensions);
+        first.Vector.Should().Equal(second.Vector);
+        first.Dimensions.Should().Be(384);
+        first.Provider.Should().Be("Local");
+
+        var norm = Math.Sqrt(first.Vector.Sum(x => x * x));
+        norm.Should().BeApproximately(1d, 0.0001d);
+    }
+
+    [Fact]
+    public async Task Knowledge_reindex_channel_preserves_job_id()
+    {
+        var channel = new InMemoryAiKnowledgeReindexChannel();
+        var jobId = Guid.NewGuid();
+
+        await channel.WriteAsync(jobId);
 
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
-        await foreach (var queuedCourseId in queue.ReadAllAsync(cts.Token))
+        await foreach (var queuedJobId in channel.ReadAllAsync(cts.Token))
         {
-            queuedCourseId.Should().Be(courseId);
+            queuedJobId.Should().Be(jobId);
             return;
         }
 
-        throw new InvalidOperationException("AI knowledge reindex queue did not yield an item.");
+        throw new InvalidOperationException("AI knowledge reindex channel did not yield an item.");
+    }
+
+    [Fact]
+    public void Knowledge_reindex_job_tracks_status_transitions()
+    {
+        var job = AiKnowledgeReindexJob.Create(Guid.NewGuid(), Guid.NewGuid());
+
+        job.Status.Should().Be(AiKnowledgeReindexJobStatus.Queued);
+
+        job.MarkInProgress();
+        job.Status.Should().Be(AiKnowledgeReindexJobStatus.InProgress);
+        job.StartedAt.Should().NotBeNull();
+
+        job.MarkSucceeded(2, 12, 3);
+        job.Status.Should().Be(AiKnowledgeReindexJobStatus.Succeeded);
+        job.CompletedAt.Should().NotBeNull();
+        job.IndexedCourses.Should().Be(2);
+        job.IndexedChunks.Should().Be(12);
+        job.DeletedStaleChunks.Should().Be(3);
     }
 
     [Fact]

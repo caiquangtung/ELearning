@@ -67,4 +67,14 @@ public sealed class AiKnowledgeChunk : AuditableAggregateRoot
             CreatedAt = DateTime.UtcNow
         };
     }
+
+    public void UpdateEmbedding(string embeddingJson, string metadataJson)
+    {
+        if (string.IsNullOrWhiteSpace(embeddingJson))
+            throw new DomainException("Knowledge chunk embedding is required.");
+
+        EmbeddingJson = embeddingJson.Trim();
+        MetadataJson = string.IsNullOrWhiteSpace(metadataJson) ? "{}" : metadataJson.Trim();
+        UpdatedAt = DateTime.UtcNow;
+    }
 }

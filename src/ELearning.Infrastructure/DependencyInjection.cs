@@ -95,12 +95,13 @@ public static class DependencyInjection
         services.AddScoped<IAiKnowledgeIndexingService, AiKnowledgeIndexingService>();
         services.AddScoped<IAiKnowledgeRetriever, AiKnowledgeRetriever>();
         services.AddScoped<IAiRagChatService, AiRagChatService>();
-        services.AddSingleton<InMemoryAiKnowledgeReindexQueue>();
-        services.AddSingleton<IAiKnowledgeReindexQueue>(sp => sp.GetRequiredService<InMemoryAiKnowledgeReindexQueue>());
+        services.AddSingleton<InMemoryAiKnowledgeReindexChannel>();
+        services.AddScoped<IAiKnowledgeReindexQueue, AiKnowledgeReindexQueue>();
         services.AddHostedService<AiKnowledgeReindexWorker>();
         services.AddScoped<IAiQuizQuestionGenerator, ConfigurableAiQuizQuestionGenerator>();
         services.AddScoped<IAiEssayGradingService, ConfigurableAiEssayGradingService>();
         services.AddSingleton<IAiEmbeddingService, LocalEmbeddingService>();
+        services.AddSingleton<IAiTextEmbeddingService, LocalDenseTextEmbeddingService>();
         services.AddScoped<IAiCourseRecommendationService, LocalCourseRecommendationService>();
         services.AddScoped<IAiLearnerRiskService, LocalLearnerRiskService>();
         services.AddScoped<IAiSemanticSearchService, LocalSemanticSearchService>();

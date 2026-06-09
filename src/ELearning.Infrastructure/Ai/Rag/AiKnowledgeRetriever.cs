@@ -1,32 +1,35 @@
-using System.Text.Json;
+using System.Diagnostics;
 using ELearning.Application.Common.Interfaces;
-using ELearning.Domain.Aggregates.AiAggregate;
 using ELearning.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Npgsql;
 
 namespace ELearning.Infrastructure.Ai;
 
 public sealed class AiKnowledgeRetriever(
     ApplicationDbContext context,
-    IAiEmbeddingService embeddingService,
+    IAiTextEmbeddingService embeddingService,
     IOptions<AiOptions> options)
     : IAiKnowledgeRetriever
 {
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
-
-    public async Task<IReadOnlyList<AiChatCitation>> RetrieveAsync(
+    public async Task<AiKnowledgeRetrievalResult> RetrieveAsync(
         AiKnowledgeRetrievalRequest request,
         CancellationToken ct = default)
     {
+        var stopwatch = Stopwatch.StartNew();
         var question = request.Question.Trim();
-        if (question.Length == 0)
-            return [];
-
         var config = options.Value;
-        var maxChunks = Math.Clamp(config.RagMaxRetrievedChunks, 1, 8);
+        var probe = embeddingService.Embed(question.Length == 0 ? "empty" : question);
         var minSimilarity = Math.Clamp(config.RagMinSimilarity, 0m, 1m);
-        var queryEmbedding = embeddingService.Embed(question);
+
+        if (question.Length == 0)
+            return EmptyResult(probe, minSimilarity, stopwatch);
+
+        var maxChunks = Math.Clamp(config.RagMaxRetrievedChunks, 1, 8);
+        var queryEmbedding = probe;
+        if (!HasVectorSignal(queryEmbedding.Vector))
+            return EmptyResult(queryEmbedding, minSimilarity, stopwatch);
 
         var accessibleCourseIds = await AiKnowledgeAccessPolicy.GetAccessiblePublishedCourseIdsAsync(
             context,
@@ -36,47 +39,135 @@ public sealed class AiKnowledgeRetriever(
             ct);
 
         if (accessibleCourseIds.Count == 0)
-            return [];
+            return EmptyResult(queryEmbedding, minSimilarity, stopwatch);
 
-        var chunks = await context.AiKnowledgeChunks
-            .AsNoTracking()
-            .Where(x => accessibleCourseIds.Contains(x.CourseId))
-            .ToListAsync(ct);
+        var candidates = await SearchVectorCandidatesAsync(
+            accessibleCourseIds,
+            PgVectorFormatter.ToVectorLiteral(queryEmbedding.Vector),
+            Math.Max(maxChunks * 4, 12),
+            ct);
 
-        return chunks
-            .Select(chunk => new
-            {
-                Chunk = chunk,
-                Score = embeddingService.CosineSimilarity(queryEmbedding, DeserializeEmbedding(chunk.EmbeddingJson))
-            })
+        var citations = candidates
             .Where(x => x.Score >= minSimilarity)
-            .OrderByDescending(x => x.Score)
-            .ThenBy(x => x.Chunk.CourseTitle)
-            .ThenBy(x => x.Chunk.ChunkIndex)
             .Take(maxChunks)
-            .Select(x => ToCitation(x.Chunk, x.Score))
+            .Select(ToCitation)
             .ToList();
+
+        return new AiKnowledgeRetrievalResult(
+            citations,
+            candidates.Count,
+            citations.Count == 0 ? null : citations.Max(x => x.Score),
+            minSimilarity,
+            queryEmbedding.Provider,
+            queryEmbedding.Model,
+            queryEmbedding.Dimensions,
+            stopwatch.ElapsedMilliseconds);
     }
 
-    private static IReadOnlyDictionary<string, decimal> DeserializeEmbedding(string embeddingJson) =>
-        JsonSerializer.Deserialize<Dictionary<string, decimal>>(embeddingJson, JsonOptions) ??
-        new Dictionary<string, decimal>();
+    private async Task<List<VectorCandidate>> SearchVectorCandidatesAsync(
+        IReadOnlyList<Guid> courseIds,
+        string queryVector,
+        int candidateLimit,
+        CancellationToken ct)
+    {
+        var candidates = new List<VectorCandidate>();
+        var connection = context.Database.GetDbConnection();
+        var shouldClose = connection.State != System.Data.ConnectionState.Open;
+        if (shouldClose)
+            await connection.OpenAsync(ct);
 
-    private static AiChatCitation ToCitation(AiKnowledgeChunk chunk, decimal score) =>
+        try
+        {
+            await using var command = connection.CreateCommand();
+            command.CommandText =
+                """
+                SELECT
+                    id,
+                    course_id,
+                    section_id,
+                    lesson_id,
+                    course_title,
+                    section_title,
+                    lesson_title,
+                    text,
+                    1 - (embedding_vector <=> CAST(@query_vector AS vector)) AS score
+                FROM ai_knowledge_chunks
+                WHERE course_id = ANY(@course_ids)
+                    AND embedding_vector IS NOT NULL
+                ORDER BY embedding_vector <=> CAST(@query_vector AS vector), course_title, chunk_index
+                LIMIT @candidate_limit
+                """;
+            command.Parameters.Add(new NpgsqlParameter("query_vector", queryVector));
+            command.Parameters.Add(new NpgsqlParameter("course_ids", courseIds.ToArray()));
+            command.Parameters.Add(new NpgsqlParameter("candidate_limit", candidateLimit));
+
+            await using var reader = await command.ExecuteReaderAsync(ct);
+            while (await reader.ReadAsync(ct))
+            {
+                candidates.Add(new VectorCandidate(
+                    reader.GetGuid(0),
+                    reader.GetGuid(1),
+                    reader.IsDBNull(2) ? null : reader.GetGuid(2),
+                    reader.IsDBNull(3) ? null : reader.GetGuid(3),
+                    reader.GetString(4),
+                    reader.IsDBNull(5) ? null : reader.GetString(5),
+                    reader.IsDBNull(6) ? null : reader.GetString(6),
+                    reader.GetString(7),
+                    Math.Round(Convert.ToDecimal(reader.GetValue(8), System.Globalization.CultureInfo.InvariantCulture), 4)));
+            }
+        }
+        finally
+        {
+            if (shouldClose)
+                await connection.CloseAsync();
+        }
+
+        return candidates;
+    }
+
+    private static AiKnowledgeRetrievalResult EmptyResult(
+        AiTextEmbedding embedding,
+        decimal minSimilarity,
+        Stopwatch stopwatch) =>
         new(
-            chunk.Id,
-            chunk.CourseId,
-            chunk.SectionId,
-            chunk.LessonId,
-            chunk.CourseTitle,
-            chunk.SectionTitle,
-            chunk.LessonTitle,
-            TrimSnippet(chunk.Text),
-            Math.Round(score, 4));
+            [],
+            0,
+            null,
+            minSimilarity,
+            embedding.Provider,
+            embedding.Model,
+            embedding.Dimensions,
+            stopwatch.ElapsedMilliseconds);
+
+    private static bool HasVectorSignal(IReadOnlyList<float> vector) =>
+        vector.Any(value => Math.Abs(value) > 0.000001f);
+
+    private static AiChatCitation ToCitation(VectorCandidate candidate) =>
+        new(
+            candidate.ChunkId,
+            candidate.CourseId,
+            candidate.SectionId,
+            candidate.LessonId,
+            candidate.CourseTitle,
+            candidate.SectionTitle,
+            candidate.LessonTitle,
+            TrimSnippet(candidate.Text),
+            candidate.Score);
 
     private static string TrimSnippet(string text)
     {
         var normalized = text.ReplaceLineEndings(" ").Trim();
         return normalized.Length <= 420 ? normalized : normalized[..420].TrimEnd() + "...";
     }
+
+    private sealed record VectorCandidate(
+        Guid ChunkId,
+        Guid CourseId,
+        Guid? SectionId,
+        Guid? LessonId,
+        string CourseTitle,
+        string? SectionTitle,
+        string? LessonTitle,
+        string Text,
+        decimal Score);
 }

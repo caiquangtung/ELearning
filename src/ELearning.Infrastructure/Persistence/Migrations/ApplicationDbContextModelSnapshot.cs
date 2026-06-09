@@ -216,6 +216,71 @@ namespace ELearning.Infrastructure.Persistence.Migrations
                     b.ToTable("ai_knowledge_chunks", (string)null);
                 });
 
+            modelBuilder.Entity("ELearning.Domain.Aggregates.AiAggregate.AiKnowledgeReindexJob", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at");
+
+                    b.Property<Guid?>("CourseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("course_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<int>("DeletedStaleChunks")
+                        .HasColumnType("integer")
+                        .HasColumnName("deleted_stale_chunks");
+
+                    b.Property<string>("Error")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("error");
+
+                    b.Property<int>("IndexedChunks")
+                        .HasColumnType("integer")
+                        .HasColumnName("indexed_chunks");
+
+                    b.Property<int>("IndexedCourses")
+                        .HasColumnType("integer")
+                        .HasColumnName("indexed_courses");
+
+                    b.Property<Guid?>("RequestedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("requested_by_user_id");
+
+                    b.Property<DateTime?>("StartedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("started_at");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("status");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourseId");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("Status", "CreatedAt");
+
+                    b.ToTable("ai_knowledge_reindex_jobs", (string)null);
+                });
+
             modelBuilder.Entity("ELearning.Domain.Aggregates.AiAggregate.AiRequestLog", b =>
                 {
                     b.Property<Guid>("Id")

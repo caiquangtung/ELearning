@@ -6,68 +6,146 @@ using ELearning.Domain.Aggregates.AiAggregate;
 using ELearning.Domain.Aggregates.CourseAggregate;
 using ELearning.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace ELearning.Infrastructure.Ai;
 
 public sealed class AiKnowledgeIndexingService(
     ApplicationDbContext context,
     AiKnowledgeChunker chunker,
-    IAiEmbeddingService embeddingService)
+    IAiTextEmbeddingService embeddingService)
     : IAiKnowledgeIndexingService
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
-    public async Task<AiKnowledgeReindexResult> ReindexAsync(Guid? courseId, CancellationToken ct = default)
+    public async Task<AiKnowledgeReindexResult> ReindexAsync(
+        Guid? courseId,
+        Guid? requestedByUserId = null,
+        Guid? jobId = null,
+        CancellationToken ct = default)
     {
-        var courses = await context.Courses
-            .Include(c => c.Sections)
-                .ThenInclude(s => s.Lessons)
-            .Where(c => !c.IsDeleted && c.Status == CourseStatus.Published)
-            .Where(c => !courseId.HasValue || c.Id == courseId.Value)
-            .OrderBy(c => c.Title)
-            .ToListAsync(ct);
+        var job = await StartJobAsync(courseId, requestedByUserId, jobId, ct);
 
-        var scopeCourseIds = courseId.HasValue
-            ? [courseId.Value]
-            : await context.Courses.IgnoreQueryFilters().Select(c => c.Id).ToListAsync(ct);
+        try
+        {
+            var courses = await context.Courses
+                .Include(c => c.Sections)
+                    .ThenInclude(s => s.Lessons)
+                .Where(c => !c.IsDeleted && c.Status == CourseStatus.Published)
+                .Where(c => !courseId.HasValue || c.Id == courseId.Value)
+                .OrderBy(c => c.Title)
+                .ToListAsync(ct);
 
-        var existing = await context.AiKnowledgeChunks
-            .Where(x => scopeCourseIds.Contains(x.CourseId))
-            .ToListAsync(ct);
+            var scopeCourseIds = courseId.HasValue
+                ? [courseId.Value]
+                : await context.Courses.IgnoreQueryFilters().Select(c => c.Id).ToListAsync(ct);
 
-        var desired = courses
-            .SelectMany(course => chunker.BuildCourseChunks(course))
-            .Select(source => new IndexedChunk(source, ComputeContentHash(source)))
-            .ToList();
+            var existing = await context.AiKnowledgeChunks
+                .Where(x => scopeCourseIds.Contains(x.CourseId))
+                .ToListAsync(ct);
 
-        var desiredHashes = desired.Select(x => x.ContentHash).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var stale = existing.Where(x => !desiredHashes.Contains(x.ContentHash)).ToList();
-        context.AiKnowledgeChunks.RemoveRange(stale);
+            var existingByHash = existing.ToDictionary(x => x.ContentHash, StringComparer.OrdinalIgnoreCase);
+            var desired = courses
+                .SelectMany(course => chunker.BuildCourseChunks(course))
+                .Select(source => CreateIndexedChunk(source))
+                .ToList();
 
-        var existingHashes = existing.Select(x => x.ContentHash).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var newChunks = desired
-            .Where(x => !existingHashes.Contains(x.ContentHash))
-            .Select(x => CreateChunk(x.Source, x.ContentHash))
-            .ToList();
+            var desiredHashes = desired.Select(x => x.ContentHash).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var stale = existing.Where(x => !desiredHashes.Contains(x.ContentHash)).ToList();
+            context.AiKnowledgeChunks.RemoveRange(stale);
 
-        await context.AiKnowledgeChunks.AddRangeAsync(newChunks, ct);
-        await context.SaveChangesAsync(ct);
+            var vectorUpdates = new List<VectorUpdate>(desired.Count);
+            var newChunks = new List<AiKnowledgeChunk>();
 
-        return new AiKnowledgeReindexResult(courses.Count, desired.Count, stale.Count);
+            foreach (var desiredChunk in desired)
+            {
+                if (existingByHash.TryGetValue(desiredChunk.ContentHash, out var existingChunk))
+                {
+                    existingChunk.UpdateEmbedding(desiredChunk.EmbeddingJson, desiredChunk.MetadataJson);
+                    vectorUpdates.Add(new VectorUpdate(existingChunk.Id, desiredChunk.VectorLiteral));
+                    continue;
+                }
+
+                var newChunk = CreateChunk(desiredChunk);
+                newChunks.Add(newChunk);
+                vectorUpdates.Add(new VectorUpdate(newChunk.Id, desiredChunk.VectorLiteral));
+            }
+
+            await context.AiKnowledgeChunks.AddRangeAsync(newChunks, ct);
+            await context.SaveChangesAsync(ct);
+            await UpdateEmbeddingVectorsAsync(vectorUpdates, ct);
+
+            job.MarkSucceeded(courses.Count, desired.Count, stale.Count);
+            await context.SaveChangesAsync(ct);
+
+            return new AiKnowledgeReindexResult(job.Id, courses.Count, desired.Count, stale.Count);
+        }
+        catch (Exception ex)
+        {
+            await MarkJobFailedAsync(job.Id, ex.Message, ct);
+            throw;
+        }
     }
 
-    private AiKnowledgeChunk CreateChunk(AiKnowledgeChunkSource source, string contentHash)
+    public async Task<AiKnowledgeStatusResult> GetStatusAsync(CancellationToken ct = default)
+    {
+        var totalChunks = await context.AiKnowledgeChunks.CountAsync(ct);
+        var indexedCourses = await context.AiKnowledgeChunks
+            .Select(x => x.CourseId)
+            .Distinct()
+            .CountAsync(ct);
+        var failedJobs = await context.AiKnowledgeReindexJobs
+            .CountAsync(x => x.Status == AiKnowledgeReindexJobStatus.Failed, ct);
+        var vectorizedChunks = await CountVectorizedChunksAsync(ct);
+
+        var jobs = await context.AiKnowledgeReindexJobs
+            .AsNoTracking()
+            .OrderByDescending(x => x.CreatedAt)
+            .Take(10)
+            .ToListAsync(ct);
+
+        var modelProbe = embeddingService.Embed("status");
+        var recentJobs = jobs.Select(ToJobSummary).ToList();
+
+        return new AiKnowledgeStatusResult(
+            totalChunks,
+            vectorizedChunks,
+            indexedCourses,
+            failedJobs,
+            modelProbe.Dimensions,
+            modelProbe.Provider,
+            modelProbe.Model,
+            recentJobs.FirstOrDefault(),
+            recentJobs);
+    }
+
+    private IndexedChunk CreateIndexedChunk(AiKnowledgeChunkSource source)
     {
         var embedding = embeddingService.Embed(source.Text);
-        var embeddingJson = JsonSerializer.Serialize(embedding, JsonOptions);
+        var embeddingJson = PgVectorFormatter.ToJson(embedding.Vector);
+        var vectorLiteral = PgVectorFormatter.ToVectorLiteral(embedding.Vector);
         var metadataJson = JsonSerializer.Serialize(new
         {
             source.SourceType,
             source.CourseTitle,
             source.SectionTitle,
-            source.LessonTitle
+            source.LessonTitle,
+            embedding.Provider,
+            embedding.Model,
+            embedding.Dimensions
         }, JsonOptions);
 
+        return new IndexedChunk(
+            source,
+            ComputeContentHash(source),
+            embeddingJson,
+            vectorLiteral,
+            metadataJson);
+    }
+
+    private static AiKnowledgeChunk CreateChunk(IndexedChunk chunk)
+    {
+        var source = chunk.Source;
         return AiKnowledgeChunk.Create(
             source.CourseId,
             source.SectionId,
@@ -77,10 +155,10 @@ public sealed class AiKnowledgeIndexingService(
             source.SectionTitle,
             source.LessonTitle,
             source.ChunkIndex,
-            contentHash,
+            chunk.ContentHash,
             source.Text,
-            embeddingJson,
-            metadataJson);
+            chunk.EmbeddingJson,
+            chunk.MetadataJson);
     }
 
     private static string ComputeContentHash(AiKnowledgeChunkSource source)
@@ -100,5 +178,114 @@ public sealed class AiKnowledgeIndexingService(
         return Convert.ToHexString(hash).ToLowerInvariant();
     }
 
-    private sealed record IndexedChunk(AiKnowledgeChunkSource Source, string ContentHash);
+    private async Task<AiKnowledgeReindexJob> StartJobAsync(
+        Guid? courseId,
+        Guid? requestedByUserId,
+        Guid? jobId,
+        CancellationToken ct)
+    {
+        AiKnowledgeReindexJob job;
+        if (jobId.HasValue)
+        {
+            job = await context.AiKnowledgeReindexJobs.FirstOrDefaultAsync(x => x.Id == jobId.Value, ct)
+                ?? throw new InvalidOperationException("AI knowledge reindex job was not found.");
+        }
+        else
+        {
+            job = AiKnowledgeReindexJob.Create(courseId, requestedByUserId);
+            await context.AiKnowledgeReindexJobs.AddAsync(job, ct);
+        }
+
+        job.MarkInProgress();
+        await context.SaveChangesAsync(ct);
+        return job;
+    }
+
+    private async Task MarkJobFailedAsync(Guid jobId, string error, CancellationToken ct)
+    {
+        context.ChangeTracker.Clear();
+        var job = await context.AiKnowledgeReindexJobs.FirstOrDefaultAsync(x => x.Id == jobId, ct);
+        if (job is null)
+            return;
+
+        job.MarkFailed(error);
+        await context.SaveChangesAsync(ct);
+    }
+
+    private async Task UpdateEmbeddingVectorsAsync(IReadOnlyList<VectorUpdate> updates, CancellationToken ct)
+    {
+        if (updates.Count == 0)
+            return;
+
+        var connection = context.Database.GetDbConnection();
+        var shouldClose = connection.State != System.Data.ConnectionState.Open;
+        if (shouldClose)
+            await connection.OpenAsync(ct);
+
+        try
+        {
+            foreach (var update in updates)
+            {
+                await using var command = connection.CreateCommand();
+                command.CommandText =
+                    """
+                    UPDATE ai_knowledge_chunks
+                    SET embedding_vector = CAST(@embedding_vector AS vector)
+                    WHERE id = @id
+                    """;
+                command.Parameters.Add(new NpgsqlParameter("embedding_vector", update.VectorLiteral));
+                command.Parameters.Add(new NpgsqlParameter("id", update.ChunkId));
+                await command.ExecuteNonQueryAsync(ct);
+            }
+        }
+        finally
+        {
+            if (shouldClose)
+                await connection.CloseAsync();
+        }
+    }
+
+    private async Task<int> CountVectorizedChunksAsync(CancellationToken ct)
+    {
+        var connection = context.Database.GetDbConnection();
+        var shouldClose = connection.State != System.Data.ConnectionState.Open;
+        if (shouldClose)
+            await connection.OpenAsync(ct);
+
+        try
+        {
+            await using var command = connection.CreateCommand();
+            command.CommandText = "SELECT COUNT(*) FROM ai_knowledge_chunks WHERE embedding_vector IS NOT NULL";
+            var value = await command.ExecuteScalarAsync(ct);
+            return Convert.ToInt32(value);
+        }
+        finally
+        {
+            if (shouldClose)
+                await connection.CloseAsync();
+        }
+    }
+
+    private static AiKnowledgeReindexJobSummary ToJobSummary(AiKnowledgeReindexJob job) =>
+        new(
+            job.Id,
+            job.CourseId,
+            job.Status.ToString(),
+            job.RequestedByUserId,
+            job.StartedAt,
+            job.CompletedAt,
+            job.IndexedCourses,
+            job.IndexedChunks,
+            job.DeletedStaleChunks,
+            job.Error,
+            job.CreatedAt);
+
+    private sealed record IndexedChunk(
+        AiKnowledgeChunkSource Source,
+        string ContentHash,
+        string EmbeddingJson,
+        string VectorLiteral,
+        string MetadataJson);
+
+    private sealed record VectorUpdate(Guid ChunkId, string VectorLiteral);
 }
