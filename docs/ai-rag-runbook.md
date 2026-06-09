@@ -8,10 +8,10 @@ This runbook covers setup, reindexing, operational checks, and troubleshooting f
 | --- | --- |
 | Default provider | `Local` |
 | External provider | OpenAI-compatible chat HTTP |
-| RAG embeddings | Local deterministic sparse vectors |
-| RAG vector store | Postgres JSON vectors in `AiKnowledgeChunks` |
+| RAG embeddings | Local deterministic dense vectors, 384 dimensions |
+| RAG vector store | Postgres pgvector `embedding_vector vector(384)` |
 | RAG reindex endpoint | `POST /api/v1/ai/knowledge/reindex` |
-| RAG background queue | In-memory queue + hosted worker |
+| RAG background queue | Persisted job rows + in-memory channel + hosted worker |
 | RAG fallback | Local extractive answer from retrieved snippets |
 | Required RAG manage permission | `AI.Manage` |
 
@@ -47,6 +47,7 @@ For local OpenAI-compatible gateways, set `Ai__BaseUrl` to the gateway's `/v1` b
 
 ```bash
 Ai__RagChatPromptVersion=rag-learning-assistant-v1
+Ai__RagEmbeddingDimensions=384
 Ai__RagMaxRetrievedChunks=4
 Ai__RagMinSimilarity=0.05
 Ai__MaxSourceCharacters=12000
@@ -58,6 +59,25 @@ Guidance:
 - Decrease `RagMaxRetrievedChunks` if answers include noisy references.
 - Increase `RagMinSimilarity` if irrelevant citations appear.
 - Decrease `RagMinSimilarity` if the assistant refuses too often.
+- `RagEmbeddingDimensions` must stay `384` while the database column is `vector(384)`.
+
+## pgvector Setup
+
+Local Docker uses a pgvector-enabled Postgres image:
+
+```yaml
+postgres:
+  image: pgvector/pgvector:pg17
+```
+
+The EF migration creates the extension and vector column:
+
+```sql
+CREATE EXTENSION IF NOT EXISTS vector;
+ALTER TABLE ai_knowledge_chunks ADD COLUMN IF NOT EXISTS embedding_vector vector(384);
+```
+
+`embedding_json` remains as debug/backward compatibility data. Runtime retrieval uses `embedding_vector`.
 
 ## Reindex Knowledge
 
@@ -101,7 +121,7 @@ The app enqueues background reindex after:
 - add lesson to a published course
 - course delete
 
-The background queue is in-memory. If the process restarts before queued work runs, trigger manual reindex.
+Each queued reindex creates an `AiKnowledgeReindexJob` row. The channel that wakes the worker is still in-memory, so if the process restarts before queued work runs, trigger manual reindex or requeue failed/stale jobs.
 
 ## Learner Chat Smoke Test
 
@@ -182,6 +202,7 @@ Minimum fields to inspect:
 - `content_hash`
 - `text`
 - `embedding_json`
+- `embedding_vector`
 
 ### Check Chat Persistence
 
@@ -216,7 +237,7 @@ Likely causes:
 - knowledge was not reindexed
 - course is not published
 - learner does not have access to the course
-- question does not overlap with local sparse embeddings
+- question does not overlap with local dense hash embeddings
 - `RagMinSimilarity` is too high
 - lesson content is empty or not included in chunks
 
@@ -232,7 +253,7 @@ Actions:
 
 Likely causes:
 
-- local sparse embeddings are too shallow for semantic matching
+- local dense hash embeddings are too shallow for semantic matching
 - `RagMinSimilarity` is too low
 - chunks are too broad
 - course content has repeated generic terms
@@ -242,7 +263,7 @@ Actions:
 1. Increase `Ai__RagMinSimilarity`.
 2. Reduce `Ai__RagMaxRetrievedChunks`.
 3. Improve course/lesson text quality.
-4. Consider real embedding provider or `pgvector` follow-up.
+4. Consider a real embedding provider behind `IAiTextEmbeddingService`.
 
 ### Provider Fails But Local Works
 
@@ -292,7 +313,7 @@ Actions:
 - Use user-secrets or environment variables for provider credentials.
 - Run manual full reindex after seed/demo data changes.
 - Run manual full reindex after bulk import/migration of course content.
-- For multiple API instances, replace in-memory queue with a durable distributed job system before relying on background reindex.
+- For multiple API instances, replace the in-memory channel with a durable distributed queue. Job status is already persisted.
 
 ## Verification Commands
 

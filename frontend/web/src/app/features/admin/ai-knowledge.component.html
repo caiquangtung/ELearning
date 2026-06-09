@@ -1,0 +1,143 @@
+<app-page-shell
+  title="AI Knowledge"
+  subtitle="Monitor course knowledge indexing and vector retrieval readiness."
+>
+  <ng-container pageActions>
+    <app-ui-button
+      label="Refresh"
+      icon="pi pi-refresh"
+      severity="secondary"
+      [text]="true"
+      (clicked)="reload()"
+    />
+    <app-ui-button
+      label="Reindex all"
+      icon="pi pi-database"
+      [disabled]="reindexing()"
+      (clicked)="reindexAll()"
+    />
+  </ng-container>
+
+  @if (loading()) {
+    <div class="state-panel">Loading AI knowledge status...</div>
+  } @else {
+    @if (status(); as s) {
+      <section class="metric-grid" aria-label="AI knowledge metrics">
+        <article class="metric-panel">
+          <span>Total chunks</span>
+          <strong>{{ s.totalChunks }}</strong>
+        </article>
+        <article class="metric-panel">
+          <span>Vectorized chunks</span>
+          <strong>{{ s.vectorizedChunks }}</strong>
+          <small>{{ vectorCoverage() }}% ready</small>
+        </article>
+        <article class="metric-panel">
+          <span>Indexed courses</span>
+          <strong>{{ s.indexedCourses }}</strong>
+        </article>
+        <article class="metric-panel" [class.metric-panel--warning]="s.failedJobs > 0">
+          <span>Failed jobs</span>
+          <strong>{{ s.failedJobs }}</strong>
+        </article>
+      </section>
+
+      <section class="ops-grid">
+        <article class="ops-panel">
+          <h2>Vector store</h2>
+          <dl>
+            <div>
+              <dt>Provider</dt>
+              <dd>{{ s.vectorProvider }}</dd>
+            </div>
+            <div>
+              <dt>Model</dt>
+              <dd>{{ s.vectorModel }}</dd>
+            </div>
+            <div>
+              <dt>Dimensions</dt>
+              <dd>{{ s.vectorDimensions }}</dd>
+            </div>
+            <div>
+              <dt>Store</dt>
+              <dd>Postgres pgvector</dd>
+            </div>
+          </dl>
+        </article>
+
+        <article class="ops-panel">
+          <h2>Scoped reindex</h2>
+          <label for="ai-course-id">Course ID</label>
+          <div class="inline-form">
+            <input
+              id="ai-course-id"
+              pInputText
+              [(ngModel)]="courseId"
+              name="courseId"
+              placeholder="Optional course UUID"
+            />
+            <app-ui-button
+              label="Run"
+              icon="pi pi-play"
+              severity="secondary"
+              [disabled]="reindexing()"
+              (clicked)="reindexCourse()"
+            />
+          </div>
+          @if (lastResult(); as result) {
+            <p class="result-note">
+              Job {{ result.jobId }} completed:
+              {{ result.indexedChunks }} chunks indexed,
+              {{ result.deletedStaleChunks }} stale deleted.
+            </p>
+          }
+        </article>
+      </section>
+
+      <section class="table-panel">
+        <header>
+          <h2>Recent reindex jobs</h2>
+        </header>
+
+        @if (s.recentJobs.length === 0) {
+          <div class="state-panel state-panel--compact">No reindex jobs yet.</div>
+        } @else {
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Course</th>
+                  <th>Chunks</th>
+                  <th>Deleted</th>
+                  <th>Started</th>
+                  <th>Completed</th>
+                  <th>Error</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (job of s.recentJobs; track job.id) {
+                  <tr>
+                    <td>
+                      <span class="status-pill" [class.status-pill--failed]="job.status === 'Failed'">
+                        {{ job.status }}
+                      </span>
+                    </td>
+                    <td>{{ job.courseId ?? 'All courses' }}</td>
+                    <td>{{ job.indexedChunks }}</td>
+                    <td>{{ job.deletedStaleChunks }}</td>
+                    <td>{{ job.startedAt ? (job.startedAt | date: 'short') : '-' }}</td>
+                    <td>{{ job.completedAt ? (job.completedAt | date: 'short') : '-' }}</td>
+                    <td class="error-cell">{{ job.error ?? '-' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+    } @else {
+      <div class="state-panel">AI knowledge status is unavailable.</div>
+    }
+  }
+</app-page-shell>

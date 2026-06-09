@@ -123,6 +123,8 @@ Backend unit tests should cover:
 
 - chunking is stable and respects max chunk size
 - reindex is idempotent by content hash
+- local dense embedding is deterministic, 384-dimensional, and normalized
+- reindex writes pgvector data plus debug `embedding_json`
 - retriever ranks relevant chunks above unrelated chunks
 - chat refuses when no context is retrieved
 - local extractive answer returns only retrieved citations

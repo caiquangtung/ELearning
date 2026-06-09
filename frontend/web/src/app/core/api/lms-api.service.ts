@@ -843,9 +843,36 @@ export interface ReindexAiKnowledgeRequest {
 }
 
 export interface ReindexAiKnowledgeDto {
+  jobId: string;
   indexedCourses: number;
   indexedChunks: number;
   deletedStaleChunks: number;
+}
+
+export interface AiKnowledgeReindexJobDto {
+  id: string;
+  courseId: string | null;
+  status: string;
+  requestedByUserId: string | null;
+  startedAt: string | null;
+  completedAt: string | null;
+  indexedCourses: number;
+  indexedChunks: number;
+  deletedStaleChunks: number;
+  error: string | null;
+  createdAt: string;
+}
+
+export interface AiKnowledgeStatusDto {
+  totalChunks: number;
+  vectorizedChunks: number;
+  indexedCourses: number;
+  failedJobs: number;
+  vectorDimensions: number;
+  vectorProvider: string;
+  vectorModel: string;
+  lastJob: AiKnowledgeReindexJobDto | null;
+  recentJobs: AiKnowledgeReindexJobDto[];
 }
 
 export interface NotificationDto {
@@ -1318,6 +1345,10 @@ export class LmsApiService {
 
   reindexAiKnowledge(body: ReindexAiKnowledgeRequest): Observable<ReindexAiKnowledgeDto> {
     return this.http.post<ReindexAiKnowledgeDto>(`${this.base}/ai/knowledge/reindex`, body);
+  }
+
+  getAiKnowledgeStatus(): Observable<AiKnowledgeStatusDto> {
+    return this.http.get<AiKnowledgeStatusDto>(`${this.base}/ai/knowledge/status`);
   }
 
   listNotifications(request: ListNotificationsRequest = {}): Observable<PagedList<NotificationDto>> {

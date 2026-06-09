@@ -8,7 +8,7 @@ The platform has two classes of AI features:
 
 1. **Deterministic local AI**
    - Runs without an external provider.
-   - Uses rule-based scoring, sparse vectors, templates, and extractive responses.
+   - Uses rule-based scoring, local embeddings, templates, and extractive responses.
    - Good for demos, predictable tests, and fallback behavior.
 
 2. **Provider-assisted AI**
@@ -37,7 +37,7 @@ If no relevant chunks are retrieved, the assistant refuses instead of guessing.
 flowchart LR
     Content["Published course and lesson content"] --> Chunking["Chunking"]
     Chunking --> Embedding["Embedding"]
-    Embedding --> Store["AiKnowledgeChunks<br/>text + embedding JSON"]
+    Embedding --> Store["AiKnowledgeChunks<br/>text + pgvector + debug JSON"]
 
     Question["Learner question"] --> QueryEmbedding["Question embedding"]
     QueryEmbedding --> Retrieval["Cosine similarity retrieval"]
@@ -98,12 +98,14 @@ This makes reindexing idempotent.
 
 An embedding is a numeric representation of text.
 
-In production RAG systems, embeddings are often dense vectors from a model. In this sprint, the app uses local deterministic sparse vectors:
+In production RAG systems, embeddings are often dense vectors from a model. The app now uses local deterministic dense vectors for RAG:
 
 - text is tokenized
-- token frequencies become vector dimensions
-- vectors are serialized as JSON
-- similarity is computed in application code
+- tokens are hashed into a fixed 384-dimensional vector
+- vectors are L2-normalized
+- vectors are stored in Postgres `embedding_vector vector(384)`
+- `embedding_json` is kept as debug/backward compatibility data
+- similarity is computed through pgvector cosine distance
 
 This is less semantically powerful than a real embedding model, but it is:
 
@@ -201,7 +203,7 @@ The current system reduces hallucination by:
 Remaining risks:
 
 - retrieved context may be partially relevant but incomplete
-- local sparse embeddings may miss semantic matches
+- local dense hash embeddings may miss semantic matches
 - provider can still phrase an answer too broadly
 - confidence is a heuristic, not a guarantee
 
@@ -254,9 +256,9 @@ The LMS AI Tutor should answer from course material only because:
 
 | Area | Current choice | Trade-off |
 | --- | --- | --- |
-| Vector store | Postgres JSON vectors | Simple but not optimized for large-scale vector search |
-| Embedding model | Local sparse vector | Deterministic but lower semantic recall |
-| Retrieval | App-side cosine similarity | Easy to inspect but not ANN/index accelerated |
+| Vector store | Postgres pgvector | Better production path than JSON vectors, still inside app database |
+| Embedding model | Local dense hash vector | Deterministic but lower semantic recall than model embeddings |
+| Retrieval | pgvector cosine query | Scales better than app-side JSON scanning, still needs tuning for large data |
 | Provider | OpenAI-compatible chat only | Flexible for many providers but no Azure-specific mode |
 | Queue | In-memory background queue | Simple but not distributed across multiple API instances |
 | Citations | Retrieved chunks only | Strong anti-hallucination control, but citation quality depends on retrieval quality |

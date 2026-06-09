@@ -409,6 +409,11 @@ export class MainLayoutComponent {
             routerLink: '/admin/reports',
           },
           {
+            label: 'AI Knowledge',
+            icon: 'pi pi-database',
+            routerLink: '/admin/ai-knowledge',
+          },
+          {
             label: 'Announcements',
             icon: 'pi pi-send',
             routerLink: '/admin/announcements',

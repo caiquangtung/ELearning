@@ -19,7 +19,7 @@ Related documents:
 | AI-4 | Learner risk prediction | Instructor/Admin | Local deterministic scoring |
 | AI-5 | Semantic course search | Learner | Local deterministic sparse embeddings |
 | AI-5 | Learning path generation | Learner | Local deterministic provider or OpenAI-compatible provider |
-| AI-6 | RAG Learning Assistant | Learner | JSON-vector retrieval, local extractive fallback, optional OpenAI-compatible answer synthesis |
+| AI-6 | RAG Learning Assistant | Learner | pgvector retrieval, local extractive fallback, optional OpenAI-compatible answer synthesis |
 
 ## Architectural Principles
 
@@ -72,6 +72,7 @@ flowchart TB
             LocalRisk["LocalLearnerRiskService"]
             LocalReco["LocalCourseRecommendationService"]
             LocalEmbedding["LocalEmbeddingService"]
+            DenseEmbedding["LocalDenseTextEmbeddingService"]
         end
 
         subgraph Providers["Providers"]
@@ -106,9 +107,9 @@ flowchart TB
     ConfigPath --> ChatClient
 
     Indexing --> Chunker
-    Indexing --> LocalEmbedding
+    Indexing --> DenseEmbedding
     Retriever --> Policy
-    Retriever --> LocalEmbedding
+    Retriever --> DenseEmbedding
     Chat --> Retriever
     Chat --> ChatClient
     Worker --> Indexing
@@ -127,6 +128,7 @@ Key contracts:
 - `IAiLearnerRiskService`
 - `IAiCourseRecommendationService`
 - `IAiEmbeddingService`
+- `IAiTextEmbeddingService`
 - `IAiRagChatService`
 - `IAiKnowledgeIndexingService`
 - `IAiKnowledgeRetriever`
@@ -167,8 +169,9 @@ Current provider rules:
 - `Provider=Local` is default.
 - `Provider=OpenAiCompatible` requires `ApiKey` and `ChatModel` for remote calls.
 - `FallbackToLocal=true` keeps workflows usable if the remote provider fails.
-- RAG v1 uses the remote provider only for answer synthesis.
-- Embeddings remain local deterministic sparse vectors in this sprint.
+- RAG uses the remote provider only for answer synthesis.
+- RAG embeddings use a local deterministic 384-dimension dense hashing model by default.
+- `embedding_json` is retained for debug/backward compatibility; retrieval uses `embedding_vector vector(384)`.
 
 ## Configuration
 
@@ -189,6 +192,7 @@ AI options are bound from the `Ai` configuration section.
 | `EssayGradingPromptVersion` | `essay-grading-v1` | Essay prompt audit version |
 | `LearningPathPromptVersion` | `learning-path-generator-v1` | Learning path prompt audit version |
 | `RagChatPromptVersion` | `rag-learning-assistant-v1` | RAG prompt audit version |
+| `RagEmbeddingDimensions` | `384` | Fixed RAG vector dimension |
 | `RagMaxRetrievedChunks` | `4` | Top retrieved chunks used for RAG |
 | `RagMinSimilarity` | `0.05` | Minimum cosine similarity for retrieved chunks |
 | `MaxSourceCharacters` | `12000` | Source-content cap for provider prompts |
@@ -218,6 +222,7 @@ erDiagram
         string content_hash
         text text
         json embedding_json
+        vector embedding_vector
         json metadata_json
         datetime created_at
         datetime updated_at
@@ -247,7 +252,7 @@ erDiagram
     }
 ```
 
-RAG v1 stores embeddings as JSON-serialized sparse vectors in Postgres and calculates cosine similarity in application code. `IAiKnowledgeRetriever` is the seam for moving to `pgvector`, a vector cache, or an external vector database later.
+RAG stores dense vectors in `embedding_vector vector(384)` and keeps `embedding_json` as debug/backward compatibility data. Retrieval uses pgvector cosine distance through `IAiKnowledgeRetriever`, which remains the seam for a future external vector database.
 
 ## Knowledge Indexing Flow
 
@@ -258,7 +263,7 @@ sequenceDiagram
     participant Handler as "ReindexAiKnowledgeCommandHandler"
     participant Indexer as "AiKnowledgeIndexingService"
     participant Chunker as "AiKnowledgeChunker"
-    participant Embedding as "LocalEmbeddingService"
+    participant Embedding as "LocalDenseTextEmbeddingService"
     participant DB as "Postgres"
 
     Admin->>API: "POST /api/v1/ai/knowledge/reindex"
@@ -269,7 +274,7 @@ sequenceDiagram
     Chunker-->>Indexer: "AiKnowledgeChunkSource[]"
     loop "For each desired chunk"
         Indexer->>Embedding: "Embed(chunk.Text)"
-        Embedding-->>Indexer: "Sparse vector"
+        Embedding-->>Indexer: "Dense vector(384)"
     end
     Indexer->>DB: "Delete stale chunks"
     Indexer->>DB: "Insert new chunks"
@@ -289,9 +294,10 @@ Background reindex is also triggered after course mutations:
 flowchart LR
     Mutation["Course mutation handler"] --> Save["Save course changes"]
     Save --> Queue["IAiKnowledgeReindexQueue.EnqueueAsync(courseId)"]
-    Queue --> Worker["AiKnowledgeReindexWorker"]
-    Worker --> Indexer["AiKnowledgeIndexingService.ReindexAsync(courseId)"]
-    Indexer --> Chunks["AiKnowledgeChunks refreshed"]
+    Queue --> Job["Persist AiKnowledgeReindexJob=Queued"]
+    Job --> Worker["AiKnowledgeReindexWorker"]
+    Worker --> Indexer["AiKnowledgeIndexingService.ReindexAsync(jobId)"]
+    Indexer --> Chunks["AiKnowledgeChunks + embedding_vector refreshed"]
 ```
 
 ## Learner Chat Flow
@@ -408,18 +414,16 @@ For RAG, `AiChatMessage` also stores answer content, citations JSON, provider/mo
 
 ## Known Limits
 
-- RAG vectors are JSON in Postgres, not `pgvector`.
-- Retrieval is app-side cosine similarity, not ANN/vector-index accelerated.
-- Embeddings are local deterministic sparse vectors.
+- RAG uses pgvector, but still with local deterministic dense embeddings.
+- Retrieval is exact/top-k pgvector query in app-managed SQL; advanced reranking is not implemented yet.
 - External provider integration is OpenAI-compatible chat only.
 - No provider-side embedding adapter yet.
-- No admin UI for AI logs/RAG reindex status yet.
-- Background reindex queue is in-memory and suitable for current app/runtime, not distributed workers.
+- Admin UI covers knowledge status/reindex jobs only, not full AI cost/quality analytics.
+- Background queue transport is in-memory; reindex job status is persisted, but distributed queueing is still a follow-up.
 
 ## Follow-Up Architecture Work
 
-- Replace JSON vector store with `pgvector` or a vector-cache design.
-- Add OpenAI-compatible embedding adapter behind `IAiEmbeddingService`.
+- Add OpenAI-compatible embedding adapter behind `IAiTextEmbeddingService`.
 - Add distributed reindex jobs if the API is horizontally scaled.
 - Add admin AI observability UI: request logs, token usage, provider errors, reindex history.
 - Add automated RAG quality dataset and regression scoring.

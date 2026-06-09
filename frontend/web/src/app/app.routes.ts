@@ -317,6 +317,14 @@ export const routes: Routes = [
               ),
           },
           {
+            path: 'ai-knowledge',
+            data: routeData('admin', 'AI Knowledge'),
+            loadComponent: () =>
+              import('./features/admin/ai-knowledge.component').then(
+                (m) => m.AiKnowledgeComponent,
+              ),
+          },
+          {
             path: 'notifications',
             data: routeData('admin', 'Notifications'),
             loadComponent: () =>

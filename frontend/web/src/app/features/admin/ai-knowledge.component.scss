@@ -1,0 +1,163 @@
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.metric-panel,
+.ops-panel,
+.table-panel,
+.state-panel {
+  border: 1px solid var(--surface-border);
+  border-radius: 6px;
+  background: var(--surface-card);
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+.metric-panel {
+  padding: 1rem;
+}
+
+.metric-panel span,
+.metric-panel small,
+dt {
+  color: var(--text-color-secondary);
+  font-size: 0.8125rem;
+}
+
+.metric-panel strong {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--text-color);
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.metric-panel--warning strong {
+  color: #b42318;
+}
+
+.ops-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.ops-panel,
+.table-panel,
+.state-panel {
+  padding: 1rem;
+}
+
+h2 {
+  margin: 0 0 0.875rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.875rem;
+  margin: 0;
+}
+
+dd {
+  margin: 0.2rem 0 0;
+  font-weight: 600;
+}
+
+label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.inline-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.inline-form input {
+  min-width: 0;
+  flex: 1;
+}
+
+.result-note {
+  margin: 0.75rem 0 0;
+  color: var(--text-color-secondary);
+  font-size: 0.875rem;
+}
+
+.table-panel {
+  margin-top: 1rem;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+th,
+td {
+  border-bottom: 1px solid var(--surface-border);
+  padding: 0.65rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  color: var(--text-color-secondary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #b7e4c7;
+  border-radius: 999px;
+  background: #f0fdf4;
+  color: #166534;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.status-pill--failed {
+  border-color: #fda29b;
+  background: #fff1f0;
+  color: #b42318;
+}
+
+.error-cell {
+  max-width: 18rem;
+  color: #b42318;
+}
+
+.state-panel {
+  color: var(--text-color-secondary);
+}
+
+.state-panel--compact {
+  box-shadow: none;
+}
+
+@media (max-width: 900px) {
+  .metric-grid,
+  .ops-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .inline-form {
+    flex-direction: column;
+  }
+}
