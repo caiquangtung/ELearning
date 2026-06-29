@@ -32,6 +32,7 @@ export class AiKnowledgeComponent implements OnInit {
   readonly status = signal<AiKnowledgeStatusDto | null>(null);
   readonly loading = signal(true);
   readonly reindexing = signal(false);
+  readonly evaluating = signal(false);
   readonly lastResult = signal<ReindexAiKnowledgeDto | null>(null);
   courseId = '';
 
@@ -64,6 +65,23 @@ export class AiKnowledgeComponent implements OnInit {
   reindexCourse(): void {
     const value = this.courseId.trim();
     this.runReindex(value.length === 0 ? null : value);
+  }
+
+  runEvaluation(): void {
+    if (this.evaluating()) return;
+    this.errors.clear();
+    this.evaluating.set(true);
+    this.api.runRagEvaluation().subscribe({
+      next: () => {
+        this.evaluating.set(false);
+        this.reload();
+      },
+      error: () => this.evaluating.set(false),
+    });
+  }
+
+  percent(value: number): number {
+    return Math.round(value * 100);
   }
 
   private runReindex(courseId: string | null): void {

@@ -1,0 +1,26 @@
+{
+  "version": "rag-golden-v1",
+  "cases": [
+    {
+      "id": "secure-coding-seed-content",
+      "question": "What does the Secure Coding course lesson content cover?",
+      "shouldUseContext": true,
+      "expectedCourseTitleTerms": ["secure", "coding"],
+      "expectedSnippetTerms": ["seed", "content"]
+    },
+    {
+      "id": "data-analytics-seed-content",
+      "question": "Where is the Data Analytics generated seed lesson content?",
+      "shouldUseContext": true,
+      "expectedCourseTitleTerms": ["data", "analytics"],
+      "expectedSnippetTerms": ["seed", "content"]
+    },
+    {
+      "id": "out-of-scope-sports",
+      "question": "Who won the 1998 world cup final?",
+      "shouldUseContext": false,
+      "expectedCourseTitleTerms": [],
+      "expectedSnippetTerms": []
+    }
+  ]
+}

@@ -4,6 +4,10 @@ using ELearning.Domain.Aggregates.AiAggregate;
 using ELearning.Domain.Aggregates.CourseAggregate;
 using ELearning.Infrastructure.Ai;
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
+using System.Net;
+using System.Text;
 
 namespace ELearning.Application.UnitTests;
 
@@ -78,12 +82,12 @@ public class RagLearningAssistantTests
     }
 
     [Fact]
-    public void Local_dense_embedding_is_deterministic_fixed_size_and_normalized()
+    public async Task Local_dense_embedding_is_deterministic_fixed_size_and_normalized()
     {
         var service = new LocalDenseTextEmbeddingService();
 
-        var first = service.Embed("JWT validation checks signatures, issuer, audience, and expiry.");
-        var second = service.Embed("JWT validation checks signatures, issuer, audience, and expiry.");
+        var first = await service.EmbedAsync("JWT validation checks signatures, issuer, audience, and expiry.");
+        var second = await service.EmbedAsync("JWT validation checks signatures, issuer, audience, and expiry.");
 
         first.Vector.Should().HaveCount(LocalDenseTextEmbeddingService.EmbeddingDimensions);
         first.Vector.Should().Equal(second.Vector);
@@ -95,21 +99,109 @@ public class RagLearningAssistantTests
     }
 
     [Fact]
-    public async Task Knowledge_reindex_channel_preserves_job_id()
+    public async Task OpenAi_compatible_embedding_normalizes_valid_vector()
     {
-        var channel = new InMemoryAiKnowledgeReindexChannel();
-        var jobId = Guid.NewGuid();
+        var response = $$"""
+            {
+              "model": "test-embedding",
+              "data": [
+                { "embedding": [{{string.Join(',', Enumerable.Repeat("1", 384))}}] }
+              ]
+            }
+            """;
+        var service = new OpenAiCompatibleTextEmbeddingService(
+            new HttpClient(new StaticResponseHandler(HttpStatusCode.OK, response)),
+            Options.Create(new AiOptions
+            {
+                RagEmbeddingProvider = "OpenAiCompatible",
+                RagEmbeddingApiKey = "test-key",
+                RagEmbeddingModel = "test-embedding",
+                RagEmbeddingDimensions = 384,
+                RagEmbeddingMaxRetries = 0
+            }));
 
-        await channel.WriteAsync(jobId);
+        var embedding = await service.EmbedAsync("JWT validation");
 
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
-        await foreach (var queuedJobId in channel.ReadAllAsync(cts.Token))
+        embedding.Provider.Should().Be("OpenAiCompatible");
+        embedding.Model.Should().Be("test-embedding");
+        embedding.Vector.Should().HaveCount(384);
+        EmbeddingVectorUtils.Norm(embedding.Vector).Should().BeApproximately(1d, 0.0001d);
+    }
+
+    [Fact]
+    public async Task OpenAi_compatible_embedding_rejects_wrong_dimension()
+    {
+        const string response = """{ "model": "bad", "data": [ { "embedding": [0.1, 0.2, 0.3] } ] }""";
+        var service = new OpenAiCompatibleTextEmbeddingService(
+            new HttpClient(new StaticResponseHandler(HttpStatusCode.OK, response)),
+            Options.Create(new AiOptions
+            {
+                RagEmbeddingProvider = "OpenAiCompatible",
+                RagEmbeddingApiKey = "test-key",
+                RagEmbeddingModel = "bad",
+                RagEmbeddingDimensions = 384,
+                RagEmbeddingMaxRetries = 0
+            }));
+
+        var act = () => service.EmbedAsync("JWT validation");
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*expected 384*");
+    }
+
+    [Fact]
+    public async Task Configurable_embedding_falls_back_to_local_when_provider_fails()
+    {
+        var options = Options.Create(new AiOptions
         {
-            queuedJobId.Should().Be(jobId);
-            return;
-        }
+            RagEmbeddingProvider = "OpenAiCompatible",
+            RagEmbeddingApiKey = "test-key",
+            RagEmbeddingModel = "test-embedding",
+            RagEmbeddingDimensions = 384,
+            RagEmbeddingMaxRetries = 0,
+            FallbackToLocal = true
+        });
+        var local = new LocalDenseTextEmbeddingService();
+        var remote = new OpenAiCompatibleTextEmbeddingService(
+            new HttpClient(new StaticResponseHandler(HttpStatusCode.InternalServerError, "{}")),
+            options);
+        var service = new ConfigurableAiTextEmbeddingService(
+            local,
+            remote,
+            options,
+            NullLogger<ConfigurableAiTextEmbeddingService>.Instance);
 
-        throw new InvalidOperationException("AI knowledge reindex channel did not yield an item.");
+        var embedding = await service.EmbedAsync("JWT validation");
+
+        embedding.Provider.Should().Be("Local");
+        embedding.Vector.Should().HaveCount(384);
+    }
+
+    [Fact]
+    public void Retriever_lexical_boost_can_promote_relevant_candidates()
+    {
+        var candidate = new AiKnowledgeRetriever.VectorCandidate(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            "Secure Coding Fundamentals",
+            "Authentication",
+            "JWT validation",
+            "Lesson",
+            0,
+            "JWT validation checks signatures, issuer, audience, and expiry.",
+            0.02m);
+
+        var citations = AiKnowledgeRetriever.BuildCitations(
+            "How does JWT validation check signatures?",
+            [candidate],
+            0.05m,
+            4,
+            800);
+
+        citations.Should().ContainSingle();
+        citations[0].Score.Should().BeGreaterThan(0.05m);
     }
 
     [Fact]
@@ -132,6 +224,29 @@ public class RagLearningAssistantTests
     }
 
     [Fact]
+    public void Rag_evaluation_run_tracks_quality_metrics()
+    {
+        var run = AiRagEvaluationRun.Succeeded(
+            Guid.NewGuid(),
+            "rag-golden-v1",
+            4,
+            3,
+            0.75m,
+            1m,
+            1m,
+            0.5m,
+            DateTime.UtcNow.AddSeconds(-2));
+
+        run.Status.Should().Be(AiRagEvaluationRunStatus.Succeeded);
+        run.TotalCases.Should().Be(4);
+        run.PassedCases.Should().Be(3);
+        run.RetrievalHitRate.Should().Be(0.75m);
+        run.CitationValidityRate.Should().Be(1m);
+        run.GroundednessRate.Should().Be(0.5m);
+        run.CompletedAt.Should().NotBeNull();
+    }
+
+    [Fact]
     public void Chat_message_rejects_invalid_confidence()
     {
         var act = () => AiChatMessage.Assistant(
@@ -145,5 +260,16 @@ public class RagLearningAssistantTests
             true);
 
         act.Should().Throw<Exception>().WithMessage("*confidence*");
+    }
+
+    private sealed class StaticResponseHandler(HttpStatusCode statusCode, string body) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken) =>
+            Task.FromResult(new HttpResponseMessage(statusCode)
+            {
+                Content = new StringContent(body, Encoding.UTF8, "application/json")
+            });
     }
 }

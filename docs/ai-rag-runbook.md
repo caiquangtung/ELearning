@@ -7,11 +7,12 @@ This runbook covers setup, reindexing, operational checks, and troubleshooting f
 | Area | Current state |
 | --- | --- |
 | Default provider | `Local` |
-| External provider | OpenAI-compatible chat HTTP |
-| RAG embeddings | Local deterministic dense vectors, 384 dimensions |
+| External provider | OpenAI-compatible chat and optional embedding HTTP |
+| RAG embeddings | Local deterministic dense vectors by default; optional OpenAI-compatible embeddings, 384 dimensions |
 | RAG vector store | Postgres pgvector `embedding_vector vector(384)` |
 | RAG reindex endpoint | `POST /api/v1/ai/knowledge/reindex` |
-| RAG background queue | Persisted job rows + in-memory channel + hosted worker |
+| RAG background queue | Persisted job rows + Postgres polling/claiming hosted worker |
+| RAG evaluation | Golden dataset runner via admin API |
 | RAG fallback | Local extractive answer from retrieved snippets |
 | Required RAG manage permission | `AI.Manage` |
 
@@ -43,6 +44,23 @@ Ai__FallbackToLocal=true
 
 For local OpenAI-compatible gateways, set `Ai__BaseUrl` to the gateway's `/v1` base URL and set `Ai__ChatModel` to the served model name.
 
+### OpenAI-Compatible RAG Embeddings
+
+RAG embeddings are local by default. To use a real embedding provider:
+
+```bash
+Ai__RagEmbeddingProvider=OpenAiCompatible
+Ai__RagEmbeddingBaseUrl=https://api.openai.com/v1
+Ai__RagEmbeddingApiKey=<secret>
+Ai__RagEmbeddingModel=<embedding-model>
+Ai__RagEmbeddingDimensions=384
+Ai__RagEmbeddingTimeoutSeconds=30
+Ai__RagEmbeddingMaxRetries=2
+Ai__FallbackToLocal=true
+```
+
+The provider response must return exactly `384` dimensions. The app normalizes the vector before storing it in `embedding_vector`. If the provider fails and `FallbackToLocal=true`, the pipeline falls back to the local dense embedding model.
+
 ## RAG Tuning Options
 
 ```bash
@@ -50,6 +68,9 @@ Ai__RagChatPromptVersion=rag-learning-assistant-v1
 Ai__RagEmbeddingDimensions=384
 Ai__RagMaxRetrievedChunks=4
 Ai__RagMinSimilarity=0.05
+Ai__RagMaxContextCharacters=2400
+Ai__RagCandidateMultiplier=8
+Ai__RagReindexPollSeconds=5
 Ai__MaxSourceCharacters=12000
 ```
 
@@ -59,6 +80,8 @@ Guidance:
 - Decrease `RagMaxRetrievedChunks` if answers include noisy references.
 - Increase `RagMinSimilarity` if irrelevant citations appear.
 - Decrease `RagMinSimilarity` if the assistant refuses too often.
+- Increase `RagCandidateMultiplier` if relevant chunks are being missed before ranking.
+- Decrease `RagMaxContextCharacters` if provider prompts get too large.
 - `RagEmbeddingDimensions` must stay `384` while the database column is `vector(384)`.
 
 ## pgvector Setup
@@ -105,6 +128,7 @@ Expected response:
 
 ```json
 {
+  "jobId": "00000000-0000-0000-0000-000000000000",
   "indexedCourses": 1,
   "indexedChunks": 12,
   "deletedStaleChunks": 2
@@ -121,7 +145,32 @@ The app enqueues background reindex after:
 - add lesson to a published course
 - course delete
 
-Each queued reindex creates an `AiKnowledgeReindexJob` row. The channel that wakes the worker is still in-memory, so if the process restarts before queued work runs, trigger manual reindex or requeue failed/stale jobs.
+Each queued reindex creates an `AiKnowledgeReindexJob` row. `AiKnowledgeReindexWorker` polls queued rows, claims one with Postgres locking, and runs the indexer. Stale `InProgress` jobs older than 30 minutes are requeued by the worker.
+
+## RAG Evaluation
+
+Run the golden dataset:
+
+```http
+POST /api/v1/ai/rag/evaluations/run
+Authorization: Bearer <admin-token>
+```
+
+List recent evaluation summaries:
+
+```http
+GET /api/v1/ai/rag/evaluations
+Authorization: Bearer <admin-token>
+```
+
+Metrics:
+
+- `retrievalHitRate`: in-scope cases retrieved expected course/snippet terms.
+- `citationValidityRate`: returned citations point to existing knowledge chunks.
+- `refusalAccuracyRate`: out-of-scope cases returned no context.
+- `groundednessRate`: in-scope retrieved snippets contain expected grounding terms.
+
+The dataset file is copied from `src/ELearning.Infrastructure/Ai/Rag/rag-golden-dataset.json`.
 
 ## Learner Chat Smoke Test
 
@@ -313,7 +362,7 @@ Actions:
 - Use user-secrets or environment variables for provider credentials.
 - Run manual full reindex after seed/demo data changes.
 - Run manual full reindex after bulk import/migration of course content.
-- For multiple API instances, replace the in-memory channel with a durable distributed queue. Job status is already persisted.
+- For heavy multi-instance deployments, consider Hangfire/Quartz or a dedicated queue; current Postgres polling is sufficient for v1 operational tooling.
 
 ## Verification Commands
 

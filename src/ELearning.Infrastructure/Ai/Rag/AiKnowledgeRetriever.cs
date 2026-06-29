@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 using ELearning.Application.Common.Interfaces;
 using ELearning.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -7,7 +8,7 @@ using Npgsql;
 
 namespace ELearning.Infrastructure.Ai;
 
-public sealed class AiKnowledgeRetriever(
+public sealed partial class AiKnowledgeRetriever(
     ApplicationDbContext context,
     IAiTextEmbeddingService embeddingService,
     IOptions<AiOptions> options)
@@ -20,13 +21,15 @@ public sealed class AiKnowledgeRetriever(
         var stopwatch = Stopwatch.StartNew();
         var question = request.Question.Trim();
         var config = options.Value;
-        var probe = embeddingService.Embed(question.Length == 0 ? "empty" : question);
+        var probe = await embeddingService.EmbedAsync(question.Length == 0 ? "empty" : question, ct);
         var minSimilarity = Math.Clamp(config.RagMinSimilarity, 0m, 1m);
 
         if (question.Length == 0)
             return EmptyResult(probe, minSimilarity, stopwatch);
 
         var maxChunks = Math.Clamp(config.RagMaxRetrievedChunks, 1, 8);
+        var candidateLimit = Math.Max(maxChunks * Math.Clamp(config.RagCandidateMultiplier, 4, 20), 24);
+        var contextBudget = Math.Clamp(config.RagMaxContextCharacters, 800, 8000);
         var queryEmbedding = probe;
         if (!HasVectorSignal(queryEmbedding.Vector))
             return EmptyResult(queryEmbedding, minSimilarity, stopwatch);
@@ -44,14 +47,10 @@ public sealed class AiKnowledgeRetriever(
         var candidates = await SearchVectorCandidatesAsync(
             accessibleCourseIds,
             PgVectorFormatter.ToVectorLiteral(queryEmbedding.Vector),
-            Math.Max(maxChunks * 4, 12),
+            candidateLimit,
             ct);
 
-        var citations = candidates
-            .Where(x => x.Score >= minSimilarity)
-            .Take(maxChunks)
-            .Select(ToCitation)
-            .ToList();
+        var citations = BuildCitations(question, candidates, minSimilarity, maxChunks, contextBudget);
 
         return new AiKnowledgeRetrievalResult(
             citations,
@@ -89,6 +88,8 @@ public sealed class AiKnowledgeRetriever(
                     course_title,
                     section_title,
                     lesson_title,
+                    source_type,
+                    chunk_index,
                     text,
                     1 - (embedding_vector <=> CAST(@query_vector AS vector)) AS score
                 FROM ai_knowledge_chunks
@@ -113,7 +114,9 @@ public sealed class AiKnowledgeRetriever(
                     reader.IsDBNull(5) ? null : reader.GetString(5),
                     reader.IsDBNull(6) ? null : reader.GetString(6),
                     reader.GetString(7),
-                    Math.Round(Convert.ToDecimal(reader.GetValue(8), System.Globalization.CultureInfo.InvariantCulture), 4)));
+                    reader.GetInt32(8),
+                    reader.GetString(9),
+                    Math.Round(Convert.ToDecimal(reader.GetValue(10), System.Globalization.CultureInfo.InvariantCulture), 4)));
             }
         }
         finally
@@ -142,6 +145,110 @@ public sealed class AiKnowledgeRetriever(
     private static bool HasVectorSignal(IReadOnlyList<float> vector) =>
         vector.Any(value => Math.Abs(value) > 0.000001f);
 
+    internal static IReadOnlyList<AiChatCitation> BuildCitations(
+        string question,
+        IReadOnlyList<VectorCandidate> candidates,
+        decimal minSimilarity,
+        int maxChunks,
+        int contextBudget)
+    {
+        var queryTerms = TokenizeForLexicalScore(question);
+        var ranked = candidates
+            .Select(candidate => candidate with
+            {
+                Score = CalculateAdjustedScore(candidate, queryTerms)
+            })
+            .Where(candidate => candidate.Score >= minSimilarity)
+            .GroupBy(DedupeKey)
+            .Select(group => group
+                .OrderByDescending(candidate => candidate.Score)
+                .ThenBy(candidate => candidate.ChunkIndex)
+                .First())
+            .OrderByDescending(candidate => candidate.Score)
+            .ThenBy(candidate => candidate.CourseTitle)
+            .ThenBy(candidate => candidate.ChunkIndex)
+            .ToList();
+
+        var citations = new List<AiChatCitation>();
+        var usedCharacters = 0;
+        foreach (var candidate in ranked)
+        {
+            var citation = ToCitation(candidate);
+            var nextLength = usedCharacters + citation.Snippet.Length;
+            if (citations.Count > 0 && nextLength > contextBudget)
+                break;
+
+            citations.Add(citation);
+            usedCharacters = nextLength;
+            if (citations.Count >= maxChunks)
+                break;
+        }
+
+        return citations;
+    }
+
+    internal static decimal CalculateAdjustedScore(VectorCandidate candidate, IReadOnlySet<string> queryTerms)
+    {
+        var lexicalScore = CalculateLexicalScore(candidate, queryTerms);
+        return Math.Round(Math.Clamp(candidate.Score + lexicalScore, -1m, 1m), 4);
+    }
+
+    internal static decimal CalculateLexicalScore(VectorCandidate candidate, IReadOnlySet<string> queryTerms)
+    {
+        if (queryTerms.Count == 0)
+            return 0m;
+
+        var sourceText = string.Join(' ',
+            candidate.CourseTitle,
+            candidate.SectionTitle,
+            candidate.LessonTitle,
+            candidate.Text);
+        var sourceTerms = TokenizeForLexicalScore(sourceText);
+        var matches = queryTerms.Count(term => sourceTerms.Contains(term));
+        if (matches == 0)
+            return 0m;
+
+        var ratio = (decimal)matches / queryTerms.Count;
+        return Math.Min(0.12m, ratio * 0.12m);
+    }
+
+    internal static IReadOnlySet<string> TokenizeForLexicalScore(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        var terms = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (Match match in WordRegex().Matches(value.ToLowerInvariant()))
+        {
+            var token = match.Value;
+            if (token.Length >= 3)
+                terms.Add(NormalizeToken(token));
+        }
+
+        return terms;
+    }
+
+    private static string DedupeKey(VectorCandidate candidate)
+    {
+        if (candidate.LessonId.HasValue)
+            return $"lesson:{candidate.LessonId.Value:N}";
+        if (candidate.SectionId.HasValue)
+            return $"section:{candidate.SectionId.Value:N}:{candidate.SourceType}";
+
+        return $"chunk:{candidate.ChunkId:N}";
+    }
+
+    private static string NormalizeToken(string token)
+    {
+        if (token.EndsWith("ing", StringComparison.OrdinalIgnoreCase) && token.Length > 5)
+            return token[..^3];
+        if (token.EndsWith("ed", StringComparison.OrdinalIgnoreCase) && token.Length > 4)
+            return token[..^2];
+        if (token.EndsWith("s", StringComparison.OrdinalIgnoreCase) && token.Length > 4)
+            return token[..^1];
+        return token;
+    }
+
     private static AiChatCitation ToCitation(VectorCandidate candidate) =>
         new(
             candidate.ChunkId,
@@ -160,7 +267,10 @@ public sealed class AiKnowledgeRetriever(
         return normalized.Length <= 420 ? normalized : normalized[..420].TrimEnd() + "...";
     }
 
-    private sealed record VectorCandidate(
+    [GeneratedRegex("[\\p{L}\\p{N}]+", RegexOptions.Compiled)]
+    private static partial Regex WordRegex();
+
+    internal sealed record VectorCandidate(
         Guid ChunkId,
         Guid CourseId,
         Guid? SectionId,
@@ -168,6 +278,8 @@ public sealed class AiKnowledgeRetriever(
         string CourseTitle,
         string? SectionTitle,
         string? LessonTitle,
+        string SourceType,
+        int ChunkIndex,
         string Text,
         decimal Score);
 }

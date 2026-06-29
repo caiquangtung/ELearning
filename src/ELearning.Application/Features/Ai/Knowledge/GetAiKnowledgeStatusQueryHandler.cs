@@ -14,12 +14,17 @@ public sealed class GetAiKnowledgeStatusQueryHandler(IAiKnowledgeIndexingService
             status.TotalChunks,
             status.VectorizedChunks,
             status.IndexedCourses,
+            status.QueuedJobs,
+            status.InProgressJobs,
             status.FailedJobs,
+            status.FailedAiRequests,
             status.VectorDimensions,
             status.VectorProvider,
             status.VectorModel,
             status.LastJob is null ? null : ToDto(status.LastJob),
-            status.RecentJobs.Select(ToDto).ToList());
+            status.RecentJobs.Select(ToDto).ToList(),
+            status.LastEvaluation is null ? null : ToDto(status.LastEvaluation),
+            status.RecentEvaluations.Select(ToDto).ToList());
     }
 
     private static AiKnowledgeReindexJobDto ToDto(AiKnowledgeReindexJobSummary job) =>
@@ -35,4 +40,21 @@ public sealed class GetAiKnowledgeStatusQueryHandler(IAiKnowledgeIndexingService
             job.DeletedStaleChunks,
             job.Error,
             job.CreatedAt);
+
+    private static AiRagEvaluationRunDto ToDto(AiRagEvaluationRunSummary run) =>
+        new(
+            run.Id,
+            run.Status,
+            run.RequestedByUserId,
+            run.DatasetVersion,
+            run.TotalCases,
+            run.PassedCases,
+            run.RetrievalHitRate,
+            run.CitationValidityRate,
+            run.RefusalAccuracyRate,
+            run.GroundednessRate,
+            run.Error,
+            run.StartedAt,
+            run.CompletedAt,
+            run.CreatedAt);
 }

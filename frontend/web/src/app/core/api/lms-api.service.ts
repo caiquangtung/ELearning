@@ -867,12 +867,34 @@ export interface AiKnowledgeStatusDto {
   totalChunks: number;
   vectorizedChunks: number;
   indexedCourses: number;
+  queuedJobs: number;
+  inProgressJobs: number;
   failedJobs: number;
+  failedAiRequests: number;
   vectorDimensions: number;
   vectorProvider: string;
   vectorModel: string;
   lastJob: AiKnowledgeReindexJobDto | null;
   recentJobs: AiKnowledgeReindexJobDto[];
+  lastEvaluation: AiRagEvaluationRunDto | null;
+  recentEvaluations: AiRagEvaluationRunDto[];
+}
+
+export interface AiRagEvaluationRunDto {
+  id: string;
+  status: string;
+  requestedByUserId: string | null;
+  datasetVersion: string;
+  totalCases: number;
+  passedCases: number;
+  retrievalHitRate: number;
+  citationValidityRate: number;
+  refusalAccuracyRate: number;
+  groundednessRate: number;
+  error: string | null;
+  startedAt: string;
+  completedAt: string | null;
+  createdAt: string;
 }
 
 export interface NotificationDto {
@@ -1349,6 +1371,14 @@ export class LmsApiService {
 
   getAiKnowledgeStatus(): Observable<AiKnowledgeStatusDto> {
     return this.http.get<AiKnowledgeStatusDto>(`${this.base}/ai/knowledge/status`);
+  }
+
+  runRagEvaluation(): Observable<AiRagEvaluationRunDto> {
+    return this.http.post<AiRagEvaluationRunDto>(`${this.base}/ai/rag/evaluations/run`, {});
+  }
+
+  listRagEvaluations(): Observable<AiRagEvaluationRunDto[]> {
+    return this.http.get<AiRagEvaluationRunDto[]>(`${this.base}/ai/rag/evaluations`);
   }
 
   listNotifications(request: ListNotificationsRequest = {}): Observable<PagedList<NotificationDto>> {

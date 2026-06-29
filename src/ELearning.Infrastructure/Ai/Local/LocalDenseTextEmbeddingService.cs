@@ -18,7 +18,7 @@ public sealed partial class LocalDenseTextEmbeddingService : IAiTextEmbeddingSer
         "advanced", "want", "become", "build", "create", "using", "about", "need"
     };
 
-    public AiTextEmbedding Embed(string text)
+    public Task<AiTextEmbedding> EmbedAsync(string text, CancellationToken ct = default)
     {
         var dimensions = EmbeddingDimensions;
         var vector = new float[dimensions];
@@ -34,22 +34,8 @@ public sealed partial class LocalDenseTextEmbeddingService : IAiTextEmbeddingSer
             vector[index] += sign;
         }
 
-        Normalize(vector);
-        return new AiTextEmbedding(vector, ProviderName, ModelName, dimensions);
-    }
-
-    private static void Normalize(float[] vector)
-    {
-        var sum = 0d;
-        foreach (var value in vector)
-            sum += value * value;
-
-        var norm = Math.Sqrt(sum);
-        if (norm <= 0)
-            return;
-
-        for (var i = 0; i < vector.Length; i++)
-            vector[i] = (float)(vector[i] / norm);
+        EmbeddingVectorUtils.Normalize(vector);
+        return Task.FromResult(new AiTextEmbedding(vector, ProviderName, ModelName, dimensions));
     }
 
     private static IEnumerable<string> Tokenize(string? value)

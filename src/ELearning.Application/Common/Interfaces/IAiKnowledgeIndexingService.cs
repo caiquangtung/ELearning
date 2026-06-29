@@ -21,12 +21,17 @@ public sealed record AiKnowledgeStatusResult(
     int TotalChunks,
     int VectorizedChunks,
     int IndexedCourses,
+    int QueuedJobs,
+    int InProgressJobs,
     int FailedJobs,
+    int FailedAiRequests,
     int VectorDimensions,
     string VectorProvider,
     string VectorModel,
     AiKnowledgeReindexJobSummary? LastJob,
-    IReadOnlyList<AiKnowledgeReindexJobSummary> RecentJobs);
+    IReadOnlyList<AiKnowledgeReindexJobSummary> RecentJobs,
+    AiRagEvaluationRunSummary? LastEvaluation,
+    IReadOnlyList<AiRagEvaluationRunSummary> RecentEvaluations);
 
 public sealed record AiKnowledgeReindexJobSummary(
     Guid Id,
@@ -39,4 +44,20 @@ public sealed record AiKnowledgeReindexJobSummary(
     int IndexedChunks,
     int DeletedStaleChunks,
     string? Error,
+    DateTime CreatedAt);
+
+public sealed record AiRagEvaluationRunSummary(
+    Guid Id,
+    string Status,
+    Guid? RequestedByUserId,
+    string DatasetVersion,
+    int TotalCases,
+    int PassedCases,
+    decimal RetrievalHitRate,
+    decimal CitationValidityRate,
+    decimal RefusalAccuracyRate,
+    decimal GroundednessRate,
+    string? Error,
+    DateTime StartedAt,
+    DateTime? CompletedAt,
     DateTime CreatedAt);

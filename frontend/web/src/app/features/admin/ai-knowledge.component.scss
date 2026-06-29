@@ -1,6 +1,6 @@
 .metric-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
   gap: 1rem;
 }
 
@@ -95,6 +95,18 @@ label {
   margin-top: 1rem;
 }
 
+.table-panel header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.table-note {
+  color: var(--text-color-secondary);
+  font-size: 0.8125rem;
+}
+
 .table-wrap {
   overflow-x: auto;
 }
@@ -143,6 +155,11 @@ th {
   color: #b42318;
 }
 
+.detail-row td {
+  background: #fff7ed;
+  font-size: 0.8125rem;
+}
+
 .state-panel {
   color: var(--text-color-secondary);
 }
@@ -155,6 +172,11 @@ th {
   .metric-grid,
   .ops-grid {
     grid-template-columns: 1fr;
+  }
+
+  .table-panel header {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .inline-form {

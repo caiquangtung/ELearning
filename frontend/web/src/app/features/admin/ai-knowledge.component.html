@@ -16,6 +16,13 @@
       [disabled]="reindexing()"
       (clicked)="reindexAll()"
     />
+    <app-ui-button
+      label="Run evaluation"
+      icon="pi pi-check-square"
+      severity="secondary"
+      [disabled]="evaluating()"
+      (clicked)="runEvaluation()"
+    />
   </ng-container>
 
   @if (loading()) {
@@ -36,9 +43,21 @@
           <span>Indexed courses</span>
           <strong>{{ s.indexedCourses }}</strong>
         </article>
+        <article class="metric-panel">
+          <span>Queued jobs</span>
+          <strong>{{ s.queuedJobs }}</strong>
+        </article>
+        <article class="metric-panel">
+          <span>In progress</span>
+          <strong>{{ s.inProgressJobs }}</strong>
+        </article>
         <article class="metric-panel" [class.metric-panel--warning]="s.failedJobs > 0">
           <span>Failed jobs</span>
           <strong>{{ s.failedJobs }}</strong>
+        </article>
+        <article class="metric-panel" [class.metric-panel--warning]="s.failedAiRequests > 0">
+          <span>Failed AI requests</span>
+          <strong>{{ s.failedAiRequests }}</strong>
         </article>
       </section>
 
@@ -86,12 +105,72 @@
           </div>
           @if (lastResult(); as result) {
             <p class="result-note">
-              Job {{ result.jobId }} completed:
+              Job {{ result.jobId }} accepted:
               {{ result.indexedChunks }} chunks indexed,
               {{ result.deletedStaleChunks }} stale deleted.
             </p>
           }
         </article>
+      </section>
+
+      <section class="table-panel">
+        <header>
+          <h2>RAG evaluations</h2>
+          @if (s.lastEvaluation; as evaluation) {
+            <span class="table-note">
+              Last run: {{ evaluation.passedCases }}/{{ evaluation.totalCases }} passed
+            </span>
+          }
+        </header>
+
+        @if (evaluating()) {
+          <div class="state-panel state-panel--compact">Running RAG evaluation...</div>
+        } @else if (s.recentEvaluations.length === 0) {
+          <div class="state-panel state-panel--compact">No evaluation runs yet.</div>
+        } @else {
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Dataset</th>
+                  <th>Cases</th>
+                  <th>Retrieval</th>
+                  <th>Citations</th>
+                  <th>Refusal</th>
+                  <th>Grounded</th>
+                  <th>Completed</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (evaluation of s.recentEvaluations; track evaluation.id) {
+                  <tr>
+                    <td>
+                      <span
+                        class="status-pill"
+                        [class.status-pill--failed]="evaluation.status === 'Failed'"
+                      >
+                        {{ evaluation.status }}
+                      </span>
+                    </td>
+                    <td>{{ evaluation.datasetVersion }}</td>
+                    <td>{{ evaluation.passedCases }}/{{ evaluation.totalCases }}</td>
+                    <td>{{ percent(evaluation.retrievalHitRate) }}%</td>
+                    <td>{{ percent(evaluation.citationValidityRate) }}%</td>
+                    <td>{{ percent(evaluation.refusalAccuracyRate) }}%</td>
+                    <td>{{ percent(evaluation.groundednessRate) }}%</td>
+                    <td>{{ evaluation.completedAt ? (evaluation.completedAt | date: 'short') : '-' }}</td>
+                  </tr>
+                  @if (evaluation.error) {
+                    <tr class="detail-row">
+                      <td colspan="8" class="error-cell">{{ evaluation.error }}</td>
+                    </tr>
+                  }
+                }
+              </tbody>
+            </table>
+          </div>
+        }
       </section>
 
       <section class="table-panel">

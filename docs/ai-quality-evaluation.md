@@ -124,8 +124,11 @@ Backend unit tests should cover:
 - chunking is stable and respects max chunk size
 - reindex is idempotent by content hash
 - local dense embedding is deterministic, 384-dimensional, and normalized
+- OpenAI-compatible embedding validates dimensions and normalizes vectors
+- embedding provider failure falls back to local when configured
 - reindex writes pgvector data plus debug `embedding_json`
-- retriever ranks relevant chunks above unrelated chunks
+- reindex jobs remain durable through queued DB rows and polling worker claims
+- retriever ranks relevant chunks above unrelated chunks with vector similarity plus lexical boost
 - chat refuses when no context is retrieved
 - local extractive answer returns only retrieved citations
 - provider confidence is clamped within `0..1`
@@ -137,6 +140,7 @@ Integration/smoke tests should cover:
 
 - seed demo data
 - reindex knowledge
+- run RAG golden dataset evaluation
 - ask lesson-specific question
 - verify answer has citation
 - ask out-of-scope question
@@ -257,6 +261,7 @@ For a demo/internal release:
 - `dotnet test` passes
 - `npm run build` passes
 - manual reindex succeeds
+- RAG golden dataset evaluation has no failed run status
 - one in-scope RAG question returns citation
 - one out-of-scope RAG question refuses
 

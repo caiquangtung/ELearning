@@ -6,6 +6,7 @@ using ELearning.Application.Features.Ai.Knowledge;
 using ELearning.Application.Features.Ai.LearnerRisk;
 using ELearning.Application.Features.Ai.LearningPaths;
 using ELearning.Application.Features.Ai.QuizQuestionGeneration;
+using ELearning.Application.Features.Ai.RagEvaluations;
 using ELearning.Application.Features.Ai.SemanticSearch;
 using ELearning.Core.Common;
 using ELearning.Core.Constants;
@@ -108,6 +109,24 @@ public sealed class AiController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> GetKnowledgeStatus(CancellationToken ct)
     {
         var result = await mediator.Send(new GetAiKnowledgeStatusQuery(), ct);
+        return result.IsSuccess ? Ok(result.Value) : ProblemFrom(result.Error);
+    }
+
+    [HttpPost("rag/evaluations/run")]
+    [HasPermission(Permissions.Ai.Manage)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> RunRagEvaluation(CancellationToken ct)
+    {
+        var result = await mediator.Send(new RunRagEvaluationCommand(), ct);
+        return result.IsSuccess ? Ok(result.Value) : ProblemFrom(result.Error);
+    }
+
+    [HttpGet("rag/evaluations")]
+    [HasPermission(Permissions.Ai.Manage)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> ListRagEvaluations(CancellationToken ct)
+    {
+        var result = await mediator.Send(new ListRagEvaluationsQuery(), ct);
         return result.IsSuccess ? Ok(result.Value) : ProblemFrom(result.Error);
     }
 

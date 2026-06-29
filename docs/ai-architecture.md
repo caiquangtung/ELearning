@@ -80,16 +80,19 @@ flowchart TB
             ConfigEssay["ConfigurableAiEssayGradingService"]
             ConfigPath["ConfigurableAiLearningPathService"]
             ChatClient["OpenAiCompatibleChatClient"]
+            ConfigEmbedding["ConfigurableAiTextEmbeddingService"]
+            EmbeddingClient["OpenAiCompatibleTextEmbeddingService"]
         end
 
         subgraph Rag["Rag"]
             Chunker["AiKnowledgeChunker"]
             Indexing["AiKnowledgeIndexingService"]
-            Queue["InMemoryAiKnowledgeReindexQueue"]
+            Queue["AiKnowledgeReindexQueue"]
             Worker["AiKnowledgeReindexWorker"]
             Policy["AiKnowledgeAccessPolicy"]
             Retriever["AiKnowledgeRetriever"]
             Chat["AiRagChatService"]
+            Evaluation["AiRagEvaluationService"]
         end
     end
 
@@ -169,8 +172,8 @@ Current provider rules:
 - `Provider=Local` is default.
 - `Provider=OpenAiCompatible` requires `ApiKey` and `ChatModel` for remote calls.
 - `FallbackToLocal=true` keeps workflows usable if the remote provider fails.
-- RAG uses the remote provider only for answer synthesis.
-- RAG embeddings use a local deterministic 384-dimension dense hashing model by default.
+- RAG uses the remote chat provider only for answer synthesis.
+- RAG embeddings use a local deterministic 384-dimension dense hashing model by default, with an optional OpenAI-compatible embedding provider behind `IAiTextEmbeddingService`.
 - `embedding_json` is retained for debug/backward compatibility; retrieval uses `embedding_vector vector(384)`.
 
 ## Configuration
@@ -192,12 +195,21 @@ AI options are bound from the `Ai` configuration section.
 | `EssayGradingPromptVersion` | `essay-grading-v1` | Essay prompt audit version |
 | `LearningPathPromptVersion` | `learning-path-generator-v1` | Learning path prompt audit version |
 | `RagChatPromptVersion` | `rag-learning-assistant-v1` | RAG prompt audit version |
+| `RagEmbeddingProvider` | `Local` | RAG embedding selector: `Local` or `OpenAiCompatible` |
+| `RagEmbeddingBaseUrl` | empty | Optional embedding base URL; falls back to `BaseUrl` |
+| `RagEmbeddingApiKey` | empty | Optional embedding secret; falls back to `ApiKey` |
+| `RagEmbeddingModel` | empty | Remote embedding model name |
 | `RagEmbeddingDimensions` | `384` | Fixed RAG vector dimension |
+| `RagEmbeddingTimeoutSeconds` | `30` | Embedding HTTP timeout |
+| `RagEmbeddingMaxRetries` | `2` | Embedding retry count |
 | `RagMaxRetrievedChunks` | `4` | Top retrieved chunks used for RAG |
 | `RagMinSimilarity` | `0.05` | Minimum cosine similarity for retrieved chunks |
+| `RagMaxContextCharacters` | `2400` | Citation/context packing character budget |
+| `RagCandidateMultiplier` | `8` | Candidate pool multiplier before threshold/dedupe |
+| `RagReindexPollSeconds` | `5` | Poll interval for queued reindex jobs |
 | `MaxSourceCharacters` | `12000` | Source-content cap for provider prompts |
 
-Secrets must not be committed to `appsettings*.json`. Use environment variables such as `Ai__Provider`, `Ai__ApiKey`, and `Ai__ChatModel`.
+Secrets must not be committed to `appsettings*.json`. Use environment variables such as `Ai__Provider`, `Ai__ApiKey`, `Ai__ChatModel`, and `Ai__RagEmbeddingApiKey`.
 
 ## RAG Data Model
 
@@ -208,6 +220,7 @@ erDiagram
     LESSON ||--o{ AI_KNOWLEDGE_CHUNK : "optional source"
     USER ||--o{ AI_CHAT_SESSION : "owns"
     AI_CHAT_SESSION ||--o{ AI_CHAT_MESSAGE : "contains"
+    USER ||--o{ AI_RAG_EVALUATION_RUN : "requests"
 
     AI_KNOWLEDGE_CHUNK {
         uuid id
@@ -250,9 +263,26 @@ erDiagram
         bool used_context
         datetime created_at
     }
+
+    AI_RAG_EVALUATION_RUN {
+        uuid id
+        string status
+        uuid requested_by_user_id
+        string dataset_version
+        int total_cases
+        int passed_cases
+        decimal retrieval_hit_rate
+        decimal citation_validity_rate
+        decimal refusal_accuracy_rate
+        decimal groundedness_rate
+        string error
+        datetime started_at
+        datetime completed_at
+        datetime created_at
+    }
 ```
 
-RAG stores dense vectors in `embedding_vector vector(384)` and keeps `embedding_json` as debug/backward compatibility data. Retrieval uses pgvector cosine distance through `IAiKnowledgeRetriever`, which remains the seam for a future external vector database.
+RAG stores dense vectors in `embedding_vector vector(384)` and keeps `embedding_json` as debug/backward compatibility data. Retrieval uses pgvector cosine distance through `IAiKnowledgeRetriever`, then applies lexical boost, thresholding, source dedupe, and context packing. `AiRagEvaluationRun` stores golden-dataset quality summaries for admin review.
 
 ## Knowledge Indexing Flow
 
@@ -263,7 +293,7 @@ sequenceDiagram
     participant Handler as "ReindexAiKnowledgeCommandHandler"
     participant Indexer as "AiKnowledgeIndexingService"
     participant Chunker as "AiKnowledgeChunker"
-    participant Embedding as "LocalDenseTextEmbeddingService"
+    participant Embedding as "IAiTextEmbeddingService"
     participant DB as "Postgres"
 
     Admin->>API: "POST /api/v1/ai/knowledge/reindex"
@@ -273,7 +303,7 @@ sequenceDiagram
     Indexer->>Chunker: "Build stable chunks"
     Chunker-->>Indexer: "AiKnowledgeChunkSource[]"
     loop "For each desired chunk"
-        Indexer->>Embedding: "Embed(chunk.Text)"
+        Indexer->>Embedding: "EmbedAsync(chunk.Text)"
         Embedding-->>Indexer: "Dense vector(384)"
     end
     Indexer->>DB: "Delete stale chunks"
@@ -295,7 +325,7 @@ flowchart LR
     Mutation["Course mutation handler"] --> Save["Save course changes"]
     Save --> Queue["IAiKnowledgeReindexQueue.EnqueueAsync(courseId)"]
     Queue --> Job["Persist AiKnowledgeReindexJob=Queued"]
-    Job --> Worker["AiKnowledgeReindexWorker"]
+    Job --> Worker["AiKnowledgeReindexWorker polls + claims Queued jobs"]
     Worker --> Indexer["AiKnowledgeIndexingService.ReindexAsync(jobId)"]
     Indexer --> Chunks["AiKnowledgeChunks + embedding_vector refreshed"]
 ```
@@ -322,7 +352,8 @@ sequenceDiagram
     Chat->>Retriever: "RetrieveAsync(userId, roles, question, courseId?)"
     Retriever->>Policy: "Resolve accessible published course ids"
     Policy->>DB: "Check role/course purchase/free scope"
-    Retriever->>DB: "Load candidate chunks"
+    Retriever->>DB: "Load vector candidates"
+    Retriever->>Retriever: "Lexical boost, threshold, source dedupe, context packing"
     Retriever-->>Chat: "Ranked citations"
     alt "No citations"
         Chat->>DB: "Store refusal answer"
@@ -414,16 +445,15 @@ For RAG, `AiChatMessage` also stores answer content, citations JSON, provider/mo
 
 ## Known Limits
 
-- RAG uses pgvector, but still with local deterministic dense embeddings.
-- Retrieval is exact/top-k pgvector query in app-managed SQL; advanced reranking is not implemented yet.
-- External provider integration is OpenAI-compatible chat only.
-- No provider-side embedding adapter yet.
-- Admin UI covers knowledge status/reindex jobs only, not full AI cost/quality analytics.
-- Background queue transport is in-memory; reindex job status is persisted, but distributed queueing is still a follow-up.
+- RAG uses pgvector and can call an OpenAI-compatible embedding provider, but the vector dimension is fixed at `384`.
+- Retrieval uses vector search plus lightweight lexical boost; cross-encoder reranking is not implemented yet.
+- External provider integration is OpenAI-compatible HTTP only; Azure-specific endpoint mode is still a follow-up.
+- Admin UI covers knowledge status, reindex jobs, failed AI request count, and RAG evaluation summaries, not full token-cost analytics.
+- Reindex queue uses Postgres polling/claiming; a dedicated distributed job framework remains a scale follow-up.
 
 ## Follow-Up Architecture Work
 
-- Add OpenAI-compatible embedding adapter behind `IAiTextEmbeddingService`.
-- Add distributed reindex jobs if the API is horizontally scaled.
-- Add admin AI observability UI: request logs, token usage, provider errors, reindex history.
-- Add automated RAG quality dataset and regression scoring.
+- Add request-log drilldown with token usage and provider error details.
+- Add cross-encoder or LLM reranking if retrieval precision is insufficient.
+- Add provider-specific embedding adapters if OpenAI-compatible mode is not enough.
+- Add distributed job framework if the API is horizontally scaled heavily.

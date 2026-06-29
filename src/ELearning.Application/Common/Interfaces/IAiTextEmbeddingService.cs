@@ -2,7 +2,7 @@ namespace ELearning.Application.Common.Interfaces;
 
 public interface IAiTextEmbeddingService
 {
-    AiTextEmbedding Embed(string text);
+    Task<AiTextEmbedding> EmbedAsync(string text, CancellationToken ct = default);
 }
 
 public sealed record AiTextEmbedding(

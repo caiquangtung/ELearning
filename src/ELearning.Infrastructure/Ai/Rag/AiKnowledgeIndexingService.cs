@@ -45,10 +45,9 @@ public sealed class AiKnowledgeIndexingService(
                 .ToListAsync(ct);
 
             var existingByHash = existing.ToDictionary(x => x.ContentHash, StringComparer.OrdinalIgnoreCase);
-            var desired = courses
-                .SelectMany(course => chunker.BuildCourseChunks(course))
-                .Select(source => CreateIndexedChunk(source))
-                .ToList();
+            var desired = new List<IndexedChunk>();
+            foreach (var source in courses.SelectMany(course => chunker.BuildCourseChunks(course)))
+                desired.Add(await CreateIndexedChunkAsync(source, ct));
 
             var desiredHashes = desired.Select(x => x.ContentHash).ToHashSet(StringComparer.OrdinalIgnoreCase);
             var stale = existing.Where(x => !desiredHashes.Contains(x.ContentHash)).ToList();
@@ -94,8 +93,14 @@ public sealed class AiKnowledgeIndexingService(
             .Select(x => x.CourseId)
             .Distinct()
             .CountAsync(ct);
+        var queuedJobs = await context.AiKnowledgeReindexJobs
+            .CountAsync(x => x.Status == AiKnowledgeReindexJobStatus.Queued, ct);
+        var inProgressJobs = await context.AiKnowledgeReindexJobs
+            .CountAsync(x => x.Status == AiKnowledgeReindexJobStatus.InProgress, ct);
         var failedJobs = await context.AiKnowledgeReindexJobs
             .CountAsync(x => x.Status == AiKnowledgeReindexJobStatus.Failed, ct);
+        var failedAiRequests = await context.AiRequestLogs
+            .CountAsync(x => x.Status == AiRequestStatus.Failed, ct);
         var vectorizedChunks = await CountVectorizedChunksAsync(ct);
 
         var jobs = await context.AiKnowledgeReindexJobs
@@ -103,25 +108,38 @@ public sealed class AiKnowledgeIndexingService(
             .OrderByDescending(x => x.CreatedAt)
             .Take(10)
             .ToListAsync(ct);
+        var evaluations = await context.AiRagEvaluationRuns
+            .AsNoTracking()
+            .OrderByDescending(x => x.CreatedAt)
+            .Take(10)
+            .ToListAsync(ct);
 
-        var modelProbe = embeddingService.Embed("status");
+        var modelProbe = await embeddingService.EmbedAsync("status", ct);
         var recentJobs = jobs.Select(ToJobSummary).ToList();
+        var recentEvaluations = evaluations.Select(ToEvaluationSummary).ToList();
 
         return new AiKnowledgeStatusResult(
             totalChunks,
             vectorizedChunks,
             indexedCourses,
+            queuedJobs,
+            inProgressJobs,
             failedJobs,
+            failedAiRequests,
             modelProbe.Dimensions,
             modelProbe.Provider,
             modelProbe.Model,
             recentJobs.FirstOrDefault(),
-            recentJobs);
+            recentJobs,
+            recentEvaluations.FirstOrDefault(),
+            recentEvaluations);
     }
 
-    private IndexedChunk CreateIndexedChunk(AiKnowledgeChunkSource source)
+    private async Task<IndexedChunk> CreateIndexedChunkAsync(
+        AiKnowledgeChunkSource source,
+        CancellationToken ct)
     {
-        var embedding = embeddingService.Embed(source.Text);
+        var embedding = await embeddingService.EmbedAsync(source.Text, ct);
         var embeddingJson = PgVectorFormatter.ToJson(embedding.Vector);
         var vectorLiteral = PgVectorFormatter.ToVectorLiteral(embedding.Vector);
         var metadataJson = JsonSerializer.Serialize(new
@@ -279,6 +297,23 @@ public sealed class AiKnowledgeIndexingService(
             job.DeletedStaleChunks,
             job.Error,
             job.CreatedAt);
+
+    private static AiRagEvaluationRunSummary ToEvaluationSummary(AiRagEvaluationRun run) =>
+        new(
+            run.Id,
+            run.Status.ToString(),
+            run.RequestedByUserId,
+            run.DatasetVersion,
+            run.TotalCases,
+            run.PassedCases,
+            run.RetrievalHitRate,
+            run.CitationValidityRate,
+            run.RefusalAccuracyRate,
+            run.GroundednessRate,
+            run.Error,
+            run.StartedAt,
+            run.CompletedAt,
+            run.CreatedAt);
 
     private sealed record IndexedChunk(
         AiKnowledgeChunkSource Source,
