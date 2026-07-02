@@ -16,8 +16,8 @@ public sealed class ReindexAiKnowledgeCommandHandler(
     : IRequestHandler<ReindexAiKnowledgeCommand, Result<ReindexAiKnowledgeDto>>
 {
     private const string Feature = "RagKnowledgeReindex";
-    private const string Provider = "Local";
-    private const string Model = "local-dense-hash-384-v1";
+    private const string Provider = "Configured";
+    private const string Model = "configured-rag-embedding-v1";
     private const string PromptVersion = "rag-knowledge-index-v1";
 
     public async Task<Result<ReindexAiKnowledgeDto>> Handle(ReindexAiKnowledgeCommand request, CancellationToken ct)

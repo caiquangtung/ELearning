@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <ItemGroup>
     <ProjectReference Include="..\ELearning.Domain\ELearning.Domain.csproj" />
@@ -26,6 +26,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>b710baff-2b05-4625-8fd5-3087f8ee9ef7</UserSecretsId>
   </PropertyGroup>
 
 </Project>

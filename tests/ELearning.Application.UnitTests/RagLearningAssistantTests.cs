@@ -89,9 +89,9 @@ public class RagLearningAssistantTests
         var first = await service.EmbedAsync("JWT validation checks signatures, issuer, audience, and expiry.");
         var second = await service.EmbedAsync("JWT validation checks signatures, issuer, audience, and expiry.");
 
-        first.Vector.Should().HaveCount(LocalDenseTextEmbeddingService.EmbeddingDimensions);
+        first.Vector.Should().HaveCount(LocalDenseTextEmbeddingService.DefaultEmbeddingDimensions);
         first.Vector.Should().Equal(second.Vector);
-        first.Dimensions.Should().Be(384);
+        first.Dimensions.Should().Be(768);
         first.Provider.Should().Be("Local");
 
         var norm = Math.Sqrt(first.Vector.Sum(x => x * x));
@@ -174,7 +174,124 @@ public class RagLearningAssistantTests
         var embedding = await service.EmbedAsync("JWT validation");
 
         embedding.Provider.Should().Be("Local");
-        embedding.Vector.Should().HaveCount(384);
+        embedding.Vector.Should().HaveCount(768);
+    }
+
+    [Fact]
+    public async Task Google_ai_studio_embedding_sends_document_task_type_title_and_dimensions()
+    {
+        var response = $$"""
+            {
+              "embedding": {
+                "values": [{{string.Join(',', Enumerable.Repeat("1", 768))}}]
+              }
+            }
+            """;
+        var handler = new StaticResponseHandler(HttpStatusCode.OK, response);
+        var service = new GoogleAiStudioTextEmbeddingService(
+            new HttpClient(handler),
+            Options.Create(new AiOptions
+            {
+                RagEmbeddingProvider = "GoogleAiStudio",
+                RagEmbeddingApiKey = "test-key",
+                RagEmbeddingModel = "gemini-embedding-2",
+                RagEmbeddingDimensions = 768,
+                RagEmbeddingMaxRetries = 0
+            }));
+
+        var embedding = await service.EmbedAsync(new AiTextEmbeddingRequest(
+            "JWT validation checks signatures.",
+            AiTextEmbeddingPurpose.RetrievalDocument,
+            "Secure API Development - JWT validation"));
+
+        embedding.Provider.Should().Be("GoogleAiStudio");
+        embedding.Model.Should().Be("models/gemini-embedding-2");
+        embedding.Vector.Should().HaveCount(768);
+        EmbeddingVectorUtils.Norm(embedding.Vector).Should().BeApproximately(1d, 0.0001d);
+
+        handler.LastRequest.Should().NotBeNull();
+        handler.LastRequest!.Headers.GetValues("x-goog-api-key").Should().ContainSingle("test-key");
+        handler.LastRequest.RequestUri!.ToString().Should().Contain("models/gemini-embedding-2:embedContent");
+        handler.LastRequestBody.Should().Contain("\"taskType\":\"RETRIEVAL_DOCUMENT\"");
+        handler.LastRequestBody.Should().Contain("\"title\":\"Secure API Development - JWT validation\"");
+        handler.LastRequestBody.Should().Contain("\"outputDimensionality\":768");
+        handler.LastRequestBody.Should().Contain("\"text\":\"JWT validation checks signatures.\"");
+    }
+
+    [Fact]
+    public async Task Google_ai_studio_embedding_sends_query_task_type_without_title()
+    {
+        var response = $$"""
+            {
+              "embedding": {
+                "values": [{{string.Join(',', Enumerable.Repeat("1", 768))}}]
+              }
+            }
+            """;
+        var handler = new StaticResponseHandler(HttpStatusCode.OK, response);
+        var service = new GoogleAiStudioTextEmbeddingService(
+            new HttpClient(handler),
+            Options.Create(new AiOptions
+            {
+                RagEmbeddingProvider = "GoogleAiStudio",
+                RagEmbeddingApiKey = "test-key",
+                RagEmbeddingModel = "gemini-embedding-2",
+                RagEmbeddingDimensions = 768,
+                RagEmbeddingMaxRetries = 0
+            }));
+
+        await service.EmbedAsync(new AiTextEmbeddingRequest(
+            "How does JWT validation work?",
+            AiTextEmbeddingPurpose.RetrievalQuery,
+            "Ignored title"));
+
+        handler.LastRequestBody.Should().Contain("\"taskType\":\"RETRIEVAL_QUERY\"");
+        handler.LastRequestBody.Should().NotContain("\"title\"");
+    }
+
+    [Fact]
+    public async Task Google_ai_studio_embedding_rejects_wrong_dimension()
+    {
+        const string response = """{ "embedding": { "values": [0.1, 0.2, 0.3] } }""";
+        var service = new GoogleAiStudioTextEmbeddingService(
+            new HttpClient(new StaticResponseHandler(HttpStatusCode.OK, response)),
+            Options.Create(new AiOptions
+            {
+                RagEmbeddingProvider = "GoogleAiStudio",
+                RagEmbeddingApiKey = "test-key",
+                RagEmbeddingModel = "gemini-embedding-2",
+                RagEmbeddingDimensions = 768,
+                RagEmbeddingMaxRetries = 0
+            }));
+
+        var act = () => service.EmbedAsync(new AiTextEmbeddingRequest(
+            "JWT validation",
+            AiTextEmbeddingPurpose.RetrievalQuery));
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*expected 768*");
+    }
+
+    [Fact]
+    public async Task Google_ai_studio_embedding_throws_provider_exception_on_rate_limit()
+    {
+        var service = new GoogleAiStudioTextEmbeddingService(
+            new HttpClient(new StaticResponseHandler(HttpStatusCode.TooManyRequests, "{}")),
+            Options.Create(new AiOptions
+            {
+                RagEmbeddingProvider = "GoogleAiStudio",
+                RagEmbeddingApiKey = "test-key",
+                RagEmbeddingModel = "gemini-embedding-2",
+                RagEmbeddingDimensions = 768,
+                RagEmbeddingMaxRetries = 0
+            }));
+
+        var act = () => service.EmbedAsync(new AiTextEmbeddingRequest(
+            "JWT validation",
+            AiTextEmbeddingPurpose.RetrievalQuery));
+
+        var exception = await act.Should().ThrowAsync<AiTextEmbeddingProviderException>();
+        exception.Which.IsRetriable.Should().BeTrue();
     }
 
     [Fact]
@@ -264,12 +381,22 @@ public class RagLearningAssistantTests
 
     private sealed class StaticResponseHandler(HttpStatusCode statusCode, string body) : HttpMessageHandler
     {
-        protected override Task<HttpResponseMessage> SendAsync(
+        public HttpRequestMessage? LastRequest { get; private set; }
+        public string LastRequestBody { get; private set; } = "";
+
+        protected override async Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request,
-            CancellationToken cancellationToken) =>
-            Task.FromResult(new HttpResponseMessage(statusCode)
+            CancellationToken cancellationToken)
+        {
+            LastRequest = request;
+            LastRequestBody = request.Content is null
+                ? ""
+                : await request.Content.ReadAsStringAsync(cancellationToken);
+
+            return new HttpResponseMessage(statusCode)
             {
                 Content = new StringContent(body, Encoding.UTF8, "application/json")
-            });
+            };
+        }
     }
 }

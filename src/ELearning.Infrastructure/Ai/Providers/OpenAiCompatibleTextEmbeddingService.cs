@@ -13,10 +13,13 @@ public sealed class OpenAiCompatibleTextEmbeddingService(
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
+    public Task<AiTextEmbedding> EmbedAsync(AiTextEmbeddingRequest request, CancellationToken ct = default) =>
+        EmbedAsync(request.Text, ct);
+
     public async Task<AiTextEmbedding> EmbedAsync(string text, CancellationToken ct = default)
     {
         var config = options.Value;
-        var model = config.RagEmbeddingModel.Trim();
+        var model = config.ResolveRagEmbeddingModel();
         if (string.IsNullOrWhiteSpace(model))
             throw new InvalidOperationException("Ai:RagEmbeddingModel is required when Ai:RagEmbeddingProvider is OpenAiCompatible.");
 

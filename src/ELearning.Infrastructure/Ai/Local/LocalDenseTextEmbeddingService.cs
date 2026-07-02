@@ -2,14 +2,16 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using ELearning.Application.Common.Interfaces;
+using Microsoft.Extensions.Options;
 
 namespace ELearning.Infrastructure.Ai;
 
 public sealed partial class LocalDenseTextEmbeddingService : IAiTextEmbeddingService
 {
-    public const int EmbeddingDimensions = 384;
+    public const int DefaultEmbeddingDimensions = 768;
     private const string ProviderName = "Local";
-    private const string ModelName = "local-dense-hash-384-v1";
+    private const string ModelNamePrefix = "local-dense-hash";
+    private readonly IOptions<AiOptions>? options;
 
     private static readonly HashSet<string> StopWords = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -18,9 +20,17 @@ public sealed partial class LocalDenseTextEmbeddingService : IAiTextEmbeddingSer
         "advanced", "want", "become", "build", "create", "using", "about", "need"
     };
 
+    public LocalDenseTextEmbeddingService(IOptions<AiOptions>? options = null)
+    {
+        this.options = options;
+    }
+
+    public Task<AiTextEmbedding> EmbedAsync(AiTextEmbeddingRequest request, CancellationToken ct = default)
+        => EmbedAsync(request.Text, ct);
+
     public Task<AiTextEmbedding> EmbedAsync(string text, CancellationToken ct = default)
     {
-        var dimensions = EmbeddingDimensions;
+        var dimensions = Math.Clamp(options?.Value.RagEmbeddingDimensions ?? DefaultEmbeddingDimensions, 1, 4096);
         var vector = new float[dimensions];
         var tokens = Tokenize(text).ToList();
         if (tokens.Count == 0 && !string.IsNullOrWhiteSpace(text))
@@ -35,7 +45,7 @@ public sealed partial class LocalDenseTextEmbeddingService : IAiTextEmbeddingSer
         }
 
         EmbeddingVectorUtils.Normalize(vector);
-        return Task.FromResult(new AiTextEmbedding(vector, ProviderName, ModelName, dimensions));
+        return Task.FromResult(new AiTextEmbedding(vector, ProviderName, $"{ModelNamePrefix}-{dimensions}-v1", dimensions));
     }
 
     private static IEnumerable<string> Tokenize(string? value)

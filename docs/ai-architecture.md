@@ -173,8 +173,9 @@ Current provider rules:
 - `Provider=OpenAiCompatible` requires `ApiKey` and `ChatModel` for remote calls.
 - `FallbackToLocal=true` keeps workflows usable if the remote provider fails.
 - RAG uses the remote chat provider only for answer synthesis.
-- RAG embeddings use a local deterministic 384-dimension dense hashing model by default, with an optional OpenAI-compatible embedding provider behind `IAiTextEmbeddingService`.
-- `embedding_json` is retained for debug/backward compatibility; retrieval uses `embedding_vector vector(384)`.
+- RAG embeddings use a local deterministic 768-dimension dense hashing model by default, with optional OpenAI-compatible or Google AI Studio embedding providers behind `IAiTextEmbeddingService`.
+- Google AI Studio embeddings use native Gemini `embedContent` with `taskType`, `title`, and `outputDimensionality`; the app does not prompt-prefix document/query text.
+- `embedding_json` is retained for debug/backward compatibility; retrieval uses `embedding_vector vector(768)`.
 
 ## Configuration
 
@@ -195,13 +196,16 @@ AI options are bound from the `Ai` configuration section.
 | `EssayGradingPromptVersion` | `essay-grading-v1` | Essay prompt audit version |
 | `LearningPathPromptVersion` | `learning-path-generator-v1` | Learning path prompt audit version |
 | `RagChatPromptVersion` | `rag-learning-assistant-v1` | RAG prompt audit version |
-| `RagEmbeddingProvider` | `Local` | RAG embedding selector: `Local` or `OpenAiCompatible` |
+| `RagEmbeddingProvider` | `Local` | RAG embedding selector: `Local`, `OpenAiCompatible`, or `GoogleAiStudio` |
 | `RagEmbeddingBaseUrl` | empty | Optional embedding base URL; falls back to `BaseUrl` |
 | `RagEmbeddingApiKey` | empty | Optional embedding secret; falls back to `ApiKey` |
 | `RagEmbeddingModel` | empty | Remote embedding model name |
-| `RagEmbeddingDimensions` | `384` | Fixed RAG vector dimension |
+| `RagEmbeddingDimensions` | `768` | Fixed RAG vector dimension |
 | `RagEmbeddingTimeoutSeconds` | `30` | Embedding HTTP timeout |
 | `RagEmbeddingMaxRetries` | `2` | Embedding retry count |
+| `RagEmbeddingFailureMode` | `FullTextFallback` | Google embedding failure behavior: full-text fallback or fail fast |
+| `RagQueryEmbeddingCacheTtlDays` | `30` | Exact query embedding cache TTL |
+| `RagAutoReindexEnabled` | `true` | Enables automatic reindex jobs after content changes |
 | `RagMaxRetrievedChunks` | `4` | Top retrieved chunks used for RAG |
 | `RagMinSimilarity` | `0.05` | Minimum cosine similarity for retrieved chunks |
 | `RagMaxContextCharacters` | `2400` | Citation/context packing character budget |
@@ -282,7 +286,7 @@ erDiagram
     }
 ```
 
-RAG stores dense vectors in `embedding_vector vector(384)` and keeps `embedding_json` as debug/backward compatibility data. Retrieval uses pgvector cosine distance through `IAiKnowledgeRetriever`, then applies lexical boost, thresholding, source dedupe, and context packing. `AiRagEvaluationRun` stores golden-dataset quality summaries for admin review.
+RAG stores dense vectors in `embedding_vector vector(768)` and keeps `embedding_json` as debug/backward compatibility data. Retrieval uses pgvector cosine distance through `IAiKnowledgeRetriever`, then applies lexical boost, thresholding, source dedupe, and context packing. `AiRagEvaluationRun` stores golden-dataset quality summaries for admin review.
 
 ## Knowledge Indexing Flow
 
@@ -303,8 +307,8 @@ sequenceDiagram
     Indexer->>Chunker: "Build stable chunks"
     Chunker-->>Indexer: "AiKnowledgeChunkSource[]"
     loop "For each desired chunk"
-        Indexer->>Embedding: "EmbedAsync(chunk.Text)"
-        Embedding-->>Indexer: "Dense vector(384)"
+        Indexer->>Embedding: "EmbedAsync(document request)"
+        Embedding-->>Indexer: "Dense vector(768)"
     end
     Indexer->>DB: "Delete stale chunks"
     Indexer->>DB: "Insert new chunks"
@@ -445,9 +449,9 @@ For RAG, `AiChatMessage` also stores answer content, citations JSON, provider/mo
 
 ## Known Limits
 
-- RAG uses pgvector and can call an OpenAI-compatible embedding provider, but the vector dimension is fixed at `384`.
+- RAG uses pgvector and can call OpenAI-compatible or Google AI Studio embedding providers, but the vector dimension is fixed at `768`.
 - Retrieval uses vector search plus lightweight lexical boost; cross-encoder reranking is not implemented yet.
-- External provider integration is OpenAI-compatible HTTP only; Azure-specific endpoint mode is still a follow-up.
+- External chat provider integration is OpenAI-compatible HTTP; Google AI Studio embeddings use native Gemini REST.
 - Admin UI covers knowledge status, reindex jobs, failed AI request count, and RAG evaluation summaries, not full token-cost analytics.
 - Reindex queue uses Postgres polling/claiming; a dedicated distributed job framework remains a scale follow-up.
 

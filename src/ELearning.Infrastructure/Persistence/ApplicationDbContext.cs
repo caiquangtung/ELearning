@@ -51,6 +51,7 @@ public class ApplicationDbContext(
     public DbSet<AiRequestLog> AiRequestLogs => Set<AiRequestLog>();
     public DbSet<AiKnowledgeChunk> AiKnowledgeChunks => Set<AiKnowledgeChunk>();
     public DbSet<AiKnowledgeReindexJob> AiKnowledgeReindexJobs => Set<AiKnowledgeReindexJob>();
+    public DbSet<AiQueryEmbeddingCache> AiQueryEmbeddingCache => Set<AiQueryEmbeddingCache>();
     public DbSet<AiRagEvaluationRun> AiRagEvaluationRuns => Set<AiRagEvaluationRun>();
     public DbSet<AiChatSession> AiChatSessions => Set<AiChatSession>();
     public DbSet<AiChatMessage> AiChatMessages => Set<AiChatMessage>();

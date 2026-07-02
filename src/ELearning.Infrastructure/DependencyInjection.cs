@@ -92,6 +92,7 @@ public static class DependencyInjection
         services.AddScoped<OpenAiCompatibleEssayGradingService>();
         services.AddScoped<OpenAiCompatibleLearningPathService>();
         services.AddScoped<OpenAiCompatibleTextEmbeddingService>();
+        services.AddScoped<GoogleAiStudioTextEmbeddingService>();
         services.AddScoped<AiKnowledgeChunker>();
         services.AddScoped<IAiKnowledgeIndexingService, AiKnowledgeIndexingService>();
         services.AddScoped<IAiKnowledgeRetriever, AiKnowledgeRetriever>();

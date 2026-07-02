@@ -21,9 +21,12 @@ public sealed class AiOptions
     public string RagEmbeddingBaseUrl { get; init; } = "";
     public string RagEmbeddingApiKey { get; init; } = "";
     public string RagEmbeddingModel { get; init; } = "";
-    public int RagEmbeddingDimensions { get; init; } = 384;
+    public int RagEmbeddingDimensions { get; init; } = 768;
     public int RagEmbeddingTimeoutSeconds { get; init; } = 30;
     public int RagEmbeddingMaxRetries { get; init; } = 2;
+    public string RagEmbeddingFailureMode { get; init; } = "FullTextFallback";
+    public int RagQueryEmbeddingCacheTtlDays { get; init; } = 30;
+    public bool RagAutoReindexEnabled { get; init; } = true;
     public int RagMaxRetrievedChunks { get; init; } = 4;
     public decimal RagMinSimilarity { get; init; } = 0.05m;
     public int RagMaxContextCharacters { get; init; } = 2400;
@@ -37,6 +40,15 @@ public sealed class AiOptions
     public bool UsesOpenAiCompatibleRagEmbeddingProvider() =>
         RagEmbeddingProvider.Equals("OpenAiCompatible", StringComparison.OrdinalIgnoreCase);
 
+    public bool UsesGoogleAiStudioRagEmbeddingProvider() =>
+        RagEmbeddingProvider.Equals("GoogleAiStudio", StringComparison.OrdinalIgnoreCase);
+
+    public bool UsesRemoteRagEmbeddingProvider() =>
+        UsesOpenAiCompatibleRagEmbeddingProvider() || UsesGoogleAiStudioRagEmbeddingProvider();
+
+    public bool UsesFullTextEmbeddingFailureFallback() =>
+        RagEmbeddingFailureMode.Equals("FullTextFallback", StringComparison.OrdinalIgnoreCase);
+
     public string ResolveRagEmbeddingBaseUrl() =>
         string.IsNullOrWhiteSpace(RagEmbeddingBaseUrl)
             ? string.IsNullOrWhiteSpace(BaseUrl) ? "https://api.openai.com/v1" : BaseUrl.Trim()
@@ -46,6 +58,21 @@ public sealed class AiOptions
         string.IsNullOrWhiteSpace(RagEmbeddingApiKey)
             ? ApiKey.Trim()
             : RagEmbeddingApiKey.Trim();
+
+    public string ResolveGoogleAiStudioRagEmbeddingBaseUrl() =>
+        string.IsNullOrWhiteSpace(RagEmbeddingBaseUrl)
+            ? "https://generativelanguage.googleapis.com/v1beta"
+            : RagEmbeddingBaseUrl.Trim();
+
+    public string ResolveRagEmbeddingModel()
+    {
+        if (!string.IsNullOrWhiteSpace(RagEmbeddingModel))
+            return RagEmbeddingModel.Trim();
+
+        return UsesGoogleAiStudioRagEmbeddingProvider()
+            ? "gemini-embedding-2"
+            : "";
+    }
 
     public string ResolveChatModel()
     {

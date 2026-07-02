@@ -114,7 +114,9 @@ public sealed class AiKnowledgeIndexingService(
             .Take(10)
             .ToListAsync(ct);
 
-        var modelProbe = await embeddingService.EmbedAsync("status", ct);
+        var modelProbe = await embeddingService.EmbedAsync(
+            new AiTextEmbeddingRequest("status", AiTextEmbeddingPurpose.StatusProbe),
+            ct);
         var recentJobs = jobs.Select(ToJobSummary).ToList();
         var recentEvaluations = evaluations.Select(ToEvaluationSummary).ToList();
 
@@ -139,7 +141,12 @@ public sealed class AiKnowledgeIndexingService(
         AiKnowledgeChunkSource source,
         CancellationToken ct)
     {
-        var embedding = await embeddingService.EmbedAsync(source.Text, ct);
+        var embedding = await embeddingService.EmbedAsync(
+            new AiTextEmbeddingRequest(
+                source.Text,
+                AiTextEmbeddingPurpose.RetrievalDocument,
+                BuildEmbeddingTitle(source)),
+            ct);
         var embeddingJson = PgVectorFormatter.ToJson(embedding.Vector);
         var vectorLiteral = PgVectorFormatter.ToVectorLiteral(embedding.Vector);
         var metadataJson = JsonSerializer.Serialize(new
@@ -178,6 +185,12 @@ public sealed class AiKnowledgeIndexingService(
             chunk.EmbeddingJson,
             chunk.MetadataJson);
     }
+
+    private static string BuildEmbeddingTitle(AiKnowledgeChunkSource source) =>
+        string.Join(
+            " - ",
+            new[] { source.CourseTitle, source.SectionTitle, source.LessonTitle }
+                .Where(value => !string.IsNullOrWhiteSpace(value)));
 
     private static string ComputeContentHash(AiKnowledgeChunkSource source)
     {

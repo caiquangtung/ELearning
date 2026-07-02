@@ -21,18 +21,14 @@ public sealed partial class AiKnowledgeRetriever(
         var stopwatch = Stopwatch.StartNew();
         var question = request.Question.Trim();
         var config = options.Value;
-        var probe = await embeddingService.EmbedAsync(question.Length == 0 ? "empty" : question, ct);
         var minSimilarity = Math.Clamp(config.RagMinSimilarity, 0m, 1m);
 
         if (question.Length == 0)
-            return EmptyResult(probe, minSimilarity, stopwatch);
+            return EmptyResult(EmptyEmbedding(), minSimilarity, stopwatch);
 
         var maxChunks = Math.Clamp(config.RagMaxRetrievedChunks, 1, 8);
         var candidateLimit = Math.Max(maxChunks * Math.Clamp(config.RagCandidateMultiplier, 4, 20), 24);
         var contextBudget = Math.Clamp(config.RagMaxContextCharacters, 800, 8000);
-        var queryEmbedding = probe;
-        if (!HasVectorSignal(queryEmbedding.Vector))
-            return EmptyResult(queryEmbedding, minSimilarity, stopwatch);
 
         var accessibleCourseIds = await AiKnowledgeAccessPolicy.GetAccessiblePublishedCourseIdsAsync(
             context,
@@ -42,13 +38,29 @@ public sealed partial class AiKnowledgeRetriever(
             ct);
 
         if (accessibleCourseIds.Count == 0)
-            return EmptyResult(queryEmbedding, minSimilarity, stopwatch);
+            return EmptyResult(EmptyEmbedding(), minSimilarity, stopwatch);
 
-        var candidates = await SearchVectorCandidatesAsync(
-            accessibleCourseIds,
-            PgVectorFormatter.ToVectorLiteral(queryEmbedding.Vector),
-            candidateLimit,
-            ct);
+        AiTextEmbedding queryEmbedding;
+        List<VectorCandidate> candidates;
+        try
+        {
+            queryEmbedding = await embeddingService.EmbedAsync(
+                new AiTextEmbeddingRequest(question, AiTextEmbeddingPurpose.RetrievalQuery),
+                ct);
+            if (!HasVectorSignal(queryEmbedding.Vector))
+                return EmptyResult(queryEmbedding, minSimilarity, stopwatch);
+
+            candidates = await SearchVectorCandidatesAsync(
+                accessibleCourseIds,
+                PgVectorFormatter.ToVectorLiteral(queryEmbedding.Vector),
+                candidateLimit,
+                ct);
+        }
+        catch (Exception) when (ShouldUseFullTextFallback(config))
+        {
+            queryEmbedding = new AiTextEmbedding([], "PostgreSql", "full-text-fallback-v1", 0);
+            candidates = await SearchFullTextCandidatesAsync(accessibleCourseIds, question, candidateLimit, ct);
+        }
 
         var citations = BuildCitations(question, candidates, minSimilarity, maxChunks, contextBudget);
 
@@ -62,6 +74,9 @@ public sealed partial class AiKnowledgeRetriever(
             queryEmbedding.Dimensions,
             stopwatch.ElapsedMilliseconds);
     }
+
+    private static bool ShouldUseFullTextFallback(AiOptions config) =>
+        config.UsesGoogleAiStudioRagEmbeddingProvider() && config.UsesFullTextEmbeddingFailureFallback();
 
     private async Task<List<VectorCandidate>> SearchVectorCandidatesAsync(
         IReadOnlyList<Guid> courseIds,
@@ -128,6 +143,77 @@ public sealed partial class AiKnowledgeRetriever(
         return candidates;
     }
 
+    private async Task<List<VectorCandidate>> SearchFullTextCandidatesAsync(
+        IReadOnlyList<Guid> courseIds,
+        string question,
+        int candidateLimit,
+        CancellationToken ct)
+    {
+        var candidates = new List<VectorCandidate>();
+        var connection = context.Database.GetDbConnection();
+        var shouldClose = connection.State != System.Data.ConnectionState.Open;
+        if (shouldClose)
+            await connection.OpenAsync(ct);
+
+        try
+        {
+            await using var command = connection.CreateCommand();
+            command.CommandText =
+                """
+                WITH query AS (
+                    SELECT websearch_to_tsquery('simple', @question) AS value
+                )
+                SELECT
+                    c.id,
+                    c.course_id,
+                    c.section_id,
+                    c.lesson_id,
+                    c.course_title,
+                    c.section_title,
+                    c.lesson_title,
+                    c.source_type,
+                    c.chunk_index,
+                    c.text,
+                    ts_rank_cd(
+                        to_tsvector('simple', concat_ws(' ', c.course_title, c.section_title, c.lesson_title, c.text)),
+                        query.value) AS score
+                FROM ai_knowledge_chunks c
+                CROSS JOIN query
+                WHERE c.course_id = ANY(@course_ids)
+                    AND to_tsvector('simple', concat_ws(' ', c.course_title, c.section_title, c.lesson_title, c.text)) @@ query.value
+                ORDER BY score DESC, c.course_title, c.chunk_index
+                LIMIT @candidate_limit
+                """;
+            command.Parameters.Add(new NpgsqlParameter("question", question));
+            command.Parameters.Add(new NpgsqlParameter("course_ids", courseIds.ToArray()));
+            command.Parameters.Add(new NpgsqlParameter("candidate_limit", candidateLimit));
+
+            await using var reader = await command.ExecuteReaderAsync(ct);
+            while (await reader.ReadAsync(ct))
+            {
+                candidates.Add(new VectorCandidate(
+                    reader.GetGuid(0),
+                    reader.GetGuid(1),
+                    reader.IsDBNull(2) ? null : reader.GetGuid(2),
+                    reader.IsDBNull(3) ? null : reader.GetGuid(3),
+                    reader.GetString(4),
+                    reader.IsDBNull(5) ? null : reader.GetString(5),
+                    reader.IsDBNull(6) ? null : reader.GetString(6),
+                    reader.GetString(7),
+                    reader.GetInt32(8),
+                    reader.GetString(9),
+                    Math.Round(Math.Clamp(Convert.ToDecimal(reader.GetValue(10), System.Globalization.CultureInfo.InvariantCulture), 0m, 1m), 4)));
+            }
+        }
+        finally
+        {
+            if (shouldClose)
+                await connection.CloseAsync();
+        }
+
+        return candidates;
+    }
+
     private static AiKnowledgeRetrievalResult EmptyResult(
         AiTextEmbedding embedding,
         decimal minSimilarity,
@@ -141,6 +227,9 @@ public sealed partial class AiKnowledgeRetriever(
             embedding.Model,
             embedding.Dimensions,
             stopwatch.ElapsedMilliseconds);
+
+    private static AiTextEmbedding EmptyEmbedding() =>
+        new([], "None", "none", 0);
 
     private static bool HasVectorSignal(IReadOnlyList<float> vector) =>
         vector.Any(value => Math.Abs(value) > 0.000001f);

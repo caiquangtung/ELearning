@@ -8,8 +8,8 @@ This runbook covers setup, reindexing, operational checks, and troubleshooting f
 | --- | --- |
 | Default provider | `Local` |
 | External provider | OpenAI-compatible chat and optional embedding HTTP |
-| RAG embeddings | Local deterministic dense vectors by default; optional OpenAI-compatible embeddings, 384 dimensions |
-| RAG vector store | Postgres pgvector `embedding_vector vector(384)` |
+| RAG embeddings | Local deterministic dense vectors by default; optional OpenAI-compatible or Google AI Studio embeddings, 768 dimensions |
+| RAG vector store | Postgres pgvector `embedding_vector vector(768)` |
 | RAG reindex endpoint | `POST /api/v1/ai/knowledge/reindex` |
 | RAG background queue | Persisted job rows + Postgres polling/claiming hosted worker |
 | RAG evaluation | Golden dataset runner via admin API |
@@ -53,25 +53,49 @@ Ai__RagEmbeddingProvider=OpenAiCompatible
 Ai__RagEmbeddingBaseUrl=https://api.openai.com/v1
 Ai__RagEmbeddingApiKey=<secret>
 Ai__RagEmbeddingModel=<embedding-model>
-Ai__RagEmbeddingDimensions=384
+Ai__RagEmbeddingDimensions=768
 Ai__RagEmbeddingTimeoutSeconds=30
 Ai__RagEmbeddingMaxRetries=2
 Ai__FallbackToLocal=true
 ```
 
-The provider response must return exactly `384` dimensions. The app normalizes the vector before storing it in `embedding_vector`. If the provider fails and `FallbackToLocal=true`, the pipeline falls back to the local dense embedding model.
+The provider response must return exactly `768` dimensions. The app normalizes the vector before storing it in `embedding_vector`. If the OpenAI-compatible provider fails and `FallbackToLocal=true`, the pipeline falls back to the local dense embedding model.
+
+### Google AI Studio RAG Embeddings
+
+Use native Gemini `embedContent` for Google AI Studio embeddings so the app can send `taskType`, `title`, and `outputDimensionality`.
+
+```bash
+Ai__RagEmbeddingProvider=GoogleAiStudio
+Ai__RagEmbeddingBaseUrl=https://generativelanguage.googleapis.com/v1beta
+Ai__RagEmbeddingApiKey=<secret>
+Ai__RagEmbeddingModel=gemini-embedding-2
+Ai__RagEmbeddingDimensions=768
+Ai__RagEmbeddingFailureMode=FullTextFallback
+Ai__RagQueryEmbeddingCacheTtlDays=30
+Ai__RagAutoReindexEnabled=false
+Ai__RagEmbeddingTimeoutSeconds=30
+Ai__RagEmbeddingMaxRetries=2
+```
+
+Google document chunks are sent as `taskType=RETRIEVAL_DOCUMENT` with a separate `title`; user questions are sent as `taskType=RETRIEVAL_QUERY`. Do not mix Google vectors with local dense vectors. When Google embedding fails and `RagEmbeddingFailureMode=FullTextFallback`, retrieval falls back to PostgreSQL full-text search. Use `FailFast` to return an error instead.
+
+Free API quotas can be exhausted quickly during reindex. Keep `RagAutoReindexEnabled=false` in CI/CD and quota-limited environments, then run manual reindex during a low-traffic window.
 
 ## RAG Tuning Options
 
 ```bash
 Ai__RagChatPromptVersion=rag-learning-assistant-v1
-Ai__RagEmbeddingDimensions=384
+Ai__RagEmbeddingDimensions=768
 Ai__RagMaxRetrievedChunks=4
 Ai__RagMinSimilarity=0.05
 Ai__RagMaxContextCharacters=2400
 Ai__RagCandidateMultiplier=8
 Ai__RagReindexPollSeconds=5
 Ai__MaxSourceCharacters=12000
+Ai__RagEmbeddingFailureMode=FullTextFallback
+Ai__RagQueryEmbeddingCacheTtlDays=30
+Ai__RagAutoReindexEnabled=true
 ```
 
 Guidance:
@@ -82,7 +106,8 @@ Guidance:
 - Decrease `RagMinSimilarity` if the assistant refuses too often.
 - Increase `RagCandidateMultiplier` if relevant chunks are being missed before ranking.
 - Decrease `RagMaxContextCharacters` if provider prompts get too large.
-- `RagEmbeddingDimensions` must stay `384` while the database column is `vector(384)`.
+- `RagEmbeddingDimensions` must stay `768` while the database column is `vector(768)`.
+- Query embeddings are cached by normalized exact query, provider, model, and dimension for the configured TTL.
 
 ## pgvector Setup
 
@@ -97,10 +122,12 @@ The EF migration creates the extension and vector column:
 
 ```sql
 CREATE EXTENSION IF NOT EXISTS vector;
-ALTER TABLE ai_knowledge_chunks ADD COLUMN IF NOT EXISTS embedding_vector vector(384);
+ALTER TABLE ai_knowledge_chunks ADD COLUMN IF NOT EXISTS embedding_vector vector(768);
 ```
 
 `embedding_json` remains as debug/backward compatibility data. Runtime retrieval uses `embedding_vector`.
+
+Changing provider, model, or dimensions requires a full knowledge reindex. The Google migration clears old vectors before switching to `vector(768)` so stale `vector(384)` values are not queried accidentally.
 
 ## Reindex Knowledge
 
