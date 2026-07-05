@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using ELearning.Domain.Exceptions;
 using ELearning.Domain.Shared;
 
@@ -18,6 +20,8 @@ public sealed class AiKnowledgeChunk : AuditableAggregateRoot
     public string ContentHash { get; private set; } = default!;
     public string Text { get; private set; } = default!;
     public string EmbeddingJson { get; private set; } = default!;
+    [NotMapped]
+    public double[]? EmbeddingVector { get; private set; }
     public string MetadataJson { get; private set; } = "{}";
 
     public static AiKnowledgeChunk Create(

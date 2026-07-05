@@ -9,6 +9,12 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=elearning_dev;Username=postgres;Password=postgres
       - Redis__ConnectionString=redis:6379
+      - Ai__RagEmbeddingProvider=GoogleAiStudio
+      - Ai__RagEmbeddingModel=gemini-embedding-001
+      - Ai__RagEmbeddingBaseUrl=https://generativelanguage.googleapis.com/v1beta
+      - Ai__RagEmbeddingDimensions=768
+      - Ai__ApiKey=${Ai__ApiKey:-}
+      - Ai__RagEmbeddingApiKey=${Ai__RagEmbeddingApiKey:-}
     depends_on:
       postgres:
         condition: service_healthy

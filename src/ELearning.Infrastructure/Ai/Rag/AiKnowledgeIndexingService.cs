@@ -29,6 +29,7 @@ public sealed class AiKnowledgeIndexingService(
         try
         {
             var courses = await context.Courses
+                .AsSplitQuery()
                 .Include(c => c.Sections)
                     .ThenInclude(s => s.Lessons)
                 .Where(c => !c.IsDeleted && c.Status == CourseStatus.Published)
@@ -261,7 +262,7 @@ public sealed class AiKnowledgeIndexingService(
                 command.CommandText =
                     """
                     UPDATE ai_knowledge_chunks
-                    SET embedding_vector = CAST(@embedding_vector AS vector)
+                    SET embedding_vector = CAST(@embedding_vector AS vector(768))
                     WHERE id = @id
                     """;
                 command.Parameters.Add(new NpgsqlParameter("embedding_vector", update.VectorLiteral));

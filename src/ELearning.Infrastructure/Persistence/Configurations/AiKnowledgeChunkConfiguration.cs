@@ -23,6 +23,7 @@ public sealed class AiKnowledgeChunkConfiguration : IEntityTypeConfiguration<AiK
         builder.Property(x => x.ContentHash).HasColumnName("content_hash").HasMaxLength(128).IsRequired();
         builder.Property(x => x.Text).HasColumnName("text").HasColumnType("text").IsRequired();
         builder.Property(x => x.EmbeddingJson).HasColumnName("embedding_json").HasColumnType("jsonb").IsRequired();
+        builder.Ignore(x => x.EmbeddingVector);
         builder.Property(x => x.MetadataJson).HasColumnName("metadata_json").HasColumnType("jsonb").IsRequired();
         builder.Property(x => x.CreatedAt).HasColumnName("created_at").IsRequired();
         builder.Property(x => x.UpdatedAt).HasColumnName("updated_at");

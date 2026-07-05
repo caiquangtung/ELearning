@@ -167,7 +167,7 @@ public sealed class ConfigurableAiTextEmbeddingService(
             command.CommandText =
                 """
                 UPDATE ai_query_embedding_cache
-                SET embedding_vector = CAST(@embedding_vector AS vector)
+                SET embedding_vector = CAST(@embedding_vector AS vector(768))
                 WHERE id = @id
                 """;
             command.Parameters.Add(new NpgsqlParameter("embedding_vector", PgVectorFormatter.ToVectorLiteral(embedding.Vector)));
