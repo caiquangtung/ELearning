@@ -25,6 +25,20 @@
   text-transform: uppercase;
 }
 
+.hero-course-picker {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.hero-course-picker label {
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
 h1,
 h2,
 p {

@@ -7,6 +7,20 @@
         Answers are grounded in indexed course and lesson content. References
         below each answer show where the response came from.
       </p>
+      <div class="hero-course-picker">
+        <label for="course-scope">Scope to course</label>
+        <p-dropdown
+          id="course-scope"
+          [options]="courseOptions()"
+          optionLabel="title"
+          optionValue="id"
+          [(ngModel)]="selectedCourseId"
+          (onChange)="onCourseChange()"
+          [disabled]="isLoadingCourses()"
+          placeholder="All course material"
+          [style]="{ minWidth: '16rem' }"
+        />
+      </div>
     </div>
     <button class="primary-action" type="button" (click)="createSession()">
       <i class="pi pi-plus"></i>

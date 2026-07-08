@@ -76,6 +76,15 @@ public sealed class AiController(IMediator mediator) : ControllerBase
         return result.IsSuccess ? Ok(result.Value) : ProblemFrom(result.Error);
     }
 
+    [HttpGet("chat/courses")]
+    [HasPermission(Permissions.Courses.Read)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAccessibleCourses(CancellationToken ct)
+    {
+        var result = await mediator.Send(new GetAccessibleAiCoursesQuery(), ct);
+        return result.IsSuccess ? Ok(result.Value) : ProblemFrom(result.Error);
+    }
+
     [HttpGet("chat/sessions/{sessionId:guid}/messages")]
     [HasPermission(Permissions.Courses.Read)]
     [ProducesResponseType(StatusCodes.Status200OK)]

@@ -58,6 +58,30 @@ public sealed class AiRagChatService(
         return ToSummary(session);
     }
 
+    public async Task<IReadOnlyList<AiAccessibleCourse>> GetAccessibleCoursesAsync(
+        Guid userId,
+        IReadOnlyCollection<string> userRoles,
+        CancellationToken ct = default)
+    {
+        var courseIds = await AiKnowledgeAccessPolicy.GetAccessiblePublishedCourseIdsAsync(
+            context,
+            userId,
+            userRoles,
+            null,
+            ct);
+        if (courseIds.Count == 0)
+            return [];
+
+        var courses = await context.Courses
+            .AsNoTracking()
+            .Where(c => courseIds.Contains(c.Id) && !c.IsDeleted && c.Status == CourseStatus.Published)
+            .OrderBy(c => c.Title)
+            .Select(c => new AiAccessibleCourse(c.Id, c.Title))
+            .ToListAsync(ct);
+
+        return courses;
+    }
+
     public async Task<IReadOnlyList<AiChatSessionSummary>> ListSessionsAsync(Guid userId, CancellationToken ct = default)
     {
         var sessions = await context.AiChatSessions

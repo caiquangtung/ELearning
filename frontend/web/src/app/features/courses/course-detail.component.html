@@ -20,12 +20,31 @@
           <p class="text-600 mb-2">
             Price: <strong>{{ formatPrice(c.priceCents, c.currency) }}</strong>
           </p>
+          <div class="course-actions">
+            <p-button
+              label="Buy course"
+              icon="pi pi-shopping-cart"
+              styleClass="mb-3"
+              [routerLink]="['/checkout']"
+              [queryParams]="{ type: 'Course', ref: c.id, qty: 1 }"
+            />
+            <p-button
+              label="Ask AI Tutor"
+              icon="pi pi-comments"
+              severity="help"
+              [outlined]="true"
+              styleClass="mb-3"
+              (onClick)="askAiTutor(c.id)"
+            />
+          </div>
+        } @else {
           <p-button
-            label="Buy course"
-            icon="pi pi-shopping-cart"
+            label="Ask AI Tutor"
+            icon="pi pi-comments"
+            severity="help"
+            [outlined]="true"
             styleClass="mb-3"
-            [routerLink]="['/checkout']"
-            [queryParams]="{ type: 'Course', ref: c.id, qty: 1 }"
+            (onClick)="askAiTutor(c.id)"
           />
         }
         @if (c.description) {

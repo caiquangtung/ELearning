@@ -34,6 +34,17 @@
   margin-top: .75rem;
 }
 
+.course-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  margin-bottom: .75rem;
+}
+
+.course-actions ::ng-deep .p-button {
+  margin-bottom: 0;
+}
+
 .rating-summary,
 .reviews {
   margin: 1.5rem 0;

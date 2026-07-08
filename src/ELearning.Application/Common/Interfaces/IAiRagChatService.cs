@@ -1,5 +1,9 @@
 namespace ELearning.Application.Common.Interfaces;
 
+public sealed record AiAccessibleCourse(
+    Guid Id,
+    string Title);
+
 public interface IAiRagChatService
 {
     Task<AiChatSessionSummary> CreateSessionAsync(
@@ -7,6 +11,11 @@ public interface IAiRagChatService
         IReadOnlyCollection<string> userRoles,
         Guid? courseId,
         string? title,
+        CancellationToken ct = default);
+
+    Task<IReadOnlyList<AiAccessibleCourse>> GetAccessibleCoursesAsync(
+        Guid userId,
+        IReadOnlyCollection<string> userRoles,
         CancellationToken ct = default);
 
     Task<IReadOnlyList<AiChatSessionSummary>> ListSessionsAsync(Guid userId, CancellationToken ct = default);

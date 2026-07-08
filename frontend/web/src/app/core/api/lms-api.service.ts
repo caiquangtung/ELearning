@@ -794,6 +794,11 @@ export interface AiChatSessionDto {
   updatedAt: string | null;
 }
 
+export interface AiAccessibleCourseDto {
+  id: string;
+  title: string;
+}
+
 export interface AiChatCitationDto {
   chunkId: string;
   courseId: string;
@@ -1355,6 +1360,10 @@ export class LmsApiService {
 
   listAiChatSessions(): Observable<AiChatSessionDto[]> {
     return this.http.get<AiChatSessionDto[]>(`${this.base}/ai/chat/sessions`);
+  }
+
+  listAccessibleAiCourses(): Observable<AiAccessibleCourseDto[]> {
+    return this.http.get<AiAccessibleCourseDto[]>(`${this.base}/ai/chat/courses`);
   }
 
   getAiChatMessages(sessionId: string): Observable<AiChatMessageDto[]> {

@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Button } from 'primeng/button';
 import { Divider } from 'primeng/divider';
 import { InputTextarea } from 'primeng/inputtextarea';
@@ -52,6 +52,7 @@ export class CourseDetailComponent implements OnInit {
   private readonly api = inject(LmsApiService);
   private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly errors = inject(GlobalErrorService);
 
   readonly course = signal<CourseDetailDto | null>(null);
@@ -82,6 +83,12 @@ export class CourseDetailComponent implements OnInit {
   stars(value: number): string {
     const rounded = Math.round(value);
     return '★★★★★'.slice(0, rounded) + '☆☆☆☆☆'.slice(0, 5 - rounded);
+  }
+
+  askAiTutor(courseId: string): void {
+    this.router.navigate(['/learn/ai-chat'], {
+      queryParams: { courseId },
+    });
   }
 
   ngOnInit(): void {

@@ -1,8 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { DropdownModule } from 'primeng/dropdown';
 import {
+  AiAccessibleCourseDto,
   AiChatAnswerDto,
   AiChatMessageDto,
   AiChatSessionDto,
@@ -12,24 +14,35 @@ import {
 @Component({
   selector: 'app-ai-chat',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, DropdownModule],
   templateUrl: './ai-chat.component.html',
   styleUrls: ['./ai-chat.component.scss'],
 })
 export class AiChatComponent {
   private readonly api = inject(LmsApiService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   readonly sessions = signal<AiChatSessionDto[]>([]);
   readonly activeSession = signal<AiChatSessionDto | null>(null);
   readonly messages = signal<AiChatMessageDto[]>([]);
+  readonly courses = signal<AiAccessibleCourseDto[]>([]);
+  readonly selectedCourseId = signal<string | null>(null);
   readonly isLoading = signal(true);
+  readonly isLoadingCourses = signal(false);
   readonly isSending = signal(false);
   readonly error = signal<string | null>(null);
 
   draft = '';
 
+  readonly courseOptions = () => {
+    const items = this.courses();
+    return [{ id: '', title: 'All course material', pinned: true }, ...items];
+  };
+
   constructor() {
     this.loadSessions();
+    this.loadCourses();
   }
 
   loadSessions(): void {
@@ -51,21 +64,46 @@ export class AiChatComponent {
     });
   }
 
+  loadCourses(): void {
+    this.isLoadingCourses.set(true);
+    this.api.listAccessibleAiCourses().subscribe({
+      next: (courses) => this.courses.set(courses ?? []),
+      error: () => this.courses.set([]),
+      complete: () => this.isLoadingCourses.set(false),
+    });
+
+    const param = this.route.snapshot.queryParamMap.get('courseId');
+    if (param) {
+      this.selectedCourseId.set(param);
+    }
+  }
+
   createSession(): void {
     this.error.set(null);
-    this.api.createAiChatSession({ courseId: null, title: null }).subscribe({
-      next: (session) => {
-        this.sessions.set([session, ...this.sessions()]);
-        this.activeSession.set(session);
-        this.messages.set([]);
-      },
-      error: () => this.error.set('Unable to create an AI tutor session.'),
-    });
+    this.api
+      .createAiChatSession({ courseId: this.resolveCourseId(), title: null })
+      .subscribe({
+        next: (session) => {
+          this.sessions.set([session, ...this.sessions()]);
+          this.activeSession.set(session);
+          this.messages.set([]);
+        },
+        error: () => this.error.set('Unable to create an AI tutor session.'),
+      });
   }
 
   selectSession(session: AiChatSessionDto): void {
     this.activeSession.set(session);
     this.loadMessages(session.id);
+  }
+
+  onCourseChange(): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { courseId: this.resolveCourseId() || null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
 
   send(): void {
@@ -74,19 +112,26 @@ export class AiChatComponent {
 
     const session = this.activeSession();
     if (!session) {
-      this.api.createAiChatSession({ courseId: null, title: null }).subscribe({
-        next: (created) => {
-          this.sessions.set([created, ...this.sessions()]);
-          this.activeSession.set(created);
-          this.messages.set([]);
-          this.sendToSession(created.id, message);
-        },
-        error: () => this.error.set('Unable to create an AI tutor session.'),
-      });
+      this.api
+        .createAiChatSession({ courseId: this.resolveCourseId(), title: null })
+        .subscribe({
+          next: (created) => {
+            this.sessions.set([created, ...this.sessions()]);
+            this.activeSession.set(created);
+            this.messages.set([]);
+            this.sendToSession(created.id, message);
+          },
+          error: () => this.error.set('Unable to create an AI tutor session.'),
+        });
       return;
     }
 
     this.sendToSession(session.id, message);
+  }
+
+  private resolveCourseId(): string | null {
+    const value = this.selectedCourseId();
+    return value ? value : null;
   }
 
   private sendToSession(sessionId: string, message: string): void {

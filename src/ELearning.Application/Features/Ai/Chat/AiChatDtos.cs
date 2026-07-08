@@ -28,6 +28,10 @@ public sealed record AiChatAnswerDto(
     string Provider,
     string Model);
 
+public sealed record AiAccessibleCourseDto(
+    Guid Id,
+    string Title);
+
 public sealed record AiChatCitationDto(
     Guid ChunkId,
     Guid CourseId,
