@@ -166,13 +166,15 @@ public sealed class OpenAiCompatibleLearningPathService(
     }
 
     private static string BuildSystemPrompt() =>
-        """
-        You create draft LMS learning paths from a learner goal and a provided course catalog. Return only a JSON object.
-        Use only courseId values from the provided catalog. Do not invent course IDs.
-        The JSON shape must be:
-        {"confidence":0.0,"estimatedEffort":"1-6 weeks","missingSkills":["..."],"courses":[{"courseId":"guid","score":0,"estimatedEffort":"1-2 weeks","reasons":["..."]}]}
-        confidence must be between 0 and 1. course score must be between 0 and 100.
-        """;
+        PromptTemplateStore.LoadSystemPrompt(
+            "learning-path-generator-v1",
+            """
+            You create draft LMS learning paths from a learner goal and a provided course catalog. Return only a JSON object.
+            Use only courseId values from the provided catalog. Do not invent course IDs.
+            The JSON shape must be:
+            {"confidence":0.0,"estimatedEffort":"1-6 weeks","missingSkills":["..."],"courses":[{"courseId":"guid","score":0,"estimatedEffort":"1-2 weeks","reasons":["..."]}]}
+            confidence must be between 0 and 1. course score must be between 0 and 100.
+            """);
 
     private static string BuildUserPrompt(AiLearningPathRequest request, int maxCourses, IReadOnlyList<Course> courses)
     {

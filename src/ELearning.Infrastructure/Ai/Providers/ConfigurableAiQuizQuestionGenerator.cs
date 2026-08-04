@@ -23,7 +23,7 @@ public sealed class ConfigurableAiQuizQuestionGenerator(
         {
             return await openAiCompatible.GenerateAsync(request, ct);
         }
-        catch (Exception ex) when (config.FallbackToLocal)
+        catch (Exception ex) when (config.EnableLocalFallback)
         {
             logger.LogWarning(ex, "OpenAI-compatible quiz generation failed; falling back to local provider.");
             return await local.GenerateAsync(request, ct);

@@ -64,9 +64,9 @@ public sealed class ConfigurableAiTextEmbeddingService(
 
             return embedding;
         }
-        catch (Exception ex) when (config.UsesOpenAiCompatibleRagEmbeddingProvider() && config.FallbackToLocal)
+        catch (Exception ex) when (config.EnableLocalFallback)
         {
-            logger.LogWarning(ex, "OpenAI-compatible RAG embedding provider failed; falling back to local dense embedding.");
+            logger.LogWarning(ex, "Remote RAG embedding provider failed; falling back to local dense embedding.");
             return await local.EmbedAsync(request, ct);
         }
     }

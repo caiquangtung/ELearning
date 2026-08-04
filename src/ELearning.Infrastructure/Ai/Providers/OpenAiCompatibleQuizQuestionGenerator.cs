@@ -90,12 +90,14 @@ public sealed class OpenAiCompatibleQuizQuestionGenerator(
     }
 
     private static string BuildSystemPrompt() =>
-        """
-        You generate LMS quiz question drafts for instructors. Return only a JSON object.
-        The JSON shape must be:
-        {"questions":[{"text":"...","type":"MultipleChoice|Essay|Code","points":1,"difficulty":"Easy|Medium|Hard","explanation":"...","options":[{"text":"...","isCorrect":true,"sortOrder":1}]}]}
-        MultipleChoice questions must have exactly one correct option. Essay and Code questions must have an empty options array.
-        """;
+        PromptTemplateStore.LoadSystemPrompt(
+            "quiz-question-generator-v1",
+            """
+            You generate LMS quiz question drafts for instructors. Return only a JSON object.
+            The JSON shape must be:
+            {"questions":[{"text":"...","type":"MultipleChoice|Essay|Code","points":1,"difficulty":"Easy|Medium|Hard","explanation":"...","options":[{"text":"...","isCorrect":true,"sortOrder":1}]}]}
+            MultipleChoice questions must have exactly one correct option. Essay and Code questions must have an empty options array.
+            """);
 
     private static string BuildUserPrompt(AiQuizQuestionGenerationRequest request, string source)
     {

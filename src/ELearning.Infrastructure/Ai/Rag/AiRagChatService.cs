@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using ELearning.Application.Common.Interfaces;
 using ELearning.Domain.Aggregates.AiAggregate;
@@ -13,6 +14,9 @@ public sealed class AiRagChatService(
     ApplicationDbContext context,
     IAiKnowledgeRetriever knowledgeRetriever,
     OpenAiCompatibleChatClient chatClient,
+    GoogleAiStudioChatClient? googleChatClient,
+    OllamaChatClient? ollamaChatClient,
+    AiChatIntentGate intentGate,
     IOptions<AiOptions> options,
     ILogger<AiRagChatService> logger)
     : IAiRagChatService
@@ -21,6 +25,8 @@ public sealed class AiRagChatService(
     {
         PropertyNameCaseInsensitive = true
     };
+
+    private const string DefaultRagNoContextPromptVersion = "rag-learning-assistant-no-context-v1";
 
     public async Task<AiChatSessionSummary> CreateSessionAsync(
         Guid userId,
@@ -128,11 +134,46 @@ public sealed class AiRagChatService(
         var userMessage = AiChatMessage.User(session.Id, message);
         await context.AiChatMessages.AddAsync(userMessage, ct);
 
-        var retrieval = await knowledgeRetriever.RetrieveAsync(
-            new AiKnowledgeRetrievalRequest(userId, userRoles, message, session.CourseId),
-            ct);
-        var citations = retrieval.Citations;
-        var answer = await GenerateAnswerAsync(message, citations, ct);
+        var config = options.Value;
+        var promptVersion = string.IsNullOrWhiteSpace(config.RagChatPromptVersion)
+            ? "rag-learning-assistant-v1"
+            : config.RagChatPromptVersion;
+
+        var intent = intentGate.Evaluate(message);
+        AiChatAnswer answer;
+        if (intent.SkipRetrieval)
+        {
+            if (!HasAiChatProvider(config))
+            {
+                logger.LogInformation(
+                    "AI chat used local intent fallback because no remote chat provider is configured. Provider={Provider}, RagChatProvider={RagChatProvider}",
+                    config.Provider,
+                    config.RagChatProvider);
+
+                answer = intent.IsGreeting
+                    ? BuildGreetingAnswer(promptVersion)
+                    : BuildNoContextAnswer(message, promptVersion);
+            }
+            else
+            {
+                answer = await GenerateAnswerAsync(message, [], promptVersion, ct);
+            }
+        }
+        else
+        {
+            var retrieval = await knowledgeRetriever.RetrieveAsync(
+                new AiKnowledgeRetrievalRequest(userId, userRoles, message, session.CourseId),
+                ct);
+
+            logger.LogInformation(
+                "AI chat used retrieval. Provider={Provider}, RagChatProvider={RagChatProvider}, Citations={CitationCount}",
+                config.Provider,
+                config.RagChatProvider,
+                retrieval.Citations.Count);
+
+            answer = await GenerateAnswerAsync(message, retrieval.Citations, promptVersion, ct);
+        }
+
         var citationsJson = JsonSerializer.Serialize(answer.Citations, JsonOptions);
         var assistantMessage = AiChatMessage.Assistant(
             session.Id,
@@ -154,17 +195,95 @@ public sealed class AiRagChatService(
     private async Task<AiChatAnswer> GenerateAnswerAsync(
         string question,
         IReadOnlyList<AiChatCitation> citations,
+        string promptVersion,
         CancellationToken ct)
     {
         var config = options.Value;
-        var promptVersion = string.IsNullOrWhiteSpace(config.RagChatPromptVersion)
-            ? "rag-learning-assistant-v1"
-            : config.RagChatPromptVersion;
+        var hasContext = citations.Count > 0;
 
-        if (citations.Count == 0)
+        ValidateChatProviderConfiguration(config);
+
+        if (citations.Count == 0 && !config.UsesGoogleAiStudioChatProvider() && !config.UsesOllamaChatProvider())
             return BuildNoContextAnswer(question, promptVersion);
 
-        if (config.UsesOpenAiCompatibleProvider() &&
+        if (config.UsesOllamaChatProvider() && ollamaChatClient is not null)
+        {
+            try
+            {
+                var result = await ollamaChatClient.CompleteJsonAsync(
+                    hasContext ? BuildSystemPrompt() : BuildNoContextSystemPrompt(),
+                    hasContext ? BuildUserPrompt(question, citations) : question,
+                    hasContext,
+                    ct);
+
+                if (hasContext)
+                {
+                    var providerAnswer = JsonSerializer.Deserialize<RagProviderAnswer>(
+                        OpenAiCompatibleJson.ExtractObject(result.Content),
+                        JsonOptions);
+
+                    if (!string.IsNullOrWhiteSpace(providerAnswer?.Answer))
+                    {
+                        return new AiChatAnswer(
+                            Guid.Empty,
+                            providerAnswer.Answer.Trim(),
+                            citations,
+                            Math.Round(Math.Clamp(providerAnswer.Confidence, 0m, 1m), 2),
+                            true,
+                            result.Provider,
+                            result.Model,
+                            promptVersion,
+                            result.TokenEstimate ?? OpenAiCompatibleJson.EstimateTokens(question, result.Content));
+                    }
+                }
+                else
+                {
+                    return new AiChatAnswer(
+                        Guid.Empty,
+                        result.Content.Trim(),
+                        citations,
+                        0m,
+                        false,
+                        result.Provider,
+                        result.Model,
+                        promptVersion,
+                        result.TokenEstimate ?? OpenAiCompatibleJson.EstimateTokens(question, result.Content));
+                }
+            }
+            catch (Exception ex) when (config.EnableLocalFallback)
+            {
+                logger.LogWarning(ex, "Ollama chat provider failed; falling back.");
+            }
+        }
+
+        if (config.UsesGoogleAiStudioChatProvider() && googleChatClient is not null)
+        {
+            try
+            {
+                var result = await googleChatClient.CompleteJsonAsync(
+                    hasContext ? BuildSystemPrompt() : BuildNoContextSystemPrompt(),
+                    hasContext ? BuildUserPrompt(question, citations) : question,
+                    ct);
+
+                return new AiChatAnswer(
+                    Guid.Empty,
+                    result.Content.Trim(),
+                    citations,
+                    Math.Round(Math.Clamp(hasContext ? 0.85m : 0m, 0m, 1m), 2),
+                    hasContext,
+                    result.Provider,
+                    result.Model,
+                    promptVersion,
+                    result.TokenEstimate ?? OpenAiCompatibleJson.EstimateTokens(question, result.Content));
+            }
+            catch (Exception ex) when (config.EnableLocalFallback)
+            {
+                logger.LogWarning(ex, "Google AI Studio chat provider failed; falling back.");
+            }
+        }
+
+        if (config.EnableOpenAiCompatibleFallback &&
+            config.UsesOpenAiCompatibleProvider() &&
             !string.IsNullOrWhiteSpace(config.ApiKey) &&
             !string.IsNullOrWhiteSpace(config.ResolveChatModel()))
         {
@@ -192,26 +311,86 @@ public sealed class AiRagChatService(
                         result.TokenEstimate ?? OpenAiCompatibleJson.EstimateTokens(question, result.Content));
                 }
             }
-            catch (Exception ex) when (config.FallbackToLocal)
+            catch (Exception ex) when (config.EnableLocalFallback)
             {
                 logger.LogWarning(ex, "RAG chat provider failed; falling back to extractive answer.");
             }
         }
 
-        return BuildExtractiveAnswer(question, citations, promptVersion);
+        if (config.UsesOllamaChatProvider() && !config.EnableLocalFallback)
+            throw new InvalidOperationException("Ollama chat provider failed and local fallback is disabled.");
+
+        if (config.UsesGoogleAiStudioChatProvider() && !config.EnableLocalFallback)
+            throw new InvalidOperationException("Google AI Studio chat provider failed and local fallback is disabled.");
+
+        if (config.UsesOpenAiCompatibleProvider() && !config.EnableOpenAiCompatibleFallback)
+            throw new InvalidOperationException("OpenAI-compatible chat provider is disabled by configuration.");
+
+        if (hasContext)
+            return BuildExtractiveAnswer(question, citations, promptVersion);
+
+        return BuildNoContextAnswer(question, promptVersion);
     }
 
-    internal static AiChatAnswer BuildNoContextAnswer(string question, string promptVersion) =>
+    private static void ValidateChatProviderConfiguration(AiOptions config)
+    {
+        if (config.UsesOllamaChatProvider())
+        {
+            if (string.IsNullOrWhiteSpace(config.OllamaBaseUrl))
+                throw new InvalidOperationException("Ai:OllamaBaseUrl is required when Ai:RagChatProvider is Ollama.");
+
+            if (string.IsNullOrWhiteSpace(config.OllamaModel))
+                throw new InvalidOperationException("Ai:OllamaModel is required when Ai:RagChatProvider is Ollama.");
+        }
+
+        if (config.UsesGoogleAiStudioChatProvider())
+        {
+            if (string.IsNullOrWhiteSpace(config.ResolveRagEmbeddingApiKey()))
+                throw new InvalidOperationException("Ai:ApiKey or Ai:RagEmbeddingApiKey is required when Ai:RagChatProvider is GoogleAiStudio.");
+
+            if (string.IsNullOrWhiteSpace(config.ResolveChatModel()))
+                throw new InvalidOperationException("Ai:ChatModel or Ai:RagChatModel is required when Ai:RagChatProvider is GoogleAiStudio.");
+        }
+
+        if (config.UsesOpenAiCompatibleProvider())
+        {
+            if (string.IsNullOrWhiteSpace(config.ApiKey))
+                throw new InvalidOperationException("Ai:ApiKey is required when Ai:RagChatProvider is OpenAiCompatible.");
+
+            if (string.IsNullOrWhiteSpace(config.ResolveChatModel()))
+                throw new InvalidOperationException("Ai:ChatModel or Ai:RagChatModel is required when Ai:RagChatProvider is OpenAiCompatible.");
+        }
+    }
+
+    private static bool HasAiChatProvider(AiOptions config) =>
+        config.UsesOpenAiCompatibleProvider() || config.UsesGoogleAiStudioChatProvider() || config.UsesOllamaChatProvider();
+
+    internal static AiChatAnswer BuildGreetingAnswer(string promptVersion) =>
         new(
             Guid.Empty,
-            "I don't have enough course material to answer that.",
+            "Hello! I'm your AI learning assistant. Ask me anything about your course content and I will help you find the answer.",
             [],
             0m,
             false,
             "Local",
-            "extractive-rag-v1",
+            "intent-gate-v1",
             promptVersion,
-            OpenAiCompatibleJson.EstimateTokens(question));
+            OpenAiCompatibleJson.EstimateTokens("Hello!"));
+
+    internal static AiChatAnswer BuildNoContextAnswer(string question, string promptVersion)
+    {
+        var tokens = OpenAiCompatibleJson.EstimateTokens(question);
+        return new AiChatAnswer(
+            Guid.Empty,
+            "I don't have enough course material to answer that. Try rephrasing your question to focus on a specific lesson or topic in your course.",
+            [],
+            0m,
+            false,
+            "Local",
+            "no-context-rag-v1",
+            promptVersion,
+            tokens);
+    }
 
     internal static AiChatAnswer BuildExtractiveAnswer(
         string question,
@@ -219,8 +398,8 @@ public sealed class AiRagChatService(
         string promptVersion)
     {
         var selected = citations.Take(2).ToList();
-        var answer = "Based on the course material: " +
-            string.Join(" ", selected.Select(x => x.Snippet.TrimEnd('.', ' ') + "."));
+        var snippets = string.Join(" ", selected.Select(x => x.Snippet.TrimEnd('.', ' ') + "."));
+        var answer = $"Based on the course material: {snippets}";
 
         return new AiChatAnswer(
             Guid.Empty,
@@ -235,29 +414,44 @@ public sealed class AiRagChatService(
     }
 
     private static string BuildSystemPrompt() =>
-        """
-        You are an LMS learning assistant. Answer only from the provided course excerpts.
-        If the excerpts do not answer the question, return: {"answer":"I don't have enough course material to answer that.","confidence":0}
-        Return only JSON with shape {"answer":"...","confidence":0.0}.
-        Do not invent citations or facts outside the provided excerpts.
-        """;
+        PromptTemplateStore.LoadSystemPrompt(
+            "rag-learning-assistant-v1",
+            """
+            You are an LMS learning assistant. Answer only from the provided course excerpts.
+            If the excerpts do not answer the question, return: {"answer":"I don't have enough course material to answer that.","confidence":0}
+            Return only JSON with shape {"answer":"...","confidence":0.0}.
+            Do not invent citations or facts outside the provided excerpts.
+            """);
+
+    private static string BuildNoContextSystemPrompt() =>
+        PromptTemplateStore.LoadSystemPrompt(
+            DefaultRagNoContextPromptVersion,
+            """
+            You are an AI learning assistant named Elearning Bot.
+            Answer naturally and concisely. You can answer questions about yourself, general topics, or guide users to ask about course content.
+            If the question seems clearly about specific course material that is not available, politely say you don't have enough course material for that topic.
+            """);
 
     private static string BuildUserPrompt(string question, IReadOnlyList<AiChatCitation> citations)
     {
-        var payload = new
+        var sb = new StringBuilder();
+        sb.AppendLine("Excerpts from the course materials:");
+        sb.AppendLine();
+        for (int i = 0; i < citations.Count; i++)
         {
-            Question = question,
-            Excerpts = citations.Select((citation, index) => new
-            {
-                Index = index + 1,
-                citation.CourseTitle,
-                citation.SectionTitle,
-                citation.LessonTitle,
-                citation.Snippet
-            })
-        };
+            var c = citations[i];
+            sb.AppendLine($"[Excerpt #{i + 1}]");
+            sb.AppendLine($"Course: {c.CourseTitle}");
+            if (!string.IsNullOrWhiteSpace(c.SectionTitle))
+                sb.AppendLine($"Section: {c.SectionTitle}");
+            if (!string.IsNullOrWhiteSpace(c.LessonTitle))
+                sb.AppendLine($"Lesson: {c.LessonTitle}");
+            sb.AppendLine($"Content: {c.Snippet.Trim()}");
+            sb.AppendLine();
+        }
 
-        return JsonSerializer.Serialize(payload, JsonOptions);
+        sb.AppendLine($"Question: {question}");
+        return sb.ToString();
     }
 
     private static AiChatSessionSummary ToSummary(AiChatSession session) =>

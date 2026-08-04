@@ -4,17 +4,35 @@ services:
       context: ./src
       dockerfile: ELearning.WebApi/Dockerfile
     ports:
-      - "${API_HTTP_PORT:-5000}:8080"
+      - "${API_HTTP_PORT:-5001}:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=elearning_dev;Username=postgres;Password=postgres
       - Redis__ConnectionString=redis:6379
+      - Ai__Provider=${Ai__Provider:-GoogleAiStudio}
+      - Ai__Model=${Ai__Model:-gemini-2.0-flash}
+      - Ai__BaseUrl=${Ai__BaseUrl:-https://generativelanguage.googleapis.com/v1beta}
+      - Ai__ChatModel=${Ai__ChatModel:-gemini-2.0-flash}
       - Ai__RagEmbeddingProvider=GoogleAiStudio
-      - Ai__RagEmbeddingModel=gemini-embedding-001
       - Ai__RagEmbeddingBaseUrl=https://generativelanguage.googleapis.com/v1beta
+      - Ai__RagEmbeddingModel=gemini-embedding-001
       - Ai__RagEmbeddingDimensions=768
       - Ai__ApiKey=${Ai__ApiKey:-}
       - Ai__RagEmbeddingApiKey=${Ai__RagEmbeddingApiKey:-}
+      - Ai__RagMinSimilarity=${Ai__RagMinSimilarity:-0.70}
+      - Ai__RagEnableIntentGating=${Ai__RagEnableIntentGating:-true}
+      - Ai__EnableLocalFallback=${Ai__EnableLocalFallback:-false}
+      - Ai__EnableOpenAiCompatibleFallback=${Ai__EnableOpenAiCompatibleFallback:-true}
+      - Ai__RagChatProvider=${Ai__RagChatProvider:-GoogleAiStudio}
+      - Ai__RagChatModel=${Ai__RagChatModel:-gemini-2.0-flash}
+            # Chat/LLM - OLLAMA
+      - Ai__RagChatProvider=${Ai__RagChatProvider:-Ollama}
+      - Ai__RagChatModel=${Ai__RagChatModel:-qwen2.5:7b}
+      - Ai__OllamaBaseUrl=${Ai__OllamaBaseUrl:-http://host.docker.internal:11434}
+      - Ai__OllamaModel=${Ai__OllamaModel:-qwen2.5:7b}
+      - Ai__OllamaTimeoutSeconds=${Ai__OllamaTimeoutSeconds:-120}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       postgres:
         condition: service_healthy

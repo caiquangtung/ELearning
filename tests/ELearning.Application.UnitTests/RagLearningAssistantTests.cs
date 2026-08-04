@@ -3,11 +3,14 @@ using ELearning.Core.Constants;
 using ELearning.Domain.Aggregates.AiAggregate;
 using ELearning.Domain.Aggregates.CourseAggregate;
 using ELearning.Infrastructure.Ai;
+using ELearning.Infrastructure.Persistence;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using System.Net;
 using System.Text;
+using System.Threading;
 
 namespace ELearning.Application.UnitTests;
 
@@ -31,6 +34,87 @@ public class RagLearningAssistantTests
         first.Select(x => x.Text).Should().Equal(second.Select(x => x.Text));
         first.Should().OnlyContain(x => x.Text.Length <= 500);
         first.Select(x => x.ChunkIndex).Should().ContainInOrder(0, 1);
+    }
+
+    [Fact]
+    public void Greeting_answer_skips_retrieval_and_returns_friendly_message()
+    {
+        var gate = BuildIntentGate();
+        var intent = gate.Evaluate("Hello there!");
+
+        intent.SkipRetrieval.Should().BeTrue();
+        intent.IsGreeting.Should().BeTrue();
+
+        var answer = AiRagChatService.BuildGreetingAnswer("rag-learning-assistant-v1");
+        answer.UsedContext.Should().BeFalse();
+        answer.Citations.Should().BeEmpty();
+        answer.Answer.Should().Contain("AI learning assistant");
+        answer.Provider.Should().Be("Local");
+    }
+
+    [Theory]
+    [InlineData("hi")]
+    [InlineData("Hey")]
+    [InlineData("Good morning")]
+    [InlineData("what's up")]
+    [InlineData("howdy")]
+    [InlineData("yo")]
+    [InlineData("what is your name")]
+    [InlineData("Who are you")]
+    public void Greeting_detection_matches_common_greetings(string message)
+    {
+        var gate = BuildIntentGate();
+        var intent = gate.Evaluate(message);
+
+        intent.SkipRetrieval.Should().BeTrue();
+        intent.IsGreeting.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Irrelevant_question_skips_retrieval_and_returns_no_context_message()
+    {
+        var gate = BuildIntentGate();
+        var intent = gate.Evaluate("okay nice");
+
+        intent.SkipRetrieval.Should().BeTrue();
+        intent.IsGreeting.Should().BeFalse();
+        intent.Reason.Should().NotBeNullOrEmpty();
+    }
+
+    [Theory]
+    [InlineData(" ")]
+    [InlineData("")]
+    [InlineData("????")]
+    [InlineData("ok")]
+    [InlineData("yes no")]
+    public void Short_or_empty_messages_are_marked_irrelevant(string message)
+    {
+        var gate = BuildIntentGate();
+        var intent = gate.Evaluate(message);
+
+        intent.SkipRetrieval.Should().BeTrue();
+        intent.IsGreeting.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Intent_gate_can_be_disabled_via_options()
+    {
+        var gate = BuildIntentGate(enabled: false);
+        var intent = gate.Evaluate("Hello!");
+
+        intent.SkipRetrieval.Should().BeFalse();
+        intent.IsGreeting.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Substantive_questions_pass_greeting_and_irrelevant_checks()
+    {
+        var gate = BuildIntentGate();
+        var intent = gate.Evaluate("How does JWT validation work in this course?");
+
+        intent.SkipRetrieval.Should().BeFalse();
+        intent.IsGreeting.Should().BeFalse();
+        intent.Reason.Should().BeNull();
     }
 
     [Fact]
@@ -69,6 +153,52 @@ public class RagLearningAssistantTests
         answer.Citations.Should().ContainSingle().Which.Should().Be(citation);
         answer.Answer.Should().Contain(citation.Snippet);
         answer.Provider.Should().Be("Local");
+    }
+
+    [Fact]
+    public void Retriever_threshold_0_70_filters_weak_candidates_after_lexical_boost()
+    {
+        var weak = new AiKnowledgeRetriever.VectorCandidate(
+            Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(),
+            "Course A", "Section A", "Lesson A", "Lesson", 0,
+            "Random text with no overlap.", 0.10m);
+
+        var citations = AiKnowledgeRetriever.BuildCitations(
+            "How does JWT validation check signatures?",
+            [weak],
+            0.70m,
+            4,
+            800);
+
+        citations.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Retriever_lexical_boost_can_promote_relevant_candidates_above_threshold()
+    {
+        var candidate = new AiKnowledgeRetriever.VectorCandidate(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            "Secure Coding Fundamentals",
+            "Authentication",
+            "JWT validation signatures authority check",
+            "Lesson",
+            0,
+            "JWT validation checks signatures and issuer authority.",
+            0.65m);
+
+        var citations = AiKnowledgeRetriever.BuildCitations(
+            "How does JWT validation check signatures and issuer authority?",
+            [candidate],
+            0.70m,
+            4,
+            800);
+
+        citations.Should().ContainSingle();
+        citations[0].Score.Should().BeGreaterThan(0.70m);
+        citations[0].RawScore.Should().Be(0.65m);
     }
 
     [Theory]
@@ -379,6 +509,241 @@ public class RagLearningAssistantTests
         act.Should().Throw<Exception>().WithMessage("*confidence*");
     }
 
+    [Fact]
+    public async Task Google_ai_studio_chat_sends_correct_request_format()
+    {
+        var response = """
+        {
+          "candidates": [
+            {
+              "content": {
+                "parts": [
+                  { "text": "My name is Elearning Bot." }
+                ]
+              }
+            }
+          ],
+          "modelVersion": "gemini-2.0-flash",
+          "usageMetadata": {
+            "totalTokenCount": 25
+          }
+        }
+        """;
+        var handler = new StaticResponseHandler(HttpStatusCode.OK, response);
+        var client = new GoogleAiStudioChatClient(
+            new HttpClient(handler),
+            Options.Create(new AiOptions
+            {
+                RagChatProvider = "GoogleAiStudio",
+                RagChatModel = "gemini-2.0-flash",
+                RagEmbeddingApiKey = "test-key",
+                MaxOutputTokens = 1200,
+                TimeoutSeconds = 30,
+                MaxRetries = 2
+            }));
+
+        var result = await client.CompleteJsonAsync(
+            "system prompt",
+            "What is your name?",
+            CancellationToken.None);
+
+        result.Provider.Should().Be("GoogleAiStudio");
+        result.Model.Should().Be("gemini-2.0-flash");
+        result.Content.Should().Be("My name is Elearning Bot.");
+        result.TokenEstimate.Should().Be(25);
+
+        handler.LastRequest.Should().NotBeNull();
+        handler.LastRequest!.Headers.GetValues("x-goog-api-key").Should().ContainSingle("test-key");
+        handler.LastRequest.RequestUri!.ToString().Should().Contain("models/gemini-2.0-flash:generateContent");
+        handler.LastRequestBody.Should().Contain("\"systemInstruction\"");
+        handler.LastRequestBody.Should().Contain("system prompt");
+        handler.LastRequestBody.Should().Contain("\"parts\"");
+        handler.LastRequestBody.Should().Contain("What is your name?");
+    }
+
+    [Fact]
+    public async Task Google_ai_studio_chat_throws_on_empty_response()
+    {
+        var response = """
+        {
+          "candidates": [
+            {
+              "content": {
+                "parts": [
+                  { "text": "" }
+                ]
+              }
+            }
+          ]
+        }
+        """;
+        var client = new GoogleAiStudioChatClient(
+            new HttpClient(new StaticResponseHandler(HttpStatusCode.OK, response)),
+            Options.Create(new AiOptions
+            {
+                RagChatProvider = "GoogleAiStudio",
+                RagChatModel = "gemini-2.0-flash",
+                RagEmbeddingApiKey = "test-key"
+            }));
+
+        var act = () => client.CompleteJsonAsync("system", "question", CancellationToken.None);
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*empty response*");
+    }
+
+    [Fact]
+    public async Task Google_ai_studio_chat_retries_on_server_error()
+    {
+        var handler = new CountingHandler(HttpStatusCode.InternalServerError, "{}", 2);
+        var client = new GoogleAiStudioChatClient(
+            new HttpClient(handler),
+            Options.Create(new AiOptions
+            {
+                RagChatProvider = "GoogleAiStudio",
+                RagChatModel = "gemini-2.0-flash",
+                RagEmbeddingApiKey = "test-key",
+                MaxRetries = 1,
+                TimeoutSeconds = 30
+            }));
+
+        var act = () => client.CompleteJsonAsync("system", "question", CancellationToken.None);
+
+        await act.Should().ThrowAsync<InvalidOperationException>();
+        handler.Attempts.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task Ollama_chat_client_sends_correct_request_format()
+    {
+        var response = """
+        {
+          "model": "qwen2.5:7b",
+          "message": {
+            "role": "assistant",
+            "content": "Hello, I am Ollama."
+          },
+          "prompt_eval_count": 10,
+          "eval_count": 15
+        }
+        """;
+        var handler = new StaticResponseHandler(HttpStatusCode.OK, response);
+        var client = new OllamaChatClient(
+            new HttpClient(handler),
+            Options.Create(new AiOptions
+            {
+                RagChatProvider = "Ollama",
+                OllamaModel = "qwen2.5:7b",
+                OllamaBaseUrl = "http://localhost:11434",
+                MaxOutputTokens = 1200,
+                TimeoutSeconds = 30,
+                MaxRetries = 2
+            }));
+
+        var result = await client.CompleteJsonAsync(
+            "system prompt",
+            "What is your name?",
+            ct: CancellationToken.None);
+
+        result.Provider.Should().Be("Ollama");
+        result.Model.Should().Be("qwen2.5:7b");
+        result.Content.Should().Be("Hello, I am Ollama.");
+        result.TokenEstimate.Should().Be(25);
+
+        handler.LastRequest.Should().NotBeNull();
+        handler.LastRequest!.RequestUri!.ToString().Should().Be("http://localhost:11434/api/chat");
+        handler.LastRequestBody.Should().Contain("\"model\":\"qwen2.5:7b\"");
+        handler.LastRequestBody.Should().Contain("\"format\":\"json\"");
+        handler.LastRequestBody.Should().Contain("\"system\"");
+        handler.LastRequestBody.Should().Contain("system prompt");
+        handler.LastRequestBody.Should().Contain("\"user\"");
+        handler.LastRequestBody.Should().Contain("What is your name?");
+        handler.LastRequestBody.Should().Contain("\"num_predict\":1200");
+    }
+
+    [Fact]
+    public async Task Ollama_chat_client_skips_json_format_when_force_json_is_false()
+    {
+        var response = """
+        {
+          "model": "qwen2.5:7b",
+          "message": {
+            "role": "assistant",
+            "content": "Hello, I am Ollama."
+          }
+        }
+        """;
+        var handler = new StaticResponseHandler(HttpStatusCode.OK, response);
+        var client = new OllamaChatClient(
+            new HttpClient(handler),
+            Options.Create(new AiOptions
+            {
+                RagChatProvider = "Ollama",
+                OllamaModel = "qwen2.5:7b",
+                OllamaBaseUrl = "http://localhost:11434"
+            }));
+
+        var result = await client.CompleteJsonAsync(
+            "system prompt",
+            "What is your name?",
+            false,
+            CancellationToken.None);
+
+        result.Content.Should().Be("Hello, I am Ollama.");
+        handler.LastRequestBody.Should().NotContain("\"format\"");
+    }
+
+    [Fact]
+    public async Task Ollama_chat_client_throws_on_empty_response()
+    {
+        var response = """
+        {
+          "model": "qwen2.5:7b",
+          "message": {
+            "role": "assistant",
+            "content": ""
+          }
+        }
+        """;
+        var client = new OllamaChatClient(
+            new HttpClient(new StaticResponseHandler(HttpStatusCode.OK, response)),
+            Options.Create(new AiOptions
+            {
+                RagChatProvider = "Ollama",
+                OllamaModel = "qwen2.5:7b",
+                OllamaBaseUrl = "http://localhost:11434"
+            }));
+
+        var act = () => client.CompleteJsonAsync("system", "question", ct: CancellationToken.None);
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*empty message*");
+    }
+
+    [Fact]
+    public async Task Ollama_chat_client_retries_on_server_error()
+    {
+        var handler = new CountingHandlerForOllama(HttpStatusCode.InternalServerError, "{}", 2);
+        var client = new OllamaChatClient(
+            new HttpClient(handler),
+            Options.Create(new AiOptions
+            {
+                RagChatProvider = "Ollama",
+                OllamaModel = "qwen2.5:7b",
+                OllamaBaseUrl = "http://localhost:11434",
+                MaxRetries = 1,
+                TimeoutSeconds = 30
+            }));
+
+        var act = () => client.CompleteJsonAsync("system", "question", ct: CancellationToken.None);
+
+        await act.Should().ThrowAsync<InvalidOperationException>();
+        handler.Attempts.Should().Be(2);
+    }
+
+    private static AiChatIntentGate BuildIntentGate(bool enabled = true) =>
+        new(Options.Create(new AiOptions { RagEnableIntentGating = enabled }));
+
     private sealed class StaticResponseHandler(HttpStatusCode statusCode, string body) : HttpMessageHandler
     {
         public HttpRequestMessage? LastRequest { get; private set; }
@@ -396,6 +761,78 @@ public class RagLearningAssistantTests
             return new HttpResponseMessage(statusCode)
             {
                 Content = new StringContent(body, Encoding.UTF8, "application/json")
+            };
+        }
+    }
+
+    private sealed class CountingHandler(HttpStatusCode statusCode, string body, int failCount) : HttpMessageHandler
+    {
+        public int Attempts { get; private set; }
+        private readonly string _body = body;
+
+        protected override async Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            Attempts++;
+            if (Attempts <= failCount)
+            {
+                await Task.Delay(1, cancellationToken);
+                return new HttpResponseMessage(statusCode)
+                {
+                    Content = new StringContent(_body, Encoding.UTF8, "application/json")
+                };
+            }
+
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("""
+                {
+                  "candidates": [
+                    {
+                      "content": {
+                        "parts": [
+                          { "text": "ok" }
+                        ]
+                      }
+                    }
+                  ]
+                }
+                """, Encoding.UTF8, "application/json")
+            };
+        }
+    }
+
+    private sealed class CountingHandlerForOllama(HttpStatusCode statusCode, string body, int failCount) : HttpMessageHandler
+    {
+        public int Attempts { get; private set; }
+        private readonly string _body = body;
+
+        protected override async Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            Attempts++;
+            if (Attempts <= failCount)
+            {
+                await Task.Delay(1, cancellationToken);
+                return new HttpResponseMessage(statusCode)
+                {
+                    Content = new StringContent(_body, Encoding.UTF8, "application/json")
+                };
+            }
+
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("""
+                {
+                  "model": "qwen2.5:7b",
+                  "message": {
+                    "role": "assistant",
+                    "content": "ok"
+                  }
+                }
+                """, Encoding.UTF8, "application/json")
             };
         }
     }

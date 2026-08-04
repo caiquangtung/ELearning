@@ -21,7 +21,7 @@ public sealed class ConfigurableAiEssayGradingService(
         {
             return await openAiCompatible.SuggestAsync(request, ct);
         }
-        catch (Exception ex) when (config.FallbackToLocal)
+        catch (Exception ex) when (config.EnableLocalFallback)
         {
             logger.LogWarning(ex, "OpenAI-compatible essay grading failed; falling back to local provider.");
             return await local.SuggestAsync(request, ct);

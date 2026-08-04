@@ -23,6 +23,8 @@
 
   <ItemGroup>
     <None Include="Ai\Rag\rag-golden-dataset.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Ai\Prompts\**\*.md" CopyToOutputDirectory="PreserveNewest" />
+    <EmbeddedResource Include="Ai\Prompts\**\*.md" />
   </ItemGroup>
 
   <PropertyGroup>

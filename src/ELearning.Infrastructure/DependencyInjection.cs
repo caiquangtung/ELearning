@@ -85,6 +85,8 @@ public static class DependencyInjection
         services.AddSingleton<IEmailService, NoOpEmailService>();
         services.AddSingleton<HttpClient>();
         services.AddScoped<OpenAiCompatibleChatClient>();
+        services.AddScoped<GoogleAiStudioChatClient>();
+        services.AddScoped<OllamaChatClient>();
         services.AddSingleton<LocalQuizQuestionGenerator>();
         services.AddSingleton<LocalEssayGradingService>();
         services.AddScoped<LocalLearningPathService>();
@@ -96,6 +98,7 @@ public static class DependencyInjection
         services.AddScoped<AiKnowledgeChunker>();
         services.AddScoped<IAiKnowledgeIndexingService, AiKnowledgeIndexingService>();
         services.AddScoped<IAiKnowledgeRetriever, AiKnowledgeRetriever>();
+        services.AddScoped<AiChatIntentGate>();
         services.AddScoped<IAiRagChatService, AiRagChatService>();
         services.AddScoped<IAiRagEvaluationService, AiRagEvaluationService>();
         services.AddScoped<IAiKnowledgeReindexQueue, AiKnowledgeReindexQueue>();

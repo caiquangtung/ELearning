@@ -67,4 +67,5 @@ public sealed record AiChatCitation(
     string? SectionTitle,
     string? LessonTitle,
     string Snippet,
-    decimal Score);
+    decimal Score,
+    decimal? RawScore = null);

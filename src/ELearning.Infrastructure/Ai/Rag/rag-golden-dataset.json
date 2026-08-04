@@ -16,6 +16,62 @@
       "expectedSnippetTerms": ["seed", "content"]
     },
     {
+      "id": "ai-seed-content",
+      "question": "What does the AI course lesson content cover?",
+      "shouldUseContext": true,
+      "expectedCourseTitleTerms": ["ai"],
+      "expectedSnippetTerms": ["seed", "content"]
+    },
+    {
+      "id": "cloud-engineering-seed-content",
+      "question": "What does the Cloud Engineering course lesson content cover?",
+      "shouldUseContext": true,
+      "expectedCourseTitleTerms": ["cloud", "engineering"],
+      "expectedSnippetTerms": ["seed", "content"]
+    },
+    {
+      "id": "backend-architecture-seed-content",
+      "question": "What does the Backend Architecture course lesson content cover?",
+      "shouldUseContext": true,
+      "expectedCourseTitleTerms": ["backend", "architecture"],
+      "expectedSnippetTerms": ["seed", "content"]
+    },
+    {
+      "id": "devops-seed-content",
+      "question": "What does the DevOps course lesson content cover?",
+      "shouldUseContext": true,
+      "expectedCourseTitleTerms": ["devops"],
+      "expectedSnippetTerms": ["seed", "content"]
+    },
+    {
+      "id": "product-management-seed-content",
+      "question": "What does the Product Management course lesson content cover?",
+      "shouldUseContext": true,
+      "expectedCourseTitleTerms": ["product", "management"],
+      "expectedSnippetTerms": ["seed", "content"]
+    },
+    {
+      "id": "ux-research-seed-content",
+      "question": "What does the UX Research course lesson content cover?",
+      "shouldUseContext": true,
+      "expectedCourseTitleTerms": ["ux", "research"],
+      "expectedSnippetTerms": ["seed", "content"]
+    },
+    {
+      "id": "sales-enablement-seed-content",
+      "question": "What does the Sales Enablement course lesson content cover?",
+      "shouldUseContext": true,
+      "expectedCourseTitleTerms": ["sales", "enablement"],
+      "expectedSnippetTerms": ["seed", "content"]
+    },
+    {
+      "id": "leadership-seed-content",
+      "question": "What does the Leadership course lesson content cover?",
+      "shouldUseContext": true,
+      "expectedCourseTitleTerms": ["leadership"],
+      "expectedSnippetTerms": ["seed", "content"]
+    },
+    {
       "id": "out-of-scope-sports",
       "question": "Who won the 1998 world cup final?",
       "shouldUseContext": false,

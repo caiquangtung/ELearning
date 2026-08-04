@@ -60,6 +60,7 @@ public sealed partial class AiKnowledgeRetriever(
         {
             queryEmbedding = new AiTextEmbedding([], "PostgreSql", "full-text-fallback-v1", 0);
             candidates = await SearchFullTextCandidatesAsync(accessibleCourseIds, question, candidateLimit, ct);
+            minSimilarity = 0.01m;
         }
 
         var citations = BuildCitations(question, candidates, minSimilarity, maxChunks, contextBudget);
@@ -158,10 +159,25 @@ public sealed partial class AiKnowledgeRetriever(
         try
         {
             await using var command = connection.CreateCommand();
+            var queryTerms = TokenizeForLexicalScore(question);
+            string queryText;
+            string tsQueryFunction;
+
+            if (queryTerms.Count > 0)
+            {
+                queryText = string.Join(" | ", queryTerms.Select(t => $"'{t.Replace("'", "''")}'"));
+                tsQueryFunction = "to_tsquery";
+            }
+            else
+            {
+                queryText = question;
+                tsQueryFunction = "websearch_to_tsquery";
+            }
+
             command.CommandText =
-                """
+                $"""
                 WITH query AS (
-                    SELECT websearch_to_tsquery('simple', @question) AS value
+                    SELECT {tsQueryFunction}('simple', @question_query) AS value
                 )
                 SELECT
                     c.id,
@@ -184,7 +200,7 @@ public sealed partial class AiKnowledgeRetriever(
                 ORDER BY score DESC, c.course_title, c.chunk_index
                 LIMIT @candidate_limit
                 """;
-            command.Parameters.Add(new NpgsqlParameter("question", question));
+            command.Parameters.Add(new NpgsqlParameter("question_query", queryText));
             command.Parameters.Add(new NpgsqlParameter("course_ids", courseIds.ToArray()));
             command.Parameters.Add(new NpgsqlParameter("candidate_limit", candidateLimit));
 
@@ -243,26 +259,28 @@ public sealed partial class AiKnowledgeRetriever(
     {
         var queryTerms = TokenizeForLexicalScore(question);
         var ranked = candidates
-            .Select(candidate => candidate with
+            .Select(candidate => new
             {
-                Score = CalculateAdjustedScore(candidate, queryTerms)
+                Candidate = candidate,
+                RawScore = candidate.Score,
+                AdjustedScore = CalculateAdjustedScore(candidate, queryTerms)
             })
-            .Where(candidate => candidate.Score >= minSimilarity)
-            .GroupBy(DedupeKey)
+            .Where(item => item.AdjustedScore >= minSimilarity)
+            .GroupBy(item => DedupeKey(item.Candidate))
             .Select(group => group
-                .OrderByDescending(candidate => candidate.Score)
-                .ThenBy(candidate => candidate.ChunkIndex)
+                .OrderByDescending(item => item.AdjustedScore)
+                .ThenBy(item => item.Candidate.ChunkIndex)
                 .First())
-            .OrderByDescending(candidate => candidate.Score)
-            .ThenBy(candidate => candidate.CourseTitle)
-            .ThenBy(candidate => candidate.ChunkIndex)
+            .OrderByDescending(item => item.AdjustedScore)
+            .ThenBy(item => item.Candidate.CourseTitle)
+            .ThenBy(item => item.Candidate.ChunkIndex)
             .ToList();
 
         var citations = new List<AiChatCitation>();
         var usedCharacters = 0;
-        foreach (var candidate in ranked)
+        foreach (var item in ranked)
         {
-            var citation = ToCitation(candidate);
+            var citation = ToCitation(item.Candidate, item.AdjustedScore, item.RawScore);
             var nextLength = usedCharacters + citation.Snippet.Length;
             if (citations.Count > 0 && nextLength > contextBudget)
                 break;
@@ -338,7 +356,7 @@ public sealed partial class AiKnowledgeRetriever(
         return token;
     }
 
-    private static AiChatCitation ToCitation(VectorCandidate candidate) =>
+    private static AiChatCitation ToCitation(VectorCandidate candidate, decimal adjustedScore, decimal rawScore) =>
         new(
             candidate.ChunkId,
             candidate.CourseId,
@@ -348,7 +366,8 @@ public sealed partial class AiKnowledgeRetriever(
             candidate.SectionTitle,
             candidate.LessonTitle,
             TrimSnippet(candidate.Text),
-            candidate.Score);
+            adjustedScore,
+            rawScore);
 
     private static string TrimSnippet(string text)
     {

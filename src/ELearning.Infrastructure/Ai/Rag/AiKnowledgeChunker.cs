@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.RegularExpressions;
 using ELearning.Domain.Aggregates.CourseAggregate;
 
@@ -26,6 +27,41 @@ public sealed partial class AiKnowledgeChunker
                 null,
                 0,
                 overview));
+        }
+
+        var structureBuilder = new StringBuilder();
+        structureBuilder.AppendLine($"Course: {course.Title} Structure and Table of Contents.");
+        structureBuilder.AppendLine($"Description: {course.Description}");
+        
+        var totalLessons = 0;
+        var sectionIndex = 1;
+        foreach (var section in course.Sections.OrderBy(x => x.SortOrder))
+        {
+            structureBuilder.AppendLine($"- Section {sectionIndex}: {section.Title}");
+            var lessonIndex = 1;
+            foreach (var lesson in section.Lessons.OrderBy(x => x.SortOrder))
+            {
+                structureBuilder.AppendLine($"  * Lesson {lessonIndex}: {lesson.Title}");
+                lessonIndex++;
+                totalLessons++;
+            }
+            sectionIndex++;
+        }
+        structureBuilder.AppendLine($"Summary: This course contains {course.Sections.Count} sections and {totalLessons} lessons.");
+
+        var structureText = Normalize(structureBuilder.ToString());
+        if (structureText.Length >= MinimumChunkCharacters)
+        {
+            chunks.Add(new AiKnowledgeChunkSource(
+                course.Id,
+                null,
+                null,
+                "Structure",
+                course.Title,
+                null,
+                null,
+                0,
+                structureText));
         }
 
         foreach (var section in course.Sections.OrderBy(x => x.SortOrder))

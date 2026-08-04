@@ -131,6 +131,71 @@ public class OpenAiCompatibleAiProviderTests
         result.Questions.Should().NotBeEmpty();
     }
 
+    [Fact]
+    public async Task Google_ai_studio_chat_client_parses_multi_part_candidate_content()
+    {
+        var options = Options.Create(new AiOptions
+        {
+            RagChatProvider = "GoogleAiStudio",
+            RagChatModel = "gemini-2.5-flash",
+            RagEmbeddingApiKey = "test-key",
+            RagEmbeddingBaseUrl = "https://generativelanguage.googleapis.com/v1beta"
+        });
+
+        var response = JsonSerializer.Serialize(new
+        {
+            modelVersion = "gemini-test",
+            candidates = new[]
+            {
+                new
+                {
+                    content = new
+                    {
+                        parts = new object[]
+                        {
+                            new { text = "Hello" },
+                            new { text = ", world" }
+                        }
+                    }
+                }
+            },
+            usageMetadata = new { totalTokenCount = 12 }
+        });
+
+        var client = new GoogleAiStudioChatClient(new HttpClient(new FakeHttpMessageHandler(response)), options);
+
+        var result = await client.CompleteJsonAsync("system", "user");
+
+        result.Provider.Should().Be("GoogleAiStudio");
+        result.Model.Should().Be("gemini-test");
+        result.Content.Should().Be("Hello, world");
+        result.TokenEstimate.Should().Be(12);
+    }
+
+    [Fact]
+    public async Task Google_ai_studio_chat_client_rejects_empty_candidates()
+    {
+        var options = Options.Create(new AiOptions
+        {
+            RagChatProvider = "GoogleAiStudio",
+            RagChatModel = "gemini-2.5-flash",
+            RagEmbeddingApiKey = "test-key",
+            RagEmbeddingBaseUrl = "https://generativelanguage.googleapis.com/v1beta"
+        });
+
+        var response = JsonSerializer.Serialize(new
+        {
+            candidates = Array.Empty<object>()
+        });
+
+        var client = new GoogleAiStudioChatClient(new HttpClient(new FakeHttpMessageHandler(response)), options);
+
+        var act = () => client.CompleteJsonAsync("system", "user");
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*did not include any candidates*");
+    }
+
     private static ServiceProvider BuildQuizServiceProvider(AiOptions options, string responseBody)
     {
         var services = new ServiceCollection();
