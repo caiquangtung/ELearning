@@ -151,8 +151,8 @@ public sealed class AiRagChatService(
                     config.RagChatProvider);
 
                 answer = intent.IsGreeting
-                    ? BuildGreetingAnswer(promptVersion)
-                    : BuildNoContextAnswer(message, promptVersion);
+                    ? BuildGreetingAnswer(promptVersion, config.RagGreetingResponse)
+                    : BuildNoContextAnswer(message, promptVersion, config.RagIrrelevantResponse);
             }
             else
             {
@@ -171,7 +171,20 @@ public sealed class AiRagChatService(
                 config.RagChatProvider,
                 retrieval.Citations.Count);
 
-            answer = await GenerateAnswerAsync(message, retrieval.Citations, promptVersion, ct);
+            if (!HasSufficientRetrievalContext(retrieval.Citations, retrieval.MinAcceptedScore))
+            {
+                logger.LogInformation(
+                    "AI chat retrieval quality gate refused generation. CandidateCount={CandidateCount}, MaxScore={MaxScore}, MinSimilarity={MinSimilarity}",
+                    retrieval.RetrievedCount,
+                    retrieval.MaxScore,
+                    retrieval.MinAcceptedScore);
+
+                answer = BuildNoContextAnswer(message, promptVersion, config.RagNoContextResponse);
+            }
+            else
+            {
+                answer = await GenerateAnswerAsync(message, retrieval.Citations, promptVersion, ct);
+            }
         }
 
         var citationsJson = JsonSerializer.Serialize(answer.Citations, JsonOptions);
@@ -204,7 +217,7 @@ public sealed class AiRagChatService(
         ValidateChatProviderConfiguration(config);
 
         if (citations.Count == 0 && !config.UsesGoogleAiStudioChatProvider() && !config.UsesOllamaChatProvider())
-            return BuildNoContextAnswer(question, promptVersion);
+            return BuildNoContextAnswer(question, promptVersion, config.RagNoContextResponse);
 
         if (config.UsesOllamaChatProvider() && ollamaChatClient is not null)
         {
@@ -218,23 +231,16 @@ public sealed class AiRagChatService(
 
                 if (hasContext)
                 {
-                    var providerAnswer = JsonSerializer.Deserialize<RagProviderAnswer>(
-                        OpenAiCompatibleJson.ExtractObject(result.Content),
-                        JsonOptions);
-
-                    if (!string.IsNullOrWhiteSpace(providerAnswer?.Answer))
-                    {
-                        return new AiChatAnswer(
-                            Guid.Empty,
-                            providerAnswer.Answer.Trim(),
-                            citations,
-                            Math.Round(Math.Clamp(providerAnswer.Confidence, 0m, 1m), 2),
-                            true,
-                            result.Provider,
-                            result.Model,
-                            promptVersion,
-                            result.TokenEstimate ?? OpenAiCompatibleJson.EstimateTokens(question, result.Content));
-                    }
+                    var answer = TryBuildProviderJsonAnswer(
+                        question,
+                        result.Provider,
+                        result.Model,
+                        result.Content,
+                        result.TokenEstimate,
+                        citations,
+                        promptVersion);
+                    if (answer is not null)
+                        return answer;
                 }
                 else
                 {
@@ -265,6 +271,22 @@ public sealed class AiRagChatService(
                     hasContext ? BuildUserPrompt(question, citations) : question,
                     ct);
 
+                if (hasContext)
+                {
+                    var answer = TryBuildProviderJsonAnswer(
+                        question,
+                        result.Provider,
+                        result.Model,
+                        result.Content,
+                        result.TokenEstimate,
+                        citations,
+                        promptVersion);
+                    if (answer is not null)
+                        return answer;
+
+                    throw new InvalidOperationException("Google AI Studio chat provider returned an invalid RAG JSON answer.");
+                }
+
                 return new AiChatAnswer(
                     Guid.Empty,
                     result.Content.Trim(),
@@ -293,23 +315,16 @@ public sealed class AiRagChatService(
                     BuildSystemPrompt(),
                     BuildUserPrompt(question, citations),
                     ct);
-                var providerAnswer = JsonSerializer.Deserialize<RagProviderAnswer>(
-                    OpenAiCompatibleJson.ExtractObject(result.Content),
-                    JsonOptions);
-
-                if (!string.IsNullOrWhiteSpace(providerAnswer?.Answer))
-                {
-                    return new AiChatAnswer(
-                        Guid.Empty,
-                        providerAnswer.Answer.Trim(),
-                        citations,
-                        Math.Round(Math.Clamp(providerAnswer.Confidence, 0m, 1m), 2),
-                        true,
-                        result.Provider,
-                        result.Model,
-                        promptVersion,
-                        result.TokenEstimate ?? OpenAiCompatibleJson.EstimateTokens(question, result.Content));
-                }
+                var answer = TryBuildProviderJsonAnswer(
+                    question,
+                    result.Provider,
+                    result.Model,
+                    result.Content,
+                    result.TokenEstimate,
+                    citations,
+                    promptVersion);
+                if (answer is not null)
+                    return answer;
             }
             catch (Exception ex) when (config.EnableLocalFallback)
             {
@@ -329,7 +344,51 @@ public sealed class AiRagChatService(
         if (hasContext)
             return BuildExtractiveAnswer(question, citations, promptVersion);
 
-        return BuildNoContextAnswer(question, promptVersion);
+        return BuildNoContextAnswer(question, promptVersion, config.RagNoContextResponse);
+    }
+
+    internal static bool HasSufficientRetrievalContext(
+        IReadOnlyList<AiChatCitation> citations,
+        decimal minSimilarity) =>
+        citations.Count > 0 && citations.Max(x => x.Score) >= minSimilarity;
+
+    internal static AiChatAnswer? TryBuildProviderJsonAnswer(
+        string question,
+        string provider,
+        string model,
+        string content,
+        int? tokenEstimate,
+        IReadOnlyList<AiChatCitation> citations,
+        string promptVersion)
+    {
+        try
+        {
+            var providerAnswer = JsonSerializer.Deserialize<RagProviderAnswer>(
+                OpenAiCompatibleJson.ExtractObject(content),
+                JsonOptions);
+
+            if (string.IsNullOrWhiteSpace(providerAnswer?.Answer))
+                return null;
+
+            return new AiChatAnswer(
+                Guid.Empty,
+                providerAnswer.Answer.Trim(),
+                citations,
+                Math.Round(Math.Clamp(providerAnswer.Confidence, 0m, 1m), 2),
+                true,
+                provider,
+                model,
+                promptVersion,
+                tokenEstimate ?? OpenAiCompatibleJson.EstimateTokens(question, content));
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+        catch (InvalidOperationException)
+        {
+            return null;
+        }
     }
 
     private static void ValidateChatProviderConfiguration(AiOptions config)
@@ -365,10 +424,12 @@ public sealed class AiRagChatService(
     private static bool HasAiChatProvider(AiOptions config) =>
         config.UsesOpenAiCompatibleProvider() || config.UsesGoogleAiStudioChatProvider() || config.UsesOllamaChatProvider();
 
-    internal static AiChatAnswer BuildGreetingAnswer(string promptVersion) =>
+    internal static AiChatAnswer BuildGreetingAnswer(string promptVersion, string? response = null) =>
         new(
             Guid.Empty,
-            "Hello! I'm your AI learning assistant. Ask me anything about your course content and I will help you find the answer.",
+            NormalizeConfiguredResponse(
+                response,
+                "Hello! I'm your AI learning assistant. Ask me anything about your course content and I will help you find the answer."),
             [],
             0m,
             false,
@@ -377,12 +438,17 @@ public sealed class AiRagChatService(
             promptVersion,
             OpenAiCompatibleJson.EstimateTokens("Hello!"));
 
-    internal static AiChatAnswer BuildNoContextAnswer(string question, string promptVersion)
+    internal static AiChatAnswer BuildNoContextAnswer(
+        string question,
+        string promptVersion,
+        string? response = null)
     {
         var tokens = OpenAiCompatibleJson.EstimateTokens(question);
         return new AiChatAnswer(
             Guid.Empty,
-            "I don't have enough course material to answer that. Try rephrasing your question to focus on a specific lesson or topic in your course.",
+            NormalizeConfiguredResponse(
+                response,
+                "I don't have enough course material to answer that. Try rephrasing your question to focus on a specific lesson or topic in your course."),
             [],
             0m,
             false,
@@ -391,6 +457,9 @@ public sealed class AiRagChatService(
             promptVersion,
             tokens);
     }
+
+    private static string NormalizeConfiguredResponse(string? response, string fallback) =>
+        string.IsNullOrWhiteSpace(response) ? fallback : response.Trim();
 
     internal static AiChatAnswer BuildExtractiveAnswer(
         string question,

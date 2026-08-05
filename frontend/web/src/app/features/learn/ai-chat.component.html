@@ -68,13 +68,24 @@
               <div class="message__meta">
                 <span>{{ message.role === "User" ? "You" : "AI Tutor" }}</span>
                 @if (message.provider) {
-                  <small>{{ message.provider }} · {{ message.confidence | percent: "1.0-0" }}</small>
+                  <small>
+                    {{ message.provider }}
+                    @if (message.model) {
+                      <span> · {{ message.model }}</span>
+                    }
+                    @if (message.confidence !== null) {
+                      <span> · {{ message.confidence | percent: "1.0-0" }}</span>
+                    }
+                  </small>
                 }
               </div>
               @if (message.role !== "User") {
                 <div class="message__labels">
                   <span>AI-generated suggestion</span>
-                  <span>Grounded in course material</span>
+                  <span>{{ message.usedContext ? "Grounded in course material" : "No course context used" }}</span>
+                  @if (message.promptVersion) {
+                    <span>{{ message.promptVersion }}</span>
+                  }
                 </div>
               }
               <p>{{ message.content }}</p>

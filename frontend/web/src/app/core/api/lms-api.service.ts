@@ -832,6 +832,7 @@ export interface AiChatAnswerDto {
   usedContext: boolean;
   provider: string;
   model: string;
+  promptVersion: string;
 }
 
 export interface CreateAiChatSessionRequest {

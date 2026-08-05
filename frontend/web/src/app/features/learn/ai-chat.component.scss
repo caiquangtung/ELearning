@@ -201,6 +201,8 @@ p {
 .message__meta small {
   color: inherit;
   opacity: 0.75;
+  text-align: right;
+  overflow-wrap: anywhere;
 }
 
 .message__labels {

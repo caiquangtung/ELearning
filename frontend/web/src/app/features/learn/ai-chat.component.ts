@@ -184,7 +184,7 @@ export class AiChatComponent {
       citations: answer.citations,
       provider: answer.provider,
       model: answer.model,
-      promptVersion: null,
+      promptVersion: answer.promptVersion,
       confidence: answer.confidence,
       usedContext: answer.usedContext,
       createdAt: new Date().toISOString(),

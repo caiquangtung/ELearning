@@ -156,6 +156,86 @@ public class RagLearningAssistantTests
     }
 
     [Fact]
+    public void Configured_no_context_answer_uses_custom_response()
+    {
+        var answer = AiRagChatService.BuildNoContextAnswer(
+            "What is outside this course?",
+            "rag-learning-assistant-v1",
+            "Please ask about indexed course material.");
+
+        answer.Answer.Should().Be("Please ask about indexed course material.");
+        answer.UsedContext.Should().BeFalse();
+        answer.PromptVersion.Should().Be("rag-learning-assistant-v1");
+    }
+
+    [Fact]
+    public void Provider_json_answer_clamps_confidence_and_keeps_prompt_version()
+    {
+        var citation = new AiChatCitation(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            null,
+            null,
+            "Secure API Development",
+            null,
+            null,
+            "JWT validation checks signatures.",
+            0.91m);
+
+        var answer = AiRagChatService.TryBuildProviderJsonAnswer(
+            "How does JWT validation work?",
+            "OpenAiCompatible",
+            "gpt-test",
+            """{"answer":"JWT validation checks signatures.","confidence":1.25}""",
+            42,
+            [citation],
+            "rag-learning-assistant-v1");
+
+        answer.Should().NotBeNull();
+        answer!.Confidence.Should().Be(1m);
+        answer.PromptVersion.Should().Be("rag-learning-assistant-v1");
+        answer.Citations.Should().ContainSingle().Which.Should().Be(citation);
+        answer.TokenEstimate.Should().Be(42);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("not json")]
+    [InlineData("""{"confidence":0.8}""")]
+    public void Provider_json_answer_rejects_malformed_or_empty_payload(string content)
+    {
+        var answer = AiRagChatService.TryBuildProviderJsonAnswer(
+            "Question",
+            "GoogleAiStudio",
+            "gemini-test",
+            content,
+            null,
+            [],
+            "rag-learning-assistant-v1");
+
+        answer.Should().BeNull();
+    }
+
+    [Fact]
+    public void Retrieval_quality_gate_requires_citation_above_threshold()
+    {
+        var weak = new AiChatCitation(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            null,
+            null,
+            "Course",
+            null,
+            null,
+            "Weak citation.",
+            0.49m);
+
+        AiRagChatService.HasSufficientRetrievalContext([], 0.50m).Should().BeFalse();
+        AiRagChatService.HasSufficientRetrievalContext([weak], 0.50m).Should().BeFalse();
+        AiRagChatService.HasSufficientRetrievalContext([weak with { Score = 0.50m }], 0.50m).Should().BeTrue();
+    }
+
+    [Fact]
     public void Retriever_threshold_0_70_filters_weak_candidates_after_lexical_boost()
     {
         var weak = new AiKnowledgeRetriever.VectorCandidate(
@@ -199,6 +279,70 @@ public class RagLearningAssistantTests
         citations.Should().ContainSingle();
         citations[0].Score.Should().BeGreaterThan(0.70m);
         citations[0].RawScore.Should().Be(0.65m);
+    }
+
+    [Fact]
+    public void Hybrid_fusion_keeps_dense_candidate_and_marks_dense_sparse_overlap()
+    {
+        var chunkId = Guid.NewGuid();
+        var courseId = Guid.NewGuid();
+        var dense = new AiKnowledgeRetriever.VectorCandidate(
+            chunkId,
+            courseId,
+            null,
+            null,
+            "Secure Coding",
+            null,
+            null,
+            "Lesson",
+            0,
+            "JWT validation checks signatures.",
+            0.78m,
+            "Dense");
+        var sparse = dense with { Score = 0.45m, RetrievalSource = "Sparse" };
+
+        var fused = AiKnowledgeRetriever.FuseCandidates([dense], [sparse], 10);
+
+        fused.Should().ContainSingle();
+        fused[0].ChunkId.Should().Be(chunkId);
+        fused[0].RetrievalSource.Should().Be("Hybrid");
+        fused[0].Score.Should().BeGreaterThan(dense.Score);
+    }
+
+    [Fact]
+    public void Hybrid_fusion_can_promote_strong_sparse_candidate()
+    {
+        var weakDense = new AiKnowledgeRetriever.VectorCandidate(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            null,
+            null,
+            "Random Course",
+            null,
+            null,
+            "Lesson",
+            0,
+            "Unrelated text.",
+            0.20m,
+            "Dense");
+        var strongSparse = new AiKnowledgeRetriever.VectorCandidate(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            null,
+            null,
+            "Secure Coding",
+            null,
+            null,
+            "Lesson",
+            0,
+            "JWT validation checks signatures.",
+            0.86m,
+            "Sparse");
+
+        var fused = AiKnowledgeRetriever.FuseCandidates([weakDense], [strongSparse], 10);
+
+        fused[0].ChunkId.Should().Be(strongSparse.ChunkId);
+        fused[0].RetrievalSource.Should().Be("Sparse");
     }
 
     [Theory]

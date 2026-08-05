@@ -48,13 +48,29 @@ public sealed partial class AiKnowledgeRetriever(
                 new AiTextEmbeddingRequest(question, AiTextEmbeddingPurpose.RetrievalQuery),
                 ct);
             if (!HasVectorSignal(queryEmbedding.Vector))
-                return EmptyResult(queryEmbedding, minSimilarity, stopwatch);
+            {
+                candidates = await SearchFullTextCandidatesSafelyAsync(
+                    accessibleCourseIds,
+                    question,
+                    candidateLimit,
+                    ct);
+                minSimilarity = 0.01m;
+            }
+            else
+            {
+                candidates = await SearchVectorCandidatesAsync(
+                    accessibleCourseIds,
+                    PgVectorFormatter.ToVectorLiteral(queryEmbedding.Vector),
+                    candidateLimit,
+                    ct);
 
-            candidates = await SearchVectorCandidatesAsync(
-                accessibleCourseIds,
-                PgVectorFormatter.ToVectorLiteral(queryEmbedding.Vector),
-                candidateLimit,
-                ct);
+                var sparseCandidates = await SearchFullTextCandidatesSafelyAsync(
+                    accessibleCourseIds,
+                    question,
+                    candidateLimit,
+                    ct);
+                candidates = FuseCandidates(candidates, sparseCandidates, candidateLimit);
+            }
         }
         catch (Exception) when (ShouldUseFullTextFallback(config))
         {
@@ -132,7 +148,8 @@ public sealed partial class AiKnowledgeRetriever(
                     reader.GetString(7),
                     reader.GetInt32(8),
                     reader.GetString(9),
-                    Math.Round(Convert.ToDecimal(reader.GetValue(10), System.Globalization.CultureInfo.InvariantCulture), 4)));
+                    Math.Round(Convert.ToDecimal(reader.GetValue(10), System.Globalization.CultureInfo.InvariantCulture), 4),
+                    "Dense"));
             }
         }
         finally
@@ -142,6 +159,26 @@ public sealed partial class AiKnowledgeRetriever(
         }
 
         return candidates;
+    }
+
+    private async Task<List<VectorCandidate>> SearchFullTextCandidatesSafelyAsync(
+        IReadOnlyList<Guid> courseIds,
+        string question,
+        int candidateLimit,
+        CancellationToken ct)
+    {
+        try
+        {
+            return await SearchFullTextCandidatesAsync(courseIds, question, candidateLimit, ct);
+        }
+        catch (PostgresException)
+        {
+            return [];
+        }
+        catch (InvalidOperationException)
+        {
+            return [];
+        }
     }
 
     private async Task<List<VectorCandidate>> SearchFullTextCandidatesAsync(
@@ -218,7 +255,8 @@ public sealed partial class AiKnowledgeRetriever(
                     reader.GetString(7),
                     reader.GetInt32(8),
                     reader.GetString(9),
-                    Math.Round(Math.Clamp(Convert.ToDecimal(reader.GetValue(10), System.Globalization.CultureInfo.InvariantCulture), 0m, 1m), 4)));
+                    Math.Round(Math.Clamp(Convert.ToDecimal(reader.GetValue(10), System.Globalization.CultureInfo.InvariantCulture), 0m, 1m), 4),
+                    "Sparse"));
             }
         }
         finally
@@ -292,6 +330,61 @@ public sealed partial class AiKnowledgeRetriever(
         }
 
         return citations;
+    }
+
+    internal static List<VectorCandidate> FuseCandidates(
+        IReadOnlyList<VectorCandidate> denseCandidates,
+        IReadOnlyList<VectorCandidate> sparseCandidates,
+        int candidateLimit)
+    {
+        if (denseCandidates.Count == 0)
+            return sparseCandidates.Take(candidateLimit).ToList();
+        if (sparseCandidates.Count == 0)
+            return denseCandidates.Take(candidateLimit).ToList();
+
+        var denseRanks = denseCandidates
+            .Select((candidate, index) => new { candidate.ChunkId, Rank = index + 1 })
+            .ToDictionary(x => x.ChunkId, x => x.Rank);
+        var sparseRanks = sparseCandidates
+            .Select((candidate, index) => new { candidate.ChunkId, Rank = index + 1 })
+            .ToDictionary(x => x.ChunkId, x => x.Rank);
+        var sparseScores = sparseCandidates
+            .GroupBy(candidate => candidate.ChunkId)
+            .ToDictionary(group => group.Key, group => group.Max(candidate => candidate.Score));
+
+        return denseCandidates
+            .Concat(sparseCandidates)
+            .GroupBy(candidate => candidate.ChunkId)
+            .Select(group =>
+            {
+                var best = group
+                    .OrderByDescending(candidate => candidate.Score)
+                    .ThenBy(candidate => candidate.ChunkIndex)
+                    .First();
+                var hasDenseRank = denseRanks.TryGetValue(best.ChunkId, out var denseRank);
+                var hasSparseRank = sparseRanks.TryGetValue(best.ChunkId, out var sparseRank);
+                var sparseScore = sparseScores.TryGetValue(best.ChunkId, out var score) ? score : 0m;
+                var rankScore =
+                    (hasDenseRank ? 1m / (60 + denseRank) : 0m) +
+                    (hasSparseRank ? 1m / (60 + sparseRank) : 0m);
+                var fusedScore = Math.Clamp(
+                    best.Score + Math.Min(0.10m, sparseScore * 0.10m) + Math.Min(0.08m, rankScore * 2.5m),
+                    -1m,
+                    1m);
+
+                return best with
+                {
+                    Score = Math.Round(fusedScore, 4),
+                    RetrievalSource = hasDenseRank && hasSparseRank
+                        ? "Hybrid"
+                        : hasDenseRank ? "Dense" : "Sparse"
+                };
+            })
+            .OrderByDescending(candidate => candidate.Score)
+            .ThenBy(candidate => candidate.CourseTitle)
+            .ThenBy(candidate => candidate.ChunkIndex)
+            .Take(candidateLimit)
+            .ToList();
     }
 
     internal static decimal CalculateAdjustedScore(VectorCandidate candidate, IReadOnlySet<string> queryTerms)
@@ -389,5 +482,6 @@ public sealed partial class AiKnowledgeRetriever(
         string SourceType,
         int ChunkIndex,
         string Text,
-        decimal Score);
+        decimal Score,
+        string RetrievalSource = "Dense");
 }
