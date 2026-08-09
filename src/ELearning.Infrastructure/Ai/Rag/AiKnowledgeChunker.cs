@@ -68,16 +68,15 @@ public sealed partial class AiKnowledgeChunker
         {
             foreach (var lesson in section.Lessons.OrderBy(x => x.SortOrder))
             {
-                var text = Normalize($"""
-                    Course: {course.Title}
-                    Section: {section.Title}
-                    Lesson: {lesson.Title}
+                var contextHeader = $"[Context: Course '{course.Title}' > Section '{section.Title}' > Lesson '{lesson.Title}']";
+                var lessonText = Normalize(lesson.Content);
+                if (lessonText.Length == 0)
+                    continue;
 
-                    {lesson.Content}
-                    """);
-
-                foreach (var (chunkText, index) in SplitText(text, maxLength).Select((value, index) => (value, index)))
+                var subChunks = SplitText(lessonText, Math.Max(200, maxLength - contextHeader.Length - 10));
+                foreach (var (chunkText, index) in subChunks.Select((value, index) => (value, index)))
                 {
+                    var contextualText = Normalize($"{contextHeader}\n{chunkText}");
                     chunks.Add(new AiKnowledgeChunkSource(
                         course.Id,
                         section.Id,
@@ -87,7 +86,7 @@ public sealed partial class AiKnowledgeChunker
                         section.Title,
                         lesson.Title,
                         index,
-                        chunkText));
+                        contextualText));
                 }
             }
         }

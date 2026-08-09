@@ -99,6 +99,8 @@ public static class DependencyInjection
         services.AddScoped<IAiKnowledgeIndexingService, AiKnowledgeIndexingService>();
         services.AddScoped<IAiKnowledgeRetriever, AiKnowledgeRetriever>();
         services.AddScoped<AiChatIntentGate>();
+        services.AddScoped<IAiQueryRouter, AiQueryRouter>();
+        services.AddScoped<IAiQueryRewriter, AiQueryRewriter>();
         services.AddScoped<IAiRagChatService, AiRagChatService>();
         services.AddScoped<IAiRagEvaluationService, AiRagEvaluationService>();
         services.AddScoped<IAiKnowledgeReindexQueue, AiKnowledgeReindexQueue>();

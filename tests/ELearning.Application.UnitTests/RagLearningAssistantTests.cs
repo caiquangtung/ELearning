@@ -1,4 +1,5 @@
 using ELearning.Application.Common.Interfaces;
+using ELearning.Application.Features.Ai.Chat;
 using ELearning.Core.Constants;
 using ELearning.Domain.Aggregates.AiAggregate;
 using ELearning.Domain.Aggregates.CourseAggregate;
@@ -34,6 +35,49 @@ public class RagLearningAssistantTests
         first.Select(x => x.Text).Should().Equal(second.Select(x => x.Text));
         first.Should().OnlyContain(x => x.Text.Length <= 500);
         first.Select(x => x.ChunkIndex).Should().ContainInOrder(0, 1);
+        first.Where(x => x.SourceType == "Lesson").Should().AllSatisfy(chunk =>
+        {
+            chunk.Text.Should().StartWith("[Context: Course 'Secure API Development' > Section 'Authentication' > Lesson 'JWT validation']");
+        });
+    }
+
+    [Fact]
+    public void QueryRouter_routes_greetings_out_of_scope_and_technical_queries()
+    {
+        var router = new AiQueryRouter(Options.Create(new AiOptions()));
+
+        var greeting = router.RouteQuery("Xin chào thầy");
+        greeting.Category.Should().Be(AiQueryIntentCategory.DirectGreeting);
+        greeting.SkipRetrieval.Should().BeTrue();
+
+        var outOfScope = router.RouteQuery("Dự báo thời tiết hôm nay thế nào?");
+        outOfScope.Category.Should().Be(AiQueryIntentCategory.OutOfScope);
+        outOfScope.SkipRetrieval.Should().BeTrue();
+
+        var codeSample = router.RouteQuery("Cho xin ví dụ code C# về CQRS pattern");
+        codeSample.Category.Should().Be(AiQueryIntentCategory.TechnicalCodeSample);
+        codeSample.SkipRetrieval.Should().BeFalse();
+
+        var normal = router.RouteQuery("Giải thích cách hoạt động của Dependency Injection");
+        normal.Category.Should().Be(AiQueryIntentCategory.QuickCourseLookup);
+        normal.SkipRetrieval.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task QueryRewriter_expands_abbreviations_and_resolves_pronouns()
+    {
+        var rewriter = new AiQueryRewriter(NullLogger<AiQueryRewriter>.Instance);
+
+        var history = new List<AiChatMessageContext>
+        {
+            new("User", "CQRS Pattern là gì?"),
+            new("Assistant", "CQRS là Command Query Responsibility Segregation...")
+        };
+
+        var rewritten = await rewriter.RewriteQueryAsync("Nó có ưu điểm gì trong DI?", history);
+
+        rewritten.Should().Contain("CQRS");
+        rewritten.Should().Contain("DI (Dependency Injection)");
     }
 
     [Fact]
@@ -883,6 +927,134 @@ public class RagLearningAssistantTests
 
         await act.Should().ThrowAsync<InvalidOperationException>();
         handler.Attempts.Should().Be(2);
+    }
+
+    [Fact]
+    public void AiChatMapper_maps_prompt_version_to_dto()
+    {
+        var answer = new AiChatAnswer(
+            Guid.NewGuid(),
+            "JWT is a compact token format.",
+            [],
+            0.95m,
+            true,
+            "GoogleAiStudio",
+            "gemini-2.0-flash",
+            "rag-learning-assistant-v2",
+            120);
+
+        var dto = AiChatMapper.ToDto(answer);
+
+        dto.MessageId.Should().Be(answer.MessageId);
+        dto.Answer.Should().Be(answer.Answer);
+        dto.Confidence.Should().Be(0.95m);
+        dto.UsedContext.Should().BeTrue();
+        dto.Provider.Should().Be("GoogleAiStudio");
+        dto.Model.Should().Be("gemini-2.0-flash");
+        dto.PromptVersion.Should().Be("rag-learning-assistant-v2");
+    }
+
+    [Fact]
+    public void TryBuildProviderJsonAnswer_clamps_confidence_and_returns_answer()
+    {
+        var citations = new List<AiChatCitation>
+        {
+            new(Guid.NewGuid(), Guid.NewGuid(), null, null, "Course A", null, "Lesson 1", "Content 1", 0.9m)
+        };
+
+        var jsonContent = """{"answer":"Valid response text.","confidence":1.5}""";
+        var answer = AiRagChatService.TryBuildProviderJsonAnswer(
+            "What is JWT?",
+            "Ollama",
+            "qwen2.5:7b",
+            jsonContent,
+            100,
+            citations,
+            "v1");
+
+        answer.Should().NotBeNull();
+        answer!.Answer.Should().Be("Valid response text.");
+        answer.Confidence.Should().Be(1.00m);
+        answer.UsedContext.Should().BeTrue();
+        answer.PromptVersion.Should().Be("v1");
+        answer.Citations.Should().HaveCount(1);
+    }
+
+    [Fact]
+    public void TryBuildProviderJsonAnswer_returns_null_on_malformed_or_empty_json()
+    {
+        var citations = new List<AiChatCitation>
+        {
+            new(Guid.NewGuid(), Guid.NewGuid(), null, null, "Course A", null, "Lesson 1", "Content 1", 0.9m)
+        };
+
+        var malformedAnswer = AiRagChatService.TryBuildProviderJsonAnswer(
+            "Question", "Provider", "Model", "Not JSON at all", 10, citations, "v1");
+        malformedAnswer.Should().BeNull();
+
+        var emptyAnswer = AiRagChatService.TryBuildProviderJsonAnswer(
+            "Question", "Provider", "Model", """{"answer":"","confidence":0.8}""", 10, citations, "v1");
+        emptyAnswer.Should().BeNull();
+    }
+
+    [Fact]
+    public void Hybrid_retrieval_fusion_promotes_sparse_matches_and_preserves_dense_candidates()
+    {
+        var chunkId1 = Guid.NewGuid();
+        var chunkId2 = Guid.NewGuid();
+        var chunkId3 = Guid.NewGuid();
+        var courseId = Guid.NewGuid();
+
+        var dense = new List<AiKnowledgeRetriever.VectorCandidate>
+        {
+            new(chunkId1, courseId, null, null, "Security", "Auth", "JWT", "lesson", 0, "JWT token validation", 0.85m, "Dense"),
+            new(chunkId2, courseId, null, null, "Security", "Auth", "OAuth", "lesson", 1, "OAuth2 flow details", 0.80m, "Dense")
+        };
+
+        var sparse = new List<AiKnowledgeRetriever.VectorCandidate>
+        {
+            new(chunkId2, courseId, null, null, "Security", "Auth", "OAuth", "lesson", 1, "OAuth2 flow details", 0.90m, "Sparse"),
+            new(chunkId3, courseId, null, null, "Security", "Crypt", "RSA", "lesson", 2, "RSA keys info", 0.75m, "Sparse")
+        };
+
+        var fused = AiKnowledgeRetriever.FuseCandidates(dense, sparse, 10);
+
+        fused.Should().HaveCount(3);
+
+        var oauthCandidate = fused.First(x => x.ChunkId == chunkId2);
+        oauthCandidate.RetrievalSource.Should().Be("Hybrid");
+        oauthCandidate.Score.Should().BeGreaterThan(0.85m);
+
+        var rsaCandidate = fused.First(x => x.ChunkId == chunkId3);
+        rsaCandidate.RetrievalSource.Should().Be("Sparse");
+    }
+
+    [Fact]
+    public void Quality_gate_refuses_when_max_score_is_below_min_similarity()
+    {
+        var lowScoreCitations = new List<AiChatCitation>
+        {
+            new(Guid.NewGuid(), Guid.NewGuid(), null, null, "Course A", null, "Lesson 1", "Unrelated topic text", 0.35m)
+        };
+
+        var sufficient = AiRagChatService.HasSufficientRetrievalContext(lowScoreCitations, 0.60m);
+        sufficient.Should().BeFalse();
+
+        var emptyCitations = new List<AiChatCitation>();
+        var sufficientEmpty = AiRagChatService.HasSufficientRetrievalContext(emptyCitations, 0.60m);
+        sufficientEmpty.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Configured_AiOptions_responses_are_used_for_greeting_and_no_context()
+    {
+        var greeting = AiRagChatService.BuildGreetingAnswer("v1", "Welcome to AI Learning!");
+        greeting.Answer.Should().Be("Welcome to AI Learning!");
+        greeting.Provider.Should().Be("Local");
+
+        var noContext = AiRagChatService.BuildNoContextAnswer("Question", "v1", "Custom no-context message.");
+        noContext.Answer.Should().Be("Custom no-context message.");
+        noContext.UsedContext.Should().BeFalse();
     }
 
     private static AiChatIntentGate BuildIntentGate(bool enabled = true) =>

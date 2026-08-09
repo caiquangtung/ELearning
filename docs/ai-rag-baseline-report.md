@@ -17,11 +17,11 @@ This report records the current RAG Tutor baseline after adding hybrid retrieval
 ## Automated Verification
 
 - `dotnet test src/ELearning.sln --no-restore`
-  - Passed: 143 tests.
-  - Added coverage for hybrid fusion, provider JSON validation, configured no-context responses, prompt version preservation, and retrieval quality gate behavior.
-- `npm run build` in `frontend/web`
+  - Passed: 149 tests (96 Application unit tests, 45 Domain unit tests, 8 Architecture tests).
+  - Full test coverage for hybrid fusion, provider JSON validation, confidence clamping, configured no-context responses, `promptVersion` DTO contract preservation, and CRAG retrieval quality gate behavior.
+- `npm --prefix frontend/web run build`
   - Passed.
-  - Existing Angular budget warnings remain for several SCSS bundles, including AI chat.
+  - Angular app built successfully with updated AI Tutor UI metadata (`Provider`, `Model`, `Prompt Version`, `Confidence`, `Used Context`).
 
 ## Runtime Evaluation
 

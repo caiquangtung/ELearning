@@ -16,7 +16,8 @@ public sealed class AiRagChatService(
     OpenAiCompatibleChatClient chatClient,
     GoogleAiStudioChatClient? googleChatClient,
     OllamaChatClient? ollamaChatClient,
-    AiChatIntentGate intentGate,
+    IAiQueryRouter? queryRouter,
+    IAiQueryRewriter? queryRewriter,
     IOptions<AiOptions> options,
     ILogger<AiRagChatService> logger)
     : IAiRagChatService
@@ -139,36 +140,59 @@ public sealed class AiRagChatService(
             ? "rag-learning-assistant-v1"
             : config.RagChatPromptVersion;
 
-        var intent = intentGate.Evaluate(message);
+        var router = queryRouter ?? new AiQueryRouter(options);
+        var routeResult = router.RouteQuery(message);
+
         AiChatAnswer answer;
-        if (intent.SkipRetrieval)
+        if (routeResult.SkipRetrieval)
         {
             if (!HasAiChatProvider(config))
             {
                 logger.LogInformation(
-                    "AI chat used local intent fallback because no remote chat provider is configured. Provider={Provider}, RagChatProvider={RagChatProvider}",
-                    config.Provider,
-                    config.RagChatProvider);
+                    "AI chat used local intent fallback. Intent={Intent}, Reason={Reason}",
+                    routeResult.IntentName,
+                    routeResult.Reason);
 
-                answer = intent.IsGreeting
+                answer = routeResult.Category == AiQueryIntentCategory.DirectGreeting
                     ? BuildGreetingAnswer(promptVersion, config.RagGreetingResponse)
-                    : BuildNoContextAnswer(message, promptVersion, config.RagIrrelevantResponse);
+                    : BuildNoContextAnswer(
+                        message,
+                        promptVersion,
+                        routeResult.Category == AiQueryIntentCategory.OutOfScope
+                            ? "Tôi là trợ lý học tập AI của hệ thống E-Learning, chỉ có thể hỗ trợ các câu hỏi liên quan đến nội dung khóa học và bài học. Bạn vui lòng đặt câu hỏi về khóa học nhé!"
+                            : config.RagIrrelevantResponse);
             }
             else
             {
-                answer = await GenerateAnswerAsync(message, [], promptVersion, ct);
+                answer = routeResult.Category == AiQueryIntentCategory.DirectGreeting
+                    ? BuildGreetingAnswer(promptVersion, config.RagGreetingResponse)
+                    : await GenerateAnswerAsync(message, [], promptVersion, ct);
             }
         }
         else
         {
+            var recentMessages = await context.AiChatMessages
+                .AsNoTracking()
+                .Where(x => x.SessionId == sessionId)
+                .OrderByDescending(x => x.CreatedAt)
+                .Take(4)
+                .OrderBy(x => x.CreatedAt)
+                .Select(x => new AiChatMessageContext(x.Role, x.Content))
+                .ToListAsync(ct);
+
+            var rewrittenQuery = queryRewriter is not null
+                ? await queryRewriter.RewriteQueryAsync(message, recentMessages, ct)
+                : message;
+
             var retrieval = await knowledgeRetriever.RetrieveAsync(
-                new AiKnowledgeRetrievalRequest(userId, userRoles, message, session.CourseId),
+                new AiKnowledgeRetrievalRequest(userId, userRoles, rewrittenQuery, session.CourseId),
                 ct);
 
             logger.LogInformation(
-                "AI chat used retrieval. Provider={Provider}, RagChatProvider={RagChatProvider}, Citations={CitationCount}",
-                config.Provider,
-                config.RagChatProvider,
+                "AI chat used retrieval. OriginalQuery='{OriginalQuery}', RewrittenQuery='{RewrittenQuery}', Intent={Intent}, Citations={CitationCount}",
+                message,
+                rewrittenQuery,
+                routeResult.IntentName,
                 retrieval.Citations.Count);
 
             if (!HasSufficientRetrievalContext(retrieval.Citations, retrieval.MinAcceptedScore))
@@ -183,7 +207,7 @@ public sealed class AiRagChatService(
             }
             else
             {
-                answer = await GenerateAnswerAsync(message, retrieval.Citations, promptVersion, ct);
+                answer = await GenerateAnswerAsync(rewrittenQuery, retrieval.Citations, promptVersion, ct);
             }
         }
 

@@ -2,7 +2,7 @@ using ELearning.Application.Common.Interfaces;
 
 namespace ELearning.Application.Features.Ai.Chat;
 
-internal static class AiChatMapper
+public static class AiChatMapper
 {
     public static AiChatSessionDto ToDto(AiChatSessionSummary session) =>
         new(session.Id, session.Title, session.CourseId, session.CreatedAt, session.UpdatedAt);
@@ -28,7 +28,8 @@ internal static class AiChatMapper
             answer.Confidence,
             answer.UsedContext,
             answer.Provider,
-            answer.Model);
+            answer.Model,
+            answer.PromptVersion);
 
     private static AiChatCitationDto ToDto(AiChatCitation citation) =>
         new(

@@ -26,7 +26,8 @@ public sealed record AiChatAnswerDto(
     decimal Confidence,
     bool UsedContext,
     string Provider,
-    string Model);
+    string Model,
+    string PromptVersion);
 
 public sealed record AiAccessibleCourseDto(
     Guid Id,
