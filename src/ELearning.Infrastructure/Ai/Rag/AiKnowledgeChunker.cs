@@ -94,7 +94,7 @@ public sealed partial class AiKnowledgeChunker
         return chunks;
     }
 
-    internal static IReadOnlyList<string> SplitText(string text, int maxCharacters)
+    internal static IReadOnlyList<string> SplitText(string text, int maxCharacters, int overlapCharacters = 180)
     {
         var normalized = Normalize(text);
         if (normalized.Length == 0)
@@ -112,39 +112,68 @@ public sealed partial class AiKnowledgeChunker
             sentences.Add(normalized);
 
         var chunks = new List<string>();
-        var current = "";
+        var currentSentences = new List<string>();
+        var currentLength = 0;
 
         foreach (var sentence in sentences)
         {
             if (sentence.Length > maxCharacters)
             {
-                Flush();
+                FlushCurrent();
                 for (var offset = 0; offset < sentence.Length; offset += maxCharacters)
-                    chunks.Add(sentence.Substring(offset, Math.Min(maxCharacters, sentence.Length - offset)).Trim());
+                {
+                    var piece = sentence.Substring(offset, Math.Min(maxCharacters, sentence.Length - offset)).Trim();
+                    if (piece.Length >= MinimumChunkCharacters)
+                        chunks.Add(piece);
+                }
+                currentSentences.Clear();
+                currentLength = 0;
                 continue;
             }
 
-            var candidate = string.IsNullOrWhiteSpace(current) ? sentence : $"{current} {sentence}";
-            if (candidate.Length > maxCharacters)
+            var addedLength = currentLength == 0 ? sentence.Length : sentence.Length + 1;
+            if (currentLength + addedLength > maxCharacters && currentSentences.Count > 0)
             {
-                Flush();
-                current = sentence;
+                var previousSentences = currentSentences.ToList();
+                FlushCurrent();
+
+                var overlapSentences = new List<string>();
+                var accumulatedOverlapLength = 0;
+                for (int i = previousSentences.Count - 1; i >= 0; i--)
+                {
+                    var s = previousSentences[i];
+                    var len = accumulatedOverlapLength == 0 ? s.Length : s.Length + 1;
+                    if (accumulatedOverlapLength + len <= overlapCharacters)
+                    {
+                        overlapSentences.Insert(0, s);
+                        accumulatedOverlapLength += len;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+
+                currentSentences = overlapSentences;
+                currentLength = accumulatedOverlapLength;
             }
-            else
-            {
-                current = candidate;
-            }
+
+            currentSentences.Add(sentence);
+            currentLength += currentLength == 0 ? sentence.Length : sentence.Length + 1;
         }
 
-        Flush();
+        FlushCurrent();
         return chunks.Where(x => x.Length >= MinimumChunkCharacters).ToList();
 
-        void Flush()
+        void FlushCurrent()
         {
-            if (!string.IsNullOrWhiteSpace(current))
+            if (currentSentences.Count > 0)
             {
-                chunks.Add(current.Trim());
-                current = "";
+                var chunkText = string.Join(" ", currentSentences).Trim();
+                if (!string.IsNullOrWhiteSpace(chunkText))
+                {
+                    chunks.Add(chunkText);
+                }
             }
         }
     }

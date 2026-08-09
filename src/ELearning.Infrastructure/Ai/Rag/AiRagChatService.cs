@@ -18,6 +18,8 @@ public sealed class AiRagChatService(
     OllamaChatClient? ollamaChatClient,
     IAiQueryRouter? queryRouter,
     IAiQueryRewriter? queryRewriter,
+    IAiQueryDecomposer? queryDecomposer,
+    IAiCragEvaluator? cragEvaluator,
     IOptions<AiOptions> options,
     ILogger<AiRagChatService> logger)
     : IAiRagChatService
@@ -184,30 +186,80 @@ public sealed class AiRagChatService(
                 ? await queryRewriter.RewriteQueryAsync(message, recentMessages, ct)
                 : message;
 
-            var retrieval = await knowledgeRetriever.RetrieveAsync(
-                new AiKnowledgeRetrievalRequest(userId, userRoles, rewrittenQuery, session.CourseId),
-                ct);
+            var decomposer = queryDecomposer ?? new AiQueryDecomposer();
+            var decomposition = decomposer.DecomposeQuery(rewrittenQuery);
 
-            logger.LogInformation(
-                "AI chat used retrieval. OriginalQuery='{OriginalQuery}', RewrittenQuery='{RewrittenQuery}', Intent={Intent}, Citations={CitationCount}",
-                message,
-                rewrittenQuery,
-                routeResult.IntentName,
-                retrieval.Citations.Count);
+            List<AiChatCitation> combinedCitations = [];
+            int totalCandidatesCount = 0;
+            decimal? maxScore = null;
+            decimal minAcceptedScore = Math.Clamp(config.RagMinSimilarity, 0m, 1m);
 
-            if (!HasSufficientRetrievalContext(retrieval.Citations, retrieval.MinAcceptedScore))
+            if (decomposition.IsDecomposed && decomposition.SubQueries.Count > 1)
             {
                 logger.LogInformation(
-                    "AI chat retrieval quality gate refused generation. CandidateCount={CandidateCount}, MaxScore={MaxScore}, MinSimilarity={MinSimilarity}",
-                    retrieval.RetrievedCount,
-                    retrieval.MaxScore,
-                    retrieval.MinAcceptedScore);
+                    "Multi-topic query decomposition triggered. OriginalQuery='{OriginalQuery}', SubQueryCount={SubQueryCount}",
+                    message,
+                    decomposition.SubQueries.Count);
 
+                foreach (var subQuery in decomposition.SubQueries)
+                {
+                    var subRetrieval = await knowledgeRetriever.RetrieveAsync(
+                        new AiKnowledgeRetrievalRequest(userId, userRoles, subQuery, session.CourseId),
+                        ct);
+
+                    totalCandidatesCount += subRetrieval.RetrievedCount;
+                    if (subRetrieval.MaxScore.HasValue)
+                    {
+                        maxScore = Math.Max(maxScore ?? 0m, subRetrieval.MaxScore.Value);
+                    }
+                    combinedCitations.AddRange(subRetrieval.Citations);
+                }
+
+                // Deduplicate combined citations by ChunkId, selecting highest scoring citations
+                combinedCitations = combinedCitations
+                    .GroupBy(c => c.ChunkId)
+                    .Select(g => g.OrderByDescending(c => c.Score).First())
+                    .OrderByDescending(c => c.Score)
+                    .Take(Math.Clamp(config.RagMaxRetrievedChunks, 1, 8))
+                    .ToList();
+            }
+            else
+            {
+                var retrieval = await knowledgeRetriever.RetrieveAsync(
+                    new AiKnowledgeRetrievalRequest(userId, userRoles, rewrittenQuery, session.CourseId),
+                    ct);
+
+                totalCandidatesCount = retrieval.RetrievedCount;
+                maxScore = retrieval.MaxScore;
+                minAcceptedScore = retrieval.MinAcceptedScore;
+                combinedCitations = retrieval.Citations.ToList();
+            }
+
+            var evaluator = cragEvaluator ?? new AiCragEvaluator();
+            var cragResult = evaluator.Evaluate(
+                combinedCitations,
+                totalCandidatesCount,
+                maxScore,
+                minAcceptedScore);
+
+            logger.LogInformation(
+                "CRAG Evaluation completed. State={CragState}, Citations={CitationCount}, MaxScore={MaxScore}, Summary='{Summary}'",
+                cragResult.State,
+                cragResult.Citations.Count,
+                cragResult.MaxScore,
+                cragResult.SummaryReason);
+
+            if (cragResult.State == CragEvaluationState.Incorrect)
+            {
                 answer = BuildNoContextAnswer(message, promptVersion, config.RagNoContextResponse);
             }
             else
             {
-                answer = await GenerateAnswerAsync(rewrittenQuery, retrieval.Citations, promptVersion, ct);
+                answer = await GenerateAnswerAsync(rewrittenQuery, cragResult.Citations, promptVersion, ct);
+                if (cragResult.State == CragEvaluationState.Ambiguous)
+                {
+                    answer = answer with { Confidence = Math.Min(answer.Confidence, 0.65m) };
+                }
             }
         }
 

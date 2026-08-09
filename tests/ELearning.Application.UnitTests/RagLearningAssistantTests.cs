@@ -42,6 +42,17 @@ public class RagLearningAssistantTests
     }
 
     [Fact]
+    public void Chunker_includes_sentence_overlap_between_adjacent_chunks()
+    {
+        var text = "Sentence 1 is long enough to start the first chunk. Sentence 2 continues the explanation. Sentence 3 completes the initial thought. Sentence 4 introduces a new topic. Sentence 5 expands on the new topic. Sentence 6 concludes the section.";
+        var chunks = AiKnowledgeChunker.SplitText(text, 160, 90);
+
+        chunks.Should().HaveCountGreaterThan(1);
+        var firstChunkLastSentence = chunks[0].Split(". ").Last().TrimEnd('.');
+        chunks[1].Should().Contain(firstChunkLastSentence);
+    }
+
+    [Fact]
     public void QueryRouter_routes_greetings_out_of_scope_and_technical_queries()
     {
         var router = new AiQueryRouter(Options.Create(new AiOptions()));
@@ -78,6 +89,47 @@ public class RagLearningAssistantTests
 
         rewritten.Should().Contain("CQRS");
         rewritten.Should().Contain("DI (Dependency Injection)");
+    }
+
+    [Fact]
+    public void QueryDecomposer_splits_multi_topic_comparison_queries()
+    {
+        var decomposer = new AiQueryDecomposer();
+
+        var comparison = decomposer.DecomposeQuery("So sánh Dependency Injection và Service Locator trong C#");
+        comparison.IsDecomposed.Should().BeTrue();
+        comparison.SubQueries.Should().HaveCount(3);
+        comparison.SubQueries[0].Should().Contain("Dependency Injection");
+        comparison.SubQueries[1].Should().Contain("Service Locator");
+
+        var conjunction = decomposer.DecomposeQuery("Giải thích JWT Authentication và cách cấu hình Middleware trong C#");
+        conjunction.IsDecomposed.Should().BeTrue();
+        conjunction.SubQueries.Should().HaveCount(2);
+
+        var singleTopic = decomposer.DecomposeQuery("Giải thích Dependency Injection");
+        singleTopic.IsDecomposed.Should().BeFalse();
+        singleTopic.SubQueries.Should().HaveCount(1);
+    }
+
+    [Fact]
+    public void CragEvaluator_evaluates_correct_ambiguous_and_incorrect_states()
+    {
+        var evaluator = new AiCragEvaluator();
+
+        var citation = new AiChatCitation(
+            Guid.NewGuid(), Guid.NewGuid(), null, null,
+            "Course", "Section", "Lesson", "Snippet", 0.50m);
+
+        var correct = evaluator.Evaluate([citation], 1, 0.50m, 0.40m);
+        correct.State.Should().Be(CragEvaluationState.Correct);
+
+        var borderlineCitation = citation with { Score = 0.30m };
+        var ambiguous = evaluator.Evaluate([borderlineCitation], 1, 0.30m, 0.40m);
+        ambiguous.State.Should().Be(CragEvaluationState.Ambiguous);
+
+        var incorrect = evaluator.Evaluate([], 0, 0.10m, 0.40m);
+        incorrect.State.Should().Be(CragEvaluationState.Incorrect);
+        incorrect.Citations.Should().BeEmpty();
     }
 
     [Fact]
